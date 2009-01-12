@@ -3,7 +3,7 @@
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
 ;;;;     Lisp Assembly Program.
-;;;; Code License: 
+;;;; License: 
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,7 +39,7 @@ sym base)")
  
    Supported instructions:
      cmp r/m16 imm16 
-     hlt                 inc r8          
+     inc r8          
      int 3               int imm8           
      jmp rel8
      jne rel8            lodsb           
@@ -94,12 +94,12 @@ sym base)")
            (string (string->bytes (second e)))
            (number (second e))))
      (dw (word->bytes (second e)))
-     (hlt #xf4)
      (inc (list #xfe (encode-1-operand (second e) 0)))
      (int (case (second e)
             (3 #xcc)
             (t (list #xcd (second e)))))
      (jmp (ecase (second e)
+            ($ (list #xeb 254))
             (short (encode-jmp 'jmp (third e) cursor 1 origin))))
      ;; TODO: merge with jmp
      (jne (encode-jmp 'jne (second e) cursor 1 origin))

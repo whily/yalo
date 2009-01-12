@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Create symbolic link of CC system into SBCL system directory.
+mkdir -p ~/.sbcl/systems
+ln -fs `pwd`\/cc.asd ~/.sbcl/systems/cc.asd
