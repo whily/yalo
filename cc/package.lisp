@@ -13,4 +13,4 @@
    #:asm
    #:*bootloader*
    #:test-cc
-   #:write-image))
+   #:write-kernel))

@@ -235,5 +235,9 @@ sym base)")
     (when s
       (dolist (b bytes)
         (write-byte b s)))))
+
+(defun write-kernel (filename)
+  "Output kernel (including bootloader) as an image file with filename."
+  (write-image (asm *bootloader*) filename))
     
 
