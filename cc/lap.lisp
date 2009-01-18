@@ -94,17 +94,16 @@
 
 (defun encode (e cursor)
   "Opcode encoding, including pseudo instructions like db/dw."
-  (mklist 
-   (aif (assoc e *x86-64-syntax* :test #'equal) 
-        (second it)
-        (case (car e)
-          (db (etypecase (second e)
-                (string (string->bytes (second e)))
-                (number (second e))))
-          (dw (encode-bytes (second e) 2))
-          (t (multiple-value-bind (format opcode)
-                 (match-instruction (instruction-format e))
-               (translate e format opcode cursor)))))))
+  (aif (assoc e *x86-64-syntax* :test #'equal) 
+       (second it)
+       (case (car e)
+         (db (etypecase (second e)
+               (string (string->bytes (second e)))
+               (number (list (second e)))))
+         (dw (encode-bytes (second e) 2))
+         (t (multiple-value-bind (format opcode)
+                (match-instruction (instruction-format e))
+              (translate e format opcode cursor))))))
 
 (defun translate (instruction format opcode cursor)
   "Return opcode for the given instruction."
@@ -116,14 +115,13 @@
                   (r (+ (cadar opcode) (reg->int (second instruction)))))))))
    (mapcan 
     #'(lambda (on) 
-        (mklist
-         (ecase on
-           ((ib iw id io) 
-            (try-encode-bytes (get-value instruction format (on->in on))
-                              (on-length on)))
-           (rb (try-encode-bytes `(- ,(get-value instruction format 'imm8)
-                                     ,(+ cursor 2))
-                                 1)))))
+        (ecase on
+          ((ib iw id io) 
+           (try-encode-bytes (get-value instruction format (on->in on))
+                             (on-length on)))
+          (rb (try-encode-bytes `(- ,(get-value instruction format 'imm8)
+                                    ,(+ cursor 2))
+                                1))))
     (cdr opcode))))
 
 (defun try-eval-values (ops cursor origin symtab has-real-car?)

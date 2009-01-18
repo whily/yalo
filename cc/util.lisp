@@ -30,12 +30,6 @@
                (let ((it ,sym)) ,@(cdr cl1))
                (acond ,@(cdr clauses)))))))
     
-(defun mklist (obj)
-  "Returns obj if it is already a list; otherwise lispy it."
-  (if (listp obj)
-      obj
-      (list obj)))
-
 (defun repeat-element (n element)
   (loop for i from 0 below n collect element))
 
