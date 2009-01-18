@@ -180,7 +180,7 @@ converted from signed to unsigned."
    operators. has-real-car?  indicates the ops position in original
    list. T if its car is an operator (real car)."
   (cond
-    ((atom ops) (operand->value-if ops cursor origin symtab))
+    ((atom ops) (operand->value ops cursor origin symtab))
     ((null ops) nil)
     ((atom (car ops)) 
      (cons (if has-real-car? 
@@ -190,7 +190,7 @@ converted from signed to unsigned."
     (t (cons (lookup-value (car ops) t cursor origin symtab)
              (lookup-value (cdr ops) nil cursor origin symtab)))))
 
-(defun operand->value-if (operand cursor origin symtab)
+(defun operand->value (operand cursor origin symtab)
   "For labels, returns its value if possible.
    For special variables, returns its value.
    For all other stuff, just return it."
