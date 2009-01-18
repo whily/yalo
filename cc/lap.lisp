@@ -63,6 +63,8 @@
     ((jmp    short imm8)        . (#xeb rb))
     ((mov    r8 imm8)           . ((+ #xb0 r) ib))
     ((mov    r16 imm16)         . ((+ #xb8 r) iw))
+    ((mov    sreg r16)          . (#x8e /r))
+    ((mov    r16 sreg)          . (#x8c /r))
     ((ret)                      . (#xc3)))
   "Syntax table for x86-64. For each entry, 1st part is the
   instruction type, 2nd part is the corresponding opcode. For details,
@@ -124,7 +126,11 @@
           ((rb rw rd ro)
            (try-encode-bytes `(- ,(instruction-value instruction type (on->in on))
                                  ,(+ cursor 1 (on-length on)))
-                             (on-length on)))))
+                             (on-length on)))
+          (/r (list (encode-modr/m 
+                     #b11 
+                     (reg->int (instruction-value instruction type 'r16))
+                     (sreg->int (instruction-value instruction type 'sreg)))))))
     (cdr opcode))))
 
 (defun try-encode-bytes (x length)
@@ -279,14 +285,15 @@ converted from signed to unsigned."
        ((eax ecx edx ebx esp ebp esi edi)         'r32)
        ((rax rcx rdx rbx rsp rbp rsi rdi 
              r8 r9 r10 r11 r12 r13 r14 r15)       'r64)
+       ((cs ds es ss fs gs)                       'sreg)
        ((short)                                   operand)
        (t                                         'label)
        ))))
 
-(defun reg->int (register)
-  "Returns the integer representation for register when encode ModR/M byte.
-   Returns -1 if not a register."
-  (ecase register
+(defun reg->int (reg)
+  "Returns the integer representation for register when encoding
+ModR/M byte."
+  (ecase reg
     ((al ax eax mm0 xmm0) 0)
     ((cl cx ecx mm1 xmm1) 1)
     ((dl dx edx mm2 xmm2) 2)
@@ -295,6 +302,17 @@ converted from signed to unsigned."
     ((ch bp ebp mm5 xmm5) 5)
     ((dh si esi mm6 xmm6) 6)
     ((bh di edi mm7 xmm7) 7)))
+
+(defun sreg->int (sreg)
+  "Returns the integer representation for segment register when
+encoding ModR/M byte."
+  (ecase sreg
+    (es 0)
+    (cs 1)
+    (ss 2)
+    (ds 3)
+    (fs 4)
+    (gs 5)))
 
 (defun string->bytes (s)
   (map 'list #'char-code s))

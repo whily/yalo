@@ -29,6 +29,8 @@
     ;; TESTING of assembler only.
     (call    msg)
     (ret)
+    (mov     ax cs)
+    (mov     es bx)
 
     msg
     (db      "Hello World! ")
