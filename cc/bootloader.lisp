@@ -31,6 +31,8 @@
     (ret)
     (mov     ax cs)
     (mov     es bx)
+    (rep     movsb)
+    (rep     movsw)
 
     msg
     (db      "Hello World! ")

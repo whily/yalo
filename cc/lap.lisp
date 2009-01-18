@@ -65,6 +65,8 @@
     ((mov    r16 imm16)         . ((+ #xb8 r) iw))
     ((mov    sreg r16)          . (#x8e /r))
     ((mov    r16 sreg)          . (#x8c /r))
+    ((rep    movsb)             . (#xf3 #xa4))
+    ((rep    movsw)             . (#xf3 #xa5))
     ((ret)                      . (#xc3)))
   "Syntax table for x86-64. For each entry, 1st part is the
   instruction type, 2nd part is the corresponding opcode. For details,
