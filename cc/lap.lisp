@@ -73,7 +73,7 @@ expr.")
              (number (second e))))
        (dw (word->bytes (second e)))
        (jmp (ecase (second e)
-              (short (encode-jmp 'jmp (third e) cursor 1 origin))))
+              (short (encode-jmp (third e) cursor 1 origin))))
        (mov (encode-mov e origin cursor))
        (t (aif (assoc (instruction-format e) *x86-64-syntax* :test #'equal)
                (translate e (instruction-format e) (cdr it))
@@ -134,19 +134,12 @@ expressions, evaluate if possible."
       (ecase length
         (1 (+ 256 value)))))
 
-(defun encode-jmp (mnemonic sym cursor length origin)
-  "Encode mnemonic jmp and jcc."
+(defun encode-jmp (sym cursor length origin)
+  "Encode mnemonic jmp."
   (ecase length
-    (1 (cons (jmp->opcode mnemonic length)
+    (1 (cons #xeb
              (lookup-sym sym (1+ cursor) length (+ cursor 1 length)
                          origin)))))
-
-(defun jmp->opcode (mnemonic length)
-  "Returns the opcode for mnemonic jmp and jcc."
-  (ecase length
-    (1 (ecase mnemonic
-         (jmp #xeb)
-         (jne #x75)))))
 
 (defun encode-mov (e origin cursor)
   "Encode mnemonic mov."
