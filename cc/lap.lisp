@@ -73,20 +73,18 @@ expr.")
 (defun encode (e origin cursor)
   "Opcode encoding, including pseudo instructions like db/dw."
   (mklist 
-   (acond
-    ((assoc e *x86-64-syntax* :test #'equal) (second it))
-    (t 
-     (declare (ignore it))
-     (case (car e)
-       (db (etypecase (second e)
-             (string (string->bytes (second e)))
-             (number (second e))))
-       (dw (word->bytes (second e)))
-       (jmp (ecase (second e)
-              (short (encode-jmp (third e) cursor 1 origin))))
-       (t (multiple-value-bind (format opcode)
-              (match-instruction (instruction-format e))
-            (translate e format opcode))))))))
+   (aif (assoc e *x86-64-syntax* :test #'equal) 
+        (second it)
+        (case (car e)
+          (db (etypecase (second e)
+                (string (string->bytes (second e)))
+                (number (second e))))
+          (dw (word->bytes (second e)))
+          (jmp (ecase (second e)
+                 (short (encode-jmp (third e) cursor 1 origin))))
+          (t (multiple-value-bind (format opcode)
+                 (match-instruction (instruction-format e))
+               (translate e format opcode)))))))
 
 (defun translate (instruction format opcode)
   "Return opcode for the given instruction."
