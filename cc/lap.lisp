@@ -30,7 +30,7 @@
     (dolist (e listing)
       (if (listp e) 
           (let ((e* (cons (car e) 
-                          (try-eval-values (cdr e) cursor origin symtab))))
+                          (try-eval-values (cdr e) cursor origin symtab t))))
             ;; FIXME: the above does not handle var definitions (db, dw
             ;; etc.) and times if labels have same name as instructions.
             (setf code 
@@ -56,9 +56,9 @@
      #'(lambda (c)
          (cond
            ((numberp c) (list c))
-           ((eq c '?) nil)
-           ((listp c) 
-            (encode-bytes (car (try-eval-values (cdr c) -1 -1 symtab)) (first c)))))
+           ((eq c '?)   nil)
+           ((listp c)   (encode-bytes (eval-final c symtab)  (first c)))
+           (t           (error "asm: wrong byte for final processing: ~A" c))))
      code)))
 
 (defparameter *x86-64-syntax*
@@ -105,15 +105,19 @@
                                  1)))))
     (cdr opcode))))
 
-(defun try-eval-values (ops cursor origin symtab)
+(defun try-eval-values (ops cursor origin symtab has-real-car?)
   "Run lookup-value. For each element, evaluate it if possible."
-  (let ((vs (lookup-value ops t cursor origin symtab)))
+  (let ((vs (lookup-value ops has-real-car? cursor origin symtab)))
     (mapcar #'try-eval-value vs)))
 
 (defun try-eval-value (op)
   "Try to evaluate op if possible; other return op as is."
   (handler-case (eval op)
     (unbound-variable () op)))
+
+(defun eval-final (revisit symtab)
+  "Final evaluation of the revisit."
+  (car (try-eval-values (cdr revisit) -1 -1 symtab nil)))
 
 (defun on->in (on)
   "Maps opcode notation (e.g. ib, iw) to instruction notation (e.g. imm8)."
@@ -180,7 +184,8 @@
 length. Otherwise, just return format."
   (if (= (length format) 3)
       (cond
-        ((and (eq (second format) 'r16) (eq (third format) 'imm8))
+        ((and (eq (second format) 'r16) 
+              (member (third format) '(imm8 imm label)))
          (list (car format) (second format) 'imm16))
         ((and (eq (second format) 'short) 
               (member (third format) '(label imm16)))
