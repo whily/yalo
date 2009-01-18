@@ -105,11 +105,11 @@
                (number (list (second e)))))
          (dw (encode-bytes (second e) 2))
          ;; Normal instructions.
-         (t (multiple-value-bind (format opcode)
+         (t (multiple-value-bind (type opcode)
                 (match-instruction (instruction-type e))
-              (encode-complex e format opcode cursor))))))
+              (encode-complex e type opcode cursor))))))
 
-(defun encode-complex (instruction format opcode cursor)
+(defun encode-complex (instruction type opcode cursor)
   "Return opcode for the given instruction."
   (cons
    (etypecase (car opcode)
@@ -121,9 +121,9 @@
     #'(lambda (on) 
         (ecase on
           ((ib iw id io) 
-           (try-encode-bytes (get-value instruction format (on->in on))
+           (try-encode-bytes (get-value instruction type (on->in on))
                              (on-length on)))
-          (rb (try-encode-bytes `(- ,(get-value instruction format 'imm8)
+          (rb (try-encode-bytes `(- ,(get-value instruction type 'imm8)
                                     ,(+ cursor 2))
                                 1))))
     (cdr opcode))))
@@ -187,38 +187,38 @@
          operand))
     (t operand)))
          
-(defun get-value (instruction format name)
-  "Get the value (in instruction) corresponding to the name (in format)."
-  (cdr (assoc name (mapcar #'cons format instruction))))
+(defun get-value (instruction type name)
+  "Get the value (in instruction) corresponding to the name (in type)."
+  (cdr (assoc name (mapcar #'cons type instruction))))
 
-(defun match-instruction (format)
-  "Returns values of (format opcode successful?). 
-   In the first run, when the format does not appear in syntax table,
+(defun match-instruction (type)
+  "Returns values of (type opcode successful?). 
+   In the first run, when the type does not appear in syntax table,
      try to match immediate data with register length."
-  (aif (assoc-x86-64-opcode format)
-       (values format (cdr it) t)
-       (let ((matched-format (match-format format)))
-         (aif (assoc-x86-64-opcode matched-format)
-              (values matched-format (cdr it) t)
+  (aif (assoc-x86-64-opcode type)
+       (values type (cdr it) t)
+       (let ((matched-type (match-type type)))
+         (aif (assoc-x86-64-opcode matched-type)
+              (values matched-type (cdr it) t)
               (error "match-instruction: unsupported instruction!")))))
 
-(defun match-format (format)
-  "Returns new format if immediate data can be matched with register
-length. Otherwise, just return format."
-  (if (= (length format) 3)
+(defun match-type (type)
+  "Returns new type if immediate data can be matched with register
+length. Otherwise, just return type."
+  (if (= (length type) 3)
       (cond
-        ((and (eq (second format) 'r16) 
-              (member (third format) '(imm8 imm label)))
-         (list (car format) (second format) 'imm16))
-        ((and (eq (second format) 'short) 
-              (member (third format) '(label imm16)))
-         (list (car format) (second format) 'imm8))
-        (t format))
-      format))
+        ((and (eq (second type) 'r16) 
+              (member (third type) '(imm8 imm label)))
+         (list (car type) (second type) 'imm16))
+        ((and (eq (second type) 'short) 
+              (member (third type) '(label imm16)))
+         (list (car type) (second type) 'imm8))
+        (t type))
+      type))
 
-(defun assoc-x86-64-opcode (format)
+(defun assoc-x86-64-opcode (type)
   "Returns a associated opcode based on x86-64 syntax."
-  (assoc format *x86-64-syntax* :test #'equal))
+  (assoc type *x86-64-syntax* :test #'equal))
 
 (defun sym-found? (sym symtab)
   "Returns T if sym is found in symtab."
@@ -239,7 +239,7 @@ length. Otherwise, just return format."
   (encode-modr/m #b11 (reg->int dest) reg))
 
 (defun instruction-type (instruction)
-  "Returns the instruction format for encoding."
+  "Returns the instruction type for encoding."
   (cons (car instruction) 
         (mapcar #'operand-type (cdr instruction))))
 
