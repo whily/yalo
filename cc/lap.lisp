@@ -64,27 +64,46 @@ expr.")
   "Opcode encoding, including pseudo instructions like db/dw."
   (mklist 
    (acond
-     ((assoc e *x86-64-syntax* :test #'equal) (second it))
-;;;      ((assoc (instruction-format e) *x86-64-syntax* :test #'equal)
-;;;       (translate e (instruction-format e) (second it)))
-     (t (ecase (car e)
-          (db (etypecase (second e)
-                (string (string->bytes (second e)))
-                (number (second e))))
-          (dw (word->bytes (second e)))
-          (int (list #xcd (second e)))
-          (jmp (ecase (second e)
-                 ($ (list #xeb 254))
-                 (short (encode-jmp 'jmp (third e) cursor 1 origin))))
-          (mov (encode-mov e origin cursor)))))))
+    ((assoc e *x86-64-syntax* :test #'equal) (second it))
+    (t 
+     (declare (ignore it))
+     (case (car e)
+       (db (etypecase (second e)
+             (string (string->bytes (second e)))
+             (number (second e))))
+       (dw (word->bytes (second e)))
+       (jmp (ecase (second e)
+              ($ (list #xeb 254))
+              (short (encode-jmp 'jmp (third e) cursor 1 origin))))
+       (mov (encode-mov e origin cursor))
+       (t (aif (assoc (instruction-format e) *x86-64-syntax* :test #'equal)
+               (translate e (instruction-format e) (cdr it))
+               (error "encode: error!"))))))))
 
+(defun translate (instruction format opcode)
+  "Return opcode for the given instruction."
+  (cons
+   (etypecase (car opcode)
+     (number (car opcode))
+     (list (error "translate: not implemented yet.")))
+   (mapcan 
+    #'(lambda (op) 
+        (mklist
+         (ecase op
+           (ib (get-value instruction format 'imm8)))))
+    (cdr opcode))))
+
+(defun get-value (instruction format name)
+  "Get the value (in instruction) corresponding to the name (in format)."
+  (cdr (assoc name (mapcar #'cons format instruction))))
+      
 (defparameter *x86-64-syntax*
   `(((int    3)                 . (#xcc))
     ((int    imm8)              . (#xcd ib))
     ((mov    r8 imm8)           . ((+ #xb0 r) ib))
     ((mov    r16 imm16)         . ((+ #xb8 r) iw)))
   "Syntax table for x86-64. For each entry, 1st part is the mnemonic
-  code, 2nd part is the translated machine code. For details, refer to
+  code, 2nd part is the corresponding opcode. For details, refer to
   http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
 
 (defun lookup-sym (sym index length base origin)
@@ -175,11 +194,14 @@ expr.")
     ((listp operand)
      'imm)
     (t 
-     (ecase operand
-       ((al cl dl bl ah ch dh bh bpl spl dil sil)                       'r8)
-       ((ax cx dx bx sp bp si di)                                       'r16)
-       ((eax ecx edx ebx esp ebp esi edi)                               'r32)
-       ((rax rcx rdx rbx rsp rbp rsi rdi r8 r9 r10 r11 r12 r13 r14 r15) 'r64)
+     (case operand
+       ((al cl dl bl ah ch dh bh bpl spl dil sil) 'r8)
+       ((ax cx dx bx sp bp si di)                 'r16)
+       ((eax ecx edx ebx esp ebp esi edi)         'r32)
+       ((rax rcx rdx rbx rsp rbp rsi rdi 
+             r8 r9 r10 r11 r12 r13 r14 r15)       'r64)
+       ((short)                                   'qualifier)
+       (t                                         'label)
        ))))
 
 (defun register->int (register)
