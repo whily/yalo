@@ -27,7 +27,7 @@
     (mov     ah #x13)
     (mov     al 1)
     (mov     bx #xf)
-    (mov     cx 13)   ; (- endmsg msg))
+    (mov     cx (- endmsg msg))
     (mov     bp msg)
     (int     #x10)  
 
