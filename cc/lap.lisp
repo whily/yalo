@@ -208,14 +208,14 @@ converted from signed to unsigned."
   (cdr (assoc name (mapcar #'cons type instruction))))
 
 (defun match-instruction (type)
-  "Returns values of (type opcode successful?). 
+  "Returns values of (type opcode).
    In the first run, when the type does not appear in syntax table,
      try to match immediate data with register length."
   (aif (assoc-x86-64-opcode type)
-       (values type (cdr it) t)
+       (values type (cdr it))
        (let ((matched-type (match-type type)))
          (aif (assoc-x86-64-opcode matched-type)
-              (values matched-type (cdr it) t)
+              (values matched-type (cdr it))
               (error "match-instruction: unsupported instruction!")))))
 
 (defun match-type (type)
