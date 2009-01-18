@@ -62,7 +62,7 @@ expr.")
 
 (defparameter *x86-64-syntax*
   `(((int    3)                 . (#xcc))
-    ((int    imm8)              . (#xcd op1)))
+    ((int    imm8)              . (#xcd ib)))
   "Syntax table for x86-64. For each entry, 1st part is the mnemonic
   code, 2nd part is the translated machine code.")
 
@@ -150,6 +150,33 @@ expr.")
   (case register
     ((ax bx cx dx sp bp si di) t)
     (t nil)))
+
+(defun instruction-format (instruction)
+  "Returns the instruction format for encoding."
+  (cons (car instruction) 
+        (mapcar #'operand-type (cdr instruction))))
+
+(defun operand-type (operand)
+  "Returns operand type with following values:
+     imm8, imm16, imm32, imm64,
+     r8, r16, r32, r64"
+  (cond
+    ((numberp operand)
+     (cond 
+       ((and (<= (- (expt 2 7))  operand (1- (expt 2 7))))  'imm8)
+       ((and (<= (- (expt 2 15)) operand (1- (expt 2 15)))) 'imm16)
+       ((and (<= (- (expt 2 31)) operand (1- (expt 2 31)))) 'imm32)
+       ((and (<= (- (expt 2 63)) operand (1- (expt 2 31)))) 'imm64)
+       (t (error "Invalid operand: ~A" operand))))
+    ((listp operand)
+     'imm)
+    (t 
+     (ecase operand
+       ((al cl dl bl ah ch dh bh bpl spl dil sil)                       'r8)
+       ((ax cx dx bx sp bp si di)                                       'r16)
+       ((eax ecx edx ebx esp ebp esi edi)                               'r32)
+       ((rax rcx rdx rbx rsp rbp rsi rdi r8 r9 r10 r11 r12 r13 r14 r15) 'r64)
+       ))))
 
 (defun register->int (register)
   "Returns the integer representation for register when encode ModR/M byte.
