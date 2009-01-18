@@ -39,6 +39,15 @@
     (stc)
     (std)
     (sti)
+    (in      al 3)
+    (in      ax 4)
+    (in      al dx)
+    (in      ax dx)
+    (out     3 al)
+    (out     4 ax)
+    (out     dx al)
+    (out     dx ax)
+
     (equ     testing 3)
     (db       msg "Hello World! ")
     endmsg
