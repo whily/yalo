@@ -27,25 +27,26 @@
   (let (symtab
         code
         (origin 0)
+        (length 0)
         (cursor 0))
     (dolist (e listing)
       (if (listp e) 
-          (let ((e* (cons (car e) 
-                          (try-eval-values (cdr e) cursor origin symtab t))))
-            ;; FIXME: the above does not handle var definitions (db, dw
-            ;; etc.) and times if labels have same name as instructions.
-            (setf code 
-                  (nconc code
-                         (case (car e*)
-                           (org (setf origin (second e*)
-                                      cursor origin)
-                                nil)
-                           (times 
-                            (repeat-list (eval (second e*)) 
-                                         (encode (nthcdr 2 e*) cursor)))
-                           (t (encode e* cursor))))))
-          (push (cons e cursor) symtab))  ; Labels
-      (setf cursor (+ origin (length code))))
+          (let* ((e* (cons (car e) 
+                          (try-eval-values (cdr e) cursor origin symtab t)))
+                 ;; FIXME: the above does not handle var definitions (db, dw
+                 ;; etc.) and times if labels have same name as instructions.
+                 (snippet (case (car e*)
+                            (org (setf origin (second e*)
+                                       cursor origin)
+                                 nil)
+                            (times 
+                             (repeat-list (eval (second e*)) 
+                                          (encode (nthcdr 2 e*) cursor)))
+                            (t (encode e* cursor)))))
+            (setf code (nconc code snippet))
+            (incf length (length snippet))
+            (setf cursor (+ origin length)))
+          (push (cons e cursor) symtab)))  ; Labels
     (mapcan 
      #'(lambda (c)
          (cond
