@@ -95,17 +95,21 @@
 (defun encode (e cursor)
   "Opcode encoding, including pseudo instructions like db/dw."
   (aif (assoc e *x86-64-syntax* :test #'equal) 
-       (second it)
+       ;; Instructions with exact match, e.g. instructions without
+       ;; operands (like nop, hlt), or special instructions like int 3.
+       (second it) 
        (case (car e)
+         ;; Pseudo instructions.
          (db (etypecase (second e)
                (string (string->bytes (second e)))
                (number (list (second e)))))
          (dw (encode-bytes (second e) 2))
+         ;; Normal instructions.
          (t (multiple-value-bind (format opcode)
                 (match-instruction (instruction-format e))
-              (translate e format opcode cursor))))))
+              (encode-complex e format opcode cursor))))))
 
-(defun translate (instruction format opcode cursor)
+(defun encode-complex (instruction format opcode cursor)
   "Return opcode for the given instruction."
   (cons
    (etypecase (car opcode)
