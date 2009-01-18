@@ -106,7 +106,7 @@
          (dw (encode-bytes (second e) 2))
          ;; Normal instructions.
          (t (multiple-value-bind (format opcode)
-                (match-instruction (instruction-format e))
+                (match-instruction (instruction-type e))
               (encode-complex e format opcode cursor))))))
 
 (defun encode-complex (instruction format opcode cursor)
@@ -238,7 +238,7 @@ length. Otherwise, just return format."
 (defun encode-1-operand (dest reg)
   (encode-modr/m #b11 (reg->int dest) reg))
 
-(defun instruction-format (instruction)
+(defun instruction-type (instruction)
   "Returns the instruction format for encoding."
   (cons (car instruction) 
         (mapcar #'operand-type (cdr instruction))))
