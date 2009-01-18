@@ -90,7 +90,10 @@ expr.")
     #'(lambda (op) 
         (mklist
          (ecase op
-           (ib (get-value instruction format 'imm8)))))
+           (ib (get-value instruction format 'imm8))
+           (iw (get-value instruction format 'imm16))
+           (id (get-value instruction format 'imm32))
+           (io (get-value instruction format 'imm64)))))
     (cdr opcode))))
 
 (defun lookup-value (ops has-real-car? cursor origin)
