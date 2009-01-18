@@ -60,12 +60,6 @@ expr.")
                                    (second r))))))
     code))
 
-(defparameter *x86-64-syntax*
-  `(((int    3)                 . (#xcc))
-    ((int    imm8)              . (#xcd ib)))
-  "Syntax table for x86-64. For each entry, 1st part is the mnemonic
-  code, 2nd part is the translated machine code.")
-
 (defun encode (e origin cursor)
   "Opcode encoding, including pseudo instructions like db/dw."
   (mklist 
@@ -82,6 +76,15 @@ expr.")
                  ($ (list #xeb 254))
                  (short (encode-jmp 'jmp (third e) cursor 1 origin))))
           (mov (encode-mov e origin cursor)))))))
+
+(defparameter *x86-64-syntax*
+  `(((int    3)                 . (#xcc))
+    ((int    imm8)              . (#xcd ib))
+    ((mov    r8 imm8)           . ((+ #xb0 r) ib))
+    ((mov    r16 imm16)         . ((+ #xb8 r) iw)))
+  "Syntax table for x86-64. For each entry, 1st part is the mnemonic
+  code, 2nd part is the translated machine code. For details, refer to
+  http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
 
 (defun lookup-sym (sym index length base origin)
   "If sym has a value other than ? in *symtab*, return the value;
