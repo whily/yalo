@@ -71,6 +71,27 @@
   code, 2nd part is the corresponding opcode. For details, refer to
   http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
 
+(defun write-kernel (filename)
+  "Output kernel (including bootloader) as an image file with filename."
+  (write-image (asm *bootloader*) filename))
+
+(defun write-image (bytes filename)
+  "Write a list of bytes to the file with filename."
+  (with-open-file (s filename :direction :output :element-type 'unsigned-byte
+                     :if-exists :supersede)
+    (when s
+      (dolist (b bytes)
+        (write-byte b s)))))
+
+(defun read-image (filename)
+  "Return a list of bytes contained in the file with filename."
+  (with-open-file (s filename :element-type 'unsigned-byte)
+    (when s
+      (let (output)
+        (loop for byte = (read-byte s nil)
+             while byte do (push byte output))
+        (nreverse output)))))
+
 (defun encode (e cursor)
   "Opcode encoding, including pseudo instructions like db/dw."
   (mklist 
@@ -281,26 +302,3 @@ converted from signed to unsigned."
           ((zerop e) (push (mod y 256) z) z)
        (decf y (* r (expt 256 e)))
        (push r z)))))
-
-(defun read-image (filename)
-  "Return a list of bytes contained in the file with filename."
-  (with-open-file (s filename :element-type 'unsigned-byte)
-    (when s
-      (let (output)
-        (loop for byte = (read-byte s nil)
-             while byte do (push byte output))
-        (nreverse output)))))
-
-(defun write-image (bytes filename)
-  "Write a list of bytes to the file with filename."
-  (with-open-file (s filename :direction :output :element-type 'unsigned-byte
-                     :if-exists :supersede)
-    (when s
-      (dolist (b bytes)
-        (write-byte b s)))))
-
-(defun write-kernel (filename)
-  "Output kernel (including bootloader) as an image file with filename."
-  (write-image (asm *bootloader*) filename))
-    
-
