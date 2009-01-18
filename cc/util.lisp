@@ -20,5 +20,7 @@
 (defun repeat-list (n list)
   (case n
     (1 list)
-    (t (append list (repeat-list (1- n) list)))))
+    (t (if (<= n 0)
+           (error "repeat-list: invalid n=~A" n)
+           (append list (repeat-list (1- n) list))))))
 
