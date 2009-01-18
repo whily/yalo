@@ -33,6 +33,12 @@
     (mov     es bx)
     (rep     movsb)
     (rep     movsw)
+    (clc)
+    (cld)
+    (cli)
+    (stc)
+    (std)
+    (sti)
 
     msg
     (db      "Hello World! ")

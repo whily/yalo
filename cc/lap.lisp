@@ -58,6 +58,9 @@
 
 (defparameter *x86-64-syntax*
   `(((call   imm16)             . (#xe8 rw))
+    ((clc)                      . (#xf8))
+    ((cld)                      . (#xfc))
+    ((cli)                      . (#xfa))
     ((int    3)                 . (#xcc))
     ((int    imm8)              . (#xcd ib))
     ((jmp    short imm8)        . (#xeb rb))
@@ -67,7 +70,10 @@
     ((mov    r16 sreg)          . (#x8c /r))
     ((rep    movsb)             . (#xf3 #xa4))
     ((rep    movsw)             . (#xf3 #xa5))
-    ((ret)                      . (#xc3)))
+    ((ret)                      . (#xc3))
+    ((stc)                      . (#xf9))
+    ((std)                      . (#xfd))
+    ((sti)                      . (#xfb)))
   "Syntax table for x86-64. For each entry, 1st part is the
   instruction type, 2nd part is the corresponding opcode. For details,
   refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
