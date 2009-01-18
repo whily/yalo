@@ -75,23 +75,25 @@ expr.")
        (dw (word->bytes (second e)))
        (jmp (ecase (second e)
               (short (encode-jmp (third e) cursor 1 origin))))
-       (mov (encode-mov e origin cursor))
-       (t (aif (assoc (instruction-format e) *x86-64-syntax* :test #'equal)
-               (translate e (instruction-format e) (cdr it))
-               (error "encode: error!"))))))))
+       (t (multiple-value-bind (format opcode)
+              (match-instruction (instruction-format e))
+            (translate e format opcode))))))))
 
 (defun translate (instruction format opcode)
   "Return opcode for the given instruction."
   (cons
    (etypecase (car opcode)
      (number (car opcode))
-     (list (error "translate: not implemented yet.")))
+     (list (ecase (caar opcode)
+             (+ (ecase (caddar opcode)
+                  (r (+ (cadar opcode) 
+                        (register->int (second instruction)))))))))
    (mapcan 
     #'(lambda (op) 
         (mklist
          (ecase op
            (ib (get-value instruction format 'imm8))
-           (iw (get-value instruction format 'imm16))
+           (iw (word->bytes (get-value instruction format 'imm16)))
            (id (get-value instruction format 'imm32))
            (io (get-value instruction format 'imm64)))))
     (cdr opcode))))
@@ -128,6 +130,32 @@ expr.")
 (defun get-value (instruction format name)
   "Get the value (in instruction) corresponding to the name (in format)."
   (cdr (assoc name (mapcar #'cons format instruction))))
+
+(defun match-instruction (format)
+  "Returns values of (format opcode successful?). 
+   In the first run, when the format does not appear in syntax table,
+     try to match immediate data with register length."
+  (aif (assoc-x86-64-opcode format)
+       (values format (cdr it) t)
+       (let ((matched-format (match-format format)))
+         (aif (assoc-x86-64-opcode matched-format)
+              (values matched-format (cdr it) t)
+              (error "match-instruction: unsupported instruction!")))))
+
+(defun match-format (format)
+  "Returns new format if immediate data can be matched with register
+length. Otherwise, just return format."
+  (if (= (length format) 3)
+      (cond
+        ((and (eq (second format) 'r16)
+              (eq (third format) 'imm8))
+         (list (car format) 'r16 'imm16))
+        (t format))
+      format))
+
+(defun assoc-x86-64-opcode (format)
+  "Returns a associated opcode based on x86-64 syntax."
+  (assoc format *x86-64-syntax* :test #'equal))
       
 (defparameter *x86-64-syntax*
   `(((int    3)                 . (#xcc))
@@ -172,39 +200,12 @@ expr.")
              (lookup-sym sym (1+ cursor) length (+ cursor 1 length)
                          origin)))))
 
-(defun encode-mov (e origin cursor)
-  "Encode mnemonic mov."
-  (let ((dest (second e))
-        (src (third e)))
-    (cond
-      ((and (r8? dest) (numberp src)) 
-       (list (+ (register->int dest) #xb0) src))
-      ((r16? dest)
-       (append (list (+ (register->int dest) #xb8)) 
-               (word->bytes (if (numberp src)
-                                src
-                                (car (lookup-sym (third e) (1+ cursor) 2 0 
-                                                 origin))))))
-      (t -1))))
-    
 (defun encode-modr/m (mod rm reg)
   "Encode ModR/M byte."
   (+ (* mod #b1000000) (* reg #b1000) rm))
 
 (defun encode-1-operand (dest reg)
   (encode-modr/m #b11 (register->int dest) reg))
-
-(defun r8? (register)
-  "Returns t if register is 8-bit."
-  (case register
-    ((al ah bl bh cl ch dl dh) t)
-    (t nil)))
-
-(defun r16? (register)
-  "Returns t if register is 16-bit."
-  (case register
-    ((ax bx cx dx sp bp si di) t)
-    (t nil)))
 
 (defun instruction-format (instruction)
   "Returns the instruction format for encoding."
