@@ -13,8 +13,6 @@
 ;;; therefore only list data structure is used even though hash table
 ;;; might be better.
 
-(defparameter *symtab* nil)
-
 (defun asm (listing)
   "One pass assembler. listing is in the form of LAP as described in
        http://code.google.com/p/yalo/wiki/AssemblySyntax
@@ -25,13 +23,14 @@
    unresolvable labels), ((length expr) ? ...) with number of ?
    filling up to length serve as placeholders. At the end of the pass,
    those placeholders are evaluated and replaced with actual values."
-  (setf *symtab* nil)
-  (let (code
+  (let (symtab
+        code
         (origin 0)
         (cursor 0))
     (dolist (e listing)
       (if (listp e) 
-          (let ((e* (cons (car e) (try-eval-values (cdr e) cursor origin))))
+          (let ((e* (cons (car e) 
+                          (try-eval-values (cdr e) cursor origin symtab))))
             ;; FIXME: the above does not handle var definitions (db, dw
             ;; etc.) and times if labels have same name as instructions.
             (setf code 
@@ -47,11 +46,11 @@
                                          (encode (nthcdr 2 e*) cursor)))
                            (t (encode e* cursor))))))
           ;; TODO: add local label support.
-          (aif (assoc e *symtab*)
+          (aif (assoc e symtab)
                (if (eq (cdr it) '?)
                    (setf (cdr it) cursor)
                    (error "asm: duplicated symbol ~A." e))
-               (push (cons e cursor) *symtab*)))
+               (push (cons e cursor) symtab)))
       (setf cursor (+ origin (length code))))
     (mapcan 
      #'(lambda (c)
@@ -59,7 +58,7 @@
            ((numberp c) (list c))
            ((eq c '?) nil)
            ((listp c) 
-            (encode-bytes (car (try-eval-values (cdr c) -1 -1)) (first c)))))
+            (encode-bytes (car (try-eval-values (cdr c) -1 -1 symtab)) (first c)))))
      code)))
 
 (defparameter *x86-64-syntax*
@@ -106,9 +105,9 @@
                                  1)))))
     (cdr opcode))))
 
-(defun try-eval-values (ops cursor origin)
+(defun try-eval-values (ops cursor origin symtab)
   "Run lookup-value. For each element, evaluate it if possible."
-  (let ((vs (lookup-value ops t cursor origin)))
+  (let ((vs (lookup-value ops t cursor origin symtab)))
     (mapcar #'try-eval-value vs)))
 
 (defun try-eval-value (op)
@@ -132,23 +131,23 @@
     (id 4)
     (io 8)))
 
-(defun lookup-value (ops has-real-car? cursor origin)
+(defun lookup-value (ops has-real-car? cursor origin symtab)
   "Replace special variables and labels with values if possible.
    Note that we do NOT handle car which are lisp
    operators. has-real-car?  indicates the ops position in original
    list. T if its car is an operator (real car)."
   (cond
-    ((atom ops) (operand->value-if ops cursor origin))
+    ((atom ops) (operand->value-if ops cursor origin symtab))
     ((null ops) nil)
     ((atom (car ops)) 
      (cons (if has-real-car? 
                (car ops)
-               (lookup-value (car ops) t cursor origin))
-           (lookup-value (cdr ops) nil cursor origin)))
-    (t (cons (lookup-value (car ops) t cursor origin)
-             (lookup-value (cdr ops) nil cursor origin)))))
+               (lookup-value (car ops) t cursor origin symtab))
+           (lookup-value (cdr ops) nil cursor origin symtab)))
+    (t (cons (lookup-value (car ops) t cursor origin symtab)
+             (lookup-value (cdr ops) nil cursor origin symtab)))))
 
-(defun operand->value-if (operand cursor origin)
+(defun operand->value-if (operand cursor origin symtab)
   "For labels, returns its value if possible.
    For special variables, returns its value.
    For all other stuff, just return it."
@@ -156,8 +155,8 @@
     ((eq operand '$) cursor)
     ((eq operand '$$) origin)
     ((eq (operand-type operand) 'label)
-     (if (sym-found? operand)
-         (cdr (assoc operand *symtab*))
+     (if (sym-found? operand symtab)
+         (cdr (assoc operand symtab))
          operand))
     (t operand)))
          
@@ -193,9 +192,9 @@ length. Otherwise, just return format."
   "Returns a associated opcode based on x86-64 syntax."
   (assoc format *x86-64-syntax* :test #'equal))
 
-(defun sym-found? (sym)
-  "Returns T if sym is found in *symtab*."
-  (and (assoc sym *symtab*) (not (eq (cdr (assoc sym *symtab*)) '?))))
+(defun sym-found? (sym symtab)
+  "Returns T if sym is found in symtab."
+  (and (assoc sym symtab) (not (eq (cdr (assoc sym symtab)) '?))))
 
 (defun signed->unsigned (value length)
   "Change value from signed to unsigned."
