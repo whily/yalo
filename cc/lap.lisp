@@ -37,9 +37,7 @@
             (setf code 
                   (nconc code
                          (case (car e*)
-                           (org (unless (null code)
-                                  (error "asm: org should be placed earlier."))
-                                (setf origin (second e*)
+                           (org (setf origin (second e*)
                                       cursor origin)
                                 nil)
                            (times 
