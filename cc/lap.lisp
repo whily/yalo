@@ -119,9 +119,10 @@
           ((ib iw id io) 
            (try-encode-bytes (get-value instruction type (on->in on))
                              (on-length on)))
-          (rb (try-encode-bytes `(- ,(get-value instruction type 'imm8)
-                                    ,(+ cursor 2))
-                                1))))
+          ((rb rw rd ro)
+           (try-encode-bytes `(- ,(get-value instruction type (on->in on))
+                                 ,(+ cursor 1 (on-length on)))
+                             (on-length on)))))
     (cdr opcode))))
 
 (defun try-eval-values (ops cursor origin symtab has-real-car?)
@@ -141,18 +142,18 @@
 (defun on->in (on)
   "Maps opcode notation (e.g. ib, iw) to instruction notation (e.g. imm8)."
   (ecase on
-    (ib 'imm8)
-    (iw 'imm16)
-    (id 'imm32)
-    (io 'imm64)))
+    ((ib rb) 'imm8)
+    ((iw rw) 'imm16)
+    ((id rd) 'imm32)
+    ((io ro) 'imm64)))
 
 (defun on-length (on)
   "Return lengths (in terms of bytes) for opcode notation (e.g. ib, iw)."
   (ecase on
-    (ib 1)
-    (iw 2)
-    (id 4)
-    (io 8)))
+    ((ib rb) 1)
+    ((iw rw) 2)
+    ((id rd) 4)
+    ((io ro) 8)))
 
 (defun lookup-value (ops has-real-car? cursor origin symtab)
   "Replace special variables and labels with values if possible.
