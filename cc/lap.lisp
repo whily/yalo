@@ -20,7 +20,7 @@
   "One pass assembler. listing is in the form of LAP as described in
        http://code.google.com/p/yalo/wiki/AssemblySyntax
    Returns opcodes as a list of bytes."
-  (setf *symtab* nil)
+  (setf *symtab* nil *revisits* nil)
   (let (code
         (origin 0)
         (cursor 0))
@@ -97,8 +97,8 @@
         (mklist
          (ecase on
            ((ib iw id io) 
-            (encode-bytes (get-value instruction format (on->in on))
-                          (on-length on)))
+            (try-encode-bytes (get-value instruction format (on->in on))
+                              (on-length on)))
            (rb (encode-bytes (get-value instruction format 'imm8) 1)))))
     (cdr opcode))))
 
@@ -271,6 +271,14 @@ length. Otherwise, just return format."
 
 (defun string->bytes (s)
   (map 'list #'char-code s))
+
+(defun try-encode-bytes (x length)
+  "If x is evaluable, run encode-bytes.
+   Otherwise return a list as
+     ((length expr) ? ...) with number of ? filling up length."
+  (handler-case (encode-bytes x length)
+    (error ()
+        (cons `(,length ,x) (repeat-element (1- length) '?))))) 
 
 (defun encode-bytes (x length)
   "Encode byte, word, doubleword, quadword into bytes in
