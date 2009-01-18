@@ -94,13 +94,12 @@
                   (r (+ (cadar opcode) 
                         (register->int (second instruction)))))))))
    (mapcan 
-    #'(lambda (op) 
+    #'(lambda (on) 
         (mklist
-         (ecase op
-           (ib (encode-bytes (get-value instruction format 'imm8)  1))
-           (iw (encode-bytes (get-value instruction format 'imm16) 2))
-           (id (encode-bytes (get-value instruction format 'imm32) 4))
-           (io (encode-bytes (get-value instruction format 'imm64) 8))
+         (ecase on
+           ((ib iw id io) 
+            (encode-bytes (get-value instruction format (on->in on))
+                          (on-length on)))
            (rb (encode-bytes (get-value instruction format 'imm8) 1)))))
     (cdr opcode))))
 
@@ -111,6 +110,22 @@
                 (handler-case (eval v)
                   (unbound-variable () v)))
             vs)))
+
+(defun on->in (on)
+  "Maps opcode notation (e.g. ib, iw) to instruction notation (e.g. imm8)."
+  (ecase on
+    (ib 'imm8)
+    (iw 'imm16)
+    (id 'imm32)
+    (io 'imm64)))
+
+(defun on-length (on)
+  "Return lengths (in terms of bytes) for opcode notation (e.g. ib, iw)."
+  (ecase on
+    (ib 1)
+    (iw 2)
+    (id 4)
+    (io 8)))
 
 (defun lookup-value (ops has-real-car? cursor origin)
   "Replace special variables and labels with values if possible.
