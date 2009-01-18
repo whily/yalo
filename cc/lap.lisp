@@ -20,9 +20,10 @@
 
    To implement the assembler in one pass, for each instruction,
    expressions are tried to be evaluated. If fails (e.g. due to
-   unresolvable labels), ((length expr) ? ...) with number of ?
-   filling up to length serve as placeholders. At the end of the pass,
-   those placeholders are evaluated and replaced with actual values."
+   unresolvable labels), ((length expr) ? ...) with ? filling up to
+   length serve as placeholders. At the end of the pass, those
+   placeholders are evaluated and replaced with actual values, with ?
+   removed (? is inserted just to make the cursor moving correct)."
   (let (symtab
         code
         (origin 0)
@@ -45,14 +46,14 @@
                             (repeat-list (eval (second e*)) 
                                          (encode (nthcdr 2 e*) cursor)))
                            (t (encode e* cursor))))))
-          (push (cons e cursor) symtab))
+          (push (cons e cursor) symtab))  ; Labels
       (setf cursor (+ origin (length code))))
     (mapcan 
      #'(lambda (c)
          (cond
            ((numberp c) (list c))
            ((eq c '?)   nil)
-           ((listp c)   (encode-bytes (eval-final c symtab)  (first c)))
+           ((listp c)   (encode-bytes (eval-final c symtab) (first c)))
            (t           (error "asm: wrong byte for final processing: ~A" c))))
      code)))
 
@@ -62,9 +63,9 @@
     ((jmp    short imm8)        . (#xeb rb))
     ((mov    r8 imm8)           . ((+ #xb0 r) ib))
     ((mov    r16 imm16)         . ((+ #xb8 r) iw)))
-  "Syntax table for x86-64. For each entry, 1st part is the mnemonic
-  code, 2nd part is the corresponding opcode. For details, refer to
-  http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
+  "Syntax table for x86-64. For each entry, 1st part is the
+  instruction type, 2nd part is the corresponding opcode. For details,
+  refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
 
 (defun write-kernel (filename)
   "Output kernel (including bootloader) as an image file with filename."
