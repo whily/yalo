@@ -11,13 +11,6 @@
 
 (defparameter *bootloader* 
   `((org     #x7c00)
-    (jmp short start)
-
-    msg
-    (db      "Hello World! ")
-    endmsg
-
-    start
 
     ;; Get current cursor position.
     (mov     ah 3)
@@ -33,6 +26,10 @@
 
     ;; Infinite loop.
     (jmp     short $)
+
+    msg
+    (db      "Hello World! ")
+    endmsg
 
     ;; Fill up to 510 bytes.
     (times   (- #x200 2 (- $ $$)) db 0)
