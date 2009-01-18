@@ -149,12 +149,10 @@ converted from signed to unsigned."
 (defun try-eval-values (ops cursor origin symtab has-real-car?)
   "Run lookup-value. For each element, evaluate it if possible."
   (let ((vs (lookup-value ops has-real-car? cursor origin symtab)))
-    (mapcar #'try-eval-value vs)))
-
-(defun try-eval-value (op)
-  "Try to evaluate op if possible; other return op as is."
-  (handler-case (eval op)
-    (unbound-variable () op)))
+    (mapcar #'(lambda (v) 
+                (handler-case (eval v)
+                  (unbound-variable () v)))
+            vs)))
 
 (defun eval-final (revisit symtab)
   "Final evaluation of the revisit."
