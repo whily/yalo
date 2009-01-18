@@ -117,10 +117,10 @@
     #'(lambda (on) 
         (ecase on
           ((ib iw id io) 
-           (try-encode-bytes (get-value instruction type (on->in on))
+           (try-encode-bytes (instruction-value instruction type (on->in on))
                              (on-length on)))
           ((rb rw rd ro)
-           (try-encode-bytes `(- ,(get-value instruction type (on->in on))
+           (try-encode-bytes `(- ,(instruction-value instruction type (on->in on))
                                  ,(+ cursor 1 (on-length on)))
                              (on-length on)))))
     (cdr opcode))))
@@ -203,7 +203,7 @@ converted from signed to unsigned."
           operand))
     (t operand)))
          
-(defun get-value (instruction type name)
+(defun instruction-value (instruction type name)
   "Get the value (in instruction) corresponding to the name (in type)."
   (cdr (assoc name (mapcar #'cons type instruction))))
 
