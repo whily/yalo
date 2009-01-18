@@ -14,19 +14,24 @@
 ;;; might be better.
 
 (defparameter *symtab* nil)
-(defparameter *revisits* nil)
 
 (defun asm (listing)
   "One pass assembler. listing is in the form of LAP as described in
        http://code.google.com/p/yalo/wiki/AssemblySyntax
-   Returns opcodes as a list of bytes."
-  (setf *symtab* nil *revisits* nil)
+   Returns opcodes as a list of bytes.
+
+   To implement the assembler in one pass, for each instruction,
+   expressions are tried to be evaluated. If fails (e.g. due to
+   unresolvable labels), ((length expr) ? ...) with number of ?
+   filling up to length serve as placeholders. At the end of the pass,
+   those placeholders are evaluated and replaced with actual values."
+  (setf *symtab* nil)
   (let (code
         (origin 0)
         (cursor 0))
     (dolist (e listing)
       (if (listp e) 
-          (let ((e* (cons (car e) (try-eval-value (cdr e) cursor origin))))
+          (let ((e* (cons (car e) (try-eval-values (cdr e) cursor origin))))
             ;; FIXME: the above does not handle var definitions (db, dw
             ;; etc.) and times if labels have same name as instructions.
             (setf code 
@@ -48,15 +53,14 @@
                    (error "asm: duplicated symbol ~A." e))
                (push (cons e cursor) *symtab*)))
       (setf cursor (+ origin (length code))))
-    (awhen (rassoc '? *symtab*)
-      (error "asm: undefined symbol ~A" (car it)))
-    (dolist (r *revisits*)
-      (ecase (second r)
-        (1 (setf (elt code (first r)) 
-                 (signed->unsigned (- (cdr (assoc (fourth r) *symtab*)) 
-                                      (third r)) 
-                                   (second r))))))
-    code))
+    (mapcan 
+     #'(lambda (c)
+         (cond
+           ((numberp c) (list c))
+           ((eq c '?) nil)
+           ((listp c) 
+            (encode-bytes (car (try-eval-values (cdr c) -1 -1)) (first c)))))
+     code)))
 
 (defparameter *x86-64-syntax*
   `(((int    3)                 . (#xcc))
@@ -78,8 +82,6 @@
                 (string (string->bytes (second e)))
                 (number (second e))))
           (dw (encode-bytes (second e) 2))
-          (jmp (ecase (second e)
-                 (short (encode-jmp (third e) cursor 1 origin))))
           (t (multiple-value-bind (format opcode)
                  (match-instruction (instruction-format e))
                (translate e format opcode cursor)))))))
@@ -99,16 +101,20 @@
            ((ib iw id io) 
             (try-encode-bytes (get-value instruction format (on->in on))
                               (on-length on)))
-           (rb (encode-bytes (get-value instruction format 'imm8) 1)))))
+           (rb (try-encode-bytes `(- ,(get-value instruction format 'imm8)
+                                     ,(+ cursor 2))
+                                 1)))))
     (cdr opcode))))
 
-(defun try-eval-value (ops cursor origin)
+(defun try-eval-values (ops cursor origin)
   "Run lookup-value. For each element, evaluate it if possible."
   (let ((vs (lookup-value ops t cursor origin)))
-    (mapcar #'(lambda (v)
-                (handler-case (eval v)
-                  (unbound-variable () v)))
-            vs)))
+    (mapcar #'try-eval-value vs)))
+
+(defun try-eval-value (op)
+  "Try to evaluate op if possible; other return op as is."
+  (handler-case (eval op)
+    (unbound-variable () op)))
 
 (defun on->in (on)
   "Maps opcode notation (e.g. ib, iw) to instruction notation (e.g. imm8)."
@@ -175,31 +181,17 @@
 length. Otherwise, just return format."
   (if (= (length format) 3)
       (cond
-        ((and (eq (second format) 'r16)
-              (eq (third format) 'imm8))
-         (list (car format) 'r16 'imm16))
+        ((and (eq (second format) 'r16) (eq (third format) 'imm8))
+         (list (car format) (second format) 'imm16))
+        ((and (eq (second format) 'short) 
+              (member (third format) '(label imm16)))
+         (list (car format) (second format) 'imm8))
         (t format))
       format))
 
 (defun assoc-x86-64-opcode (format)
   "Returns a associated opcode based on x86-64 syntax."
   (assoc format *x86-64-syntax* :test #'equal))
-
-(defun lookup-sym (sym index length base origin)
-  "If sym is a number of has a value other than ? in *symtab*, 
-      return the value;
-   Otherwise:
-     - make a new entry in *symtab* with value ?
-     - make a new entry in *revisits*
-     - return a length number of ?"
-  (cond
-    ((numberp sym) (list (signed->unsigned (- sym base) length)))
-    ((sym-found? sym)
-     (list (signed->unsigned (- (cdr (assoc sym *symtab*)) base) length)))
-    (t
-     (push (cons sym '?) *symtab*)
-     (push (list (- index origin) length base sym) *revisits*)
-     (repeat-element length '?))))
 
 (defun sym-found? (sym)
   "Returns T if sym is found in *symtab*."
@@ -211,13 +203,6 @@ length. Otherwise, just return format."
       value
       (ecase length
         ((1 2 4 8) (+ (expt 256 length) value)))))
-
-(defun encode-jmp (sym cursor length origin)
-  "Encode mnemonic jmp."
-  (ecase length
-    (1 (cons #xeb
-             (lookup-sym sym (1+ cursor) length (+ cursor 1 length)
-                         origin)))))
 
 (defun encode-modr/m (mod rm reg)
   "Encode ModR/M byte."
@@ -274,19 +259,19 @@ length. Otherwise, just return format."
 
 (defun try-encode-bytes (x length)
   "If x is evaluable, run encode-bytes.
-   Otherwise return a list as
-     ((length expr) ? ...) with number of ? filling up length."
+   Otherwise return the placeholder list."
   (handler-case (encode-bytes x length)
     (error ()
         (cons `(,length ,x) (repeat-element (1- length) '?))))) 
 
 (defun encode-bytes (x length)
   "Encode byte, word, doubleword, quadword into bytes in
-little-ending. Length is the number of bytes to convert to."
+little-ending. Length is the number of bytes to convert to. X is first
+converted from signed to unsigned."
   (ecase length
     ((1 2 4 8) 
      (do* ((e (1- length) (1- e))
-           (y x)
+           (y (signed->unsigned x length))
            (r (floor y (expt 256 e)) (floor y (expt 256 e)))
            z)
           ((zerop e) (push (mod y 256) z) z)
