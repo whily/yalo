@@ -14,17 +14,13 @@
 ;;; might be better.
 
 (defparameter *symtab* nil)
-(defparameter *revisits* nil "A list of (index length expr) with index
-refers to the code position in terms of bytes with starting offset 0,
-starting from length bytes will be replaced with value evaluated from
-expr.")
+(defparameter *revisits* nil)
 
 (defun asm (listing)
   "One pass assembler. listing is in the form of LAP as described in
        http://code.google.com/p/yalo/wiki/AssemblySyntax
    Returns opcodes as a list of bytes."
-  (setf *symtab* nil
-        *revisits* nil)
+  (setf *symtab* nil)
   (let (code
         (origin 0)
         (cursor 0))
@@ -86,9 +82,9 @@ expr.")
                  (short (encode-jmp (third e) cursor 1 origin))))
           (t (multiple-value-bind (format opcode)
                  (match-instruction (instruction-format e))
-               (translate e format opcode)))))))
+               (translate e format opcode cursor)))))))
 
-(defun translate (instruction format opcode)
+(defun translate (instruction format opcode cursor)
   "Return opcode for the given instruction."
   (cons
    (etypecase (car opcode)
@@ -101,10 +97,11 @@ expr.")
     #'(lambda (op) 
         (mklist
          (ecase op
-           (ib (get-value instruction format 'imm8))
+           (ib (encode-bytes (get-value instruction format 'imm8)  1))
            (iw (encode-bytes (get-value instruction format 'imm16) 2))
            (id (encode-bytes (get-value instruction format 'imm32) 4))
-           (io (encode-bytes (get-value instruction format 'imm64) 8)))))
+           (io (encode-bytes (get-value instruction format 'imm64) 8))
+           (rb (encode-bytes (get-value instruction format 'imm8) 1)))))
     (cdr opcode))))
 
 (defun try-eval-value (ops cursor origin)
@@ -199,7 +196,7 @@ length. Otherwise, just return format."
   (if (>= value 0)
       value
       (ecase length
-        (1 (+ 256 value)))))
+        ((1 2 4 8) (+ (expt 256 length) value)))))
 
 (defun encode-jmp (sym cursor length origin)
   "Encode mnemonic jmp."
