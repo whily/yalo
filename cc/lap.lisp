@@ -33,9 +33,12 @@
       (if (listp e) 
           (let* ((e* (cons (car e) 
                           (try-eval-values (cdr e) cursor origin symtab t)))
-                 ;; FIXME: the above does not handle var definitions (db, dw
-                 ;; etc.) and times if labels have same name as instructions.
+                 ;; FIXME: the above may not handle times correctly if
+                 ;; labels have same name as instructions.
                  (snippet (case (car e*)
+                            (equ (push (cons (second e) (eval (third e))) 
+                                       symtab)
+                                 nil)
                             (org (setf origin (second e*)
                                        cursor origin)
                                  nil)
@@ -43,6 +46,8 @@
                              (repeat-list (eval (second e*)) 
                                           (encode (nthcdr 2 e*) cursor)))
                             (t (encode e* cursor)))))
+            (when (and (= (length e) 3) (member (car e) '(db dw)))
+              (push (cons (second e) cursor) symtab))
             (setf code (nconc code snippet))
             (incf length (length snippet))
             (setf cursor (+ origin length)))
@@ -108,10 +113,13 @@
                             ; is LITERAL. 
        (case (car e)
          ;; Pseudo instructions.
-         (db (etypecase (second e)
-               (string (string->bytes (second e)))
-               (number (list (second e)))))
-         (dw (encode-bytes (second e) 2))
+         ((db dw)
+          (let ((val (nth (1- (length e)) e)))
+            (ecase (car e)
+              (db (etypecase val
+                    (string (string->bytes val))
+                    (number (list val))))
+              (dw (encode-bytes val 2)))))
          ;; Normal instructions.
          (t (multiple-value-bind (type opcode)
                 (match-instruction (instruction-type e))

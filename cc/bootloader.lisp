@@ -39,9 +39,8 @@
     (stc)
     (std)
     (sti)
-
-    msg
-    (db      "Hello World! ")
+    (equ     testing 3)
+    (db       msg "Hello World! ")
     endmsg
 
     ;; Fill up to 510 bytes.
