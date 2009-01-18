@@ -219,8 +219,10 @@ converted from signed to unsigned."
               (error "match-instruction: unsupported instruction!")))))
 
 (defun match-type (type)
-  "Returns new type if immediate data can be matched with register
-length. Otherwise, just return type."
+  "Special hacks for cases below:
+     - Value of expressions cannot get.
+     - Length of immediate value is smaller compared with that of register.
+   In these cases, match the types accordingly."
   (if (= (length type) 3)
       (cond
         ((and (eq (second type) 'r16) 
@@ -256,9 +258,7 @@ length. Otherwise, just return type."
         (mapcar #'operand-type (cdr instruction))))
 
 (defun operand-type (operand)
-  "Returns operand type with following values:
-     imm8, imm16, imm32, imm64,
-     r8, r16, r32, r64"
+  "Returns operand type."
   (cond
     ((numberp operand)
      (cond 
