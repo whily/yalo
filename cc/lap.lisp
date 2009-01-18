@@ -44,8 +44,8 @@
                                 nil)
                            (times 
                             (repeat-list (eval (second e*)) 
-                                         (encode (nthcdr 2 e*) origin cursor)))
-                           (t (encode e* origin cursor))))))
+                                         (encode (nthcdr 2 e*) cursor)))
+                           (t (encode e* cursor))))))
           ;; TODO: add local label support.
           (aif (assoc e *symtab*)
                (if (eq (cdr it) '?)
@@ -72,7 +72,7 @@
   code, 2nd part is the corresponding opcode. For details, refer to
   http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
 
-(defun encode (e origin cursor)
+(defun encode (e cursor)
   "Opcode encoding, including pseudo instructions like db/dw."
   (mklist 
    (aif (assoc e *x86-64-syntax* :test #'equal) 
