@@ -13,10 +13,10 @@
 ;;; therefore only list data structure is used.
 
 (defparameter *symtab* nil)
-(defparameter *revisits* nil "A list of (index length base sym) with
-index refers to the code position in terms of bytes with starting
-offset 0, starting from length bytes will be replaced with value (-
-sym base)")
+(defparameter *revisits* nil "A list of (index length expr) with index
+refers to the code position in terms of bytes with starting offset 0,
+starting from length bytes will be replaced with value evaluated from
+expr.")
 
 (defun asm (listing)
   "One pass assembler. For details of the syntax, please refer to
@@ -38,11 +38,8 @@ sym base)")
    actually generating code.
  
    Supported instructions:
-     cmp r/m16 imm16 
-     inc r8          
      int 3               int imm8           
      jmp rel8
-     jne rel8            lodsb           
      mov r16 imm16       mov r8 imm8
   "
   (setf *symtab* nil
@@ -86,24 +83,16 @@ sym base)")
   "Opcode encoding, including pseudo instructions like db/dw."
   (mklist 
    (ecase (car e)
-     ;; Clean up cmp.
-     (cmp (append (list #x81 (encode-1-operand (second e) 7))
-                (word->bytes (car (lookup-sym (third e) (+ cursor 2) 2 0
-                                              origin)))))
      (db (etypecase (second e)
            (string (string->bytes (second e)))
            (number (second e))))
      (dw (word->bytes (second e)))
-     (inc (list #xfe (encode-1-operand (second e) 0)))
      (int (case (second e)
             (3 #xcc)
             (t (list #xcd (second e)))))
      (jmp (ecase (second e)
             ($ (list #xeb 254))
             (short (encode-jmp 'jmp (third e) cursor 1 origin))))
-     ;; TODO: merge with jmp
-     (jne (encode-jmp 'jne (second e) cursor 1 origin))
-     (lodsb #xac)
      (mov (encode-mov e origin cursor)))))
 
 (defun lookup-sym (sym index length base origin)

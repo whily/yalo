@@ -11,27 +11,25 @@
 
 (defparameter *bootloader* 
   `((org     #x7c00)
-    (jmp     short start)
+    (jmp short start)
 
     msg
     (db      "Hello World! ")
     endmsg
 
     start
-    (mov     cx 1)             ; Write 1 character
-    (mov     bx #xf)           ; White color
+
+    ;; Get current cursor position.
     (mov     ah 3)
-    (int     #x10)             ; Get current cursor position
-    (mov     si msg)
-    show-loop
-    (mov     ah 2)
-    (int     #x10)             ; Set cursor position
-    (lodsb)                    ; Load a byte of the message into al
-    (mov     ah 9)
-    (int     #x10)             ; Write character
-    (inc     dl)               ; Advance cursor
-    (cmp     si  endmsg)
-    (jne     show-loop)
+    (int     #x10)             
+
+    ;; Write string.
+    (mov     ah #x13)
+    (mov     al 1)
+    (mov     bx #xf)
+    (mov     cx 13)   ; (- endmsg msg))
+    (mov     bp msg)
+    (int     #x10)  
 
     ;; Infinite loop.
     (jmp     $)
