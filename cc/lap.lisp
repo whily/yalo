@@ -38,8 +38,7 @@ expr.")
                          cursor origin))
               (times (setf snippet 
                            (repeat-list 
-                            (eval (replacer (replacer (second e) '$$ origin)
-                                            '$ cursor))
+                            (eval (replacer* (second e) '$$ origin '$ cursor))
                             (encode (nthcdr 2 e) origin cursor))))
               (t (setf snippet (encode e origin cursor))))
             (when snippet 

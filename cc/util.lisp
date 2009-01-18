@@ -55,3 +55,12 @@
     (t (cons (replacer (car list) old new)
              (replacer (cdr list) old new)))))
 
+(defun replacer* (list &rest args)
+  "Apply replacer to multiple arguments."
+  (case (length args)
+    ((0 1) (error "replacer*: length of args should be positive and even."))
+    (2 (replacer list (first args) (second args)))
+    (t (apply #'replacer* (replacer list (first args) (second args)) 
+              (nthcdr 2 args)))))
+        
+
