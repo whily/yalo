@@ -45,6 +45,7 @@ expr.")
                             (repeat-list (eval (second e*)) 
                                          (encode (nthcdr 2 e*) origin cursor)))
                            (t (encode e* origin cursor))))))
+          ;; TODO: add local label support.
           (aif (assoc e *symtab*)
                (if (eq (cdr it) '?)
                    (setf (cdr it) cursor)
@@ -64,6 +65,7 @@ expr.")
 (defparameter *x86-64-syntax*
   `(((int    3)                 . (#xcc))
     ((int    imm8)              . (#xcd ib))
+    ((jmp    short imm8)        . (#xeb rb))
     ((mov    r8 imm8)           . ((+ #xb0 r) ib))
     ((mov    r16 imm16)         . ((+ #xb8 r) iw)))
   "Syntax table for x86-64. For each entry, 1st part is the mnemonic
@@ -231,7 +233,7 @@ length. Otherwise, just return format."
        ((eax ecx edx ebx esp ebp esi edi)         'r32)
        ((rax rcx rdx rbx rsp rbp rsi rdi 
              r8 r9 r10 r11 r12 r13 r14 r15)       'r64)
-       ((short)                                   'qualifier)
+       ((short)                                   operand)
        (t                                         'label)
        ))))
 
