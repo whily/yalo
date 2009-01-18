@@ -30,20 +30,21 @@ expr.")
         (cursor 0))
     (dolist (e listing)
       (if (listp e) 
-          (progn
-            (rplacd e (lookup-value (cdr e) cursor origin))
+          (let ((e* (cons (car e) (lookup-value (cdr e) t cursor origin))))
+            ;; FIXME: the above does not handle var definitions (db, dw
+            ;; etc.) and times if labels have same name as instructions.
             (setf code 
                   (nconc code
-                         (case (car e)
+                         (case (car e*)
                            (org (unless (null code)
                                   (error "asm: org should be placed earlier."))
-                                (setf origin (second e)
+                                (setf origin (second e*)
                                       cursor origin)
                                 nil)
                            (times 
-                            (repeat-list (eval (second e)) 
-                                         (encode (nthcdr 2 e) origin cursor)))
-                           (t (encode e origin cursor))))))
+                            (repeat-list (eval (second e*)) 
+                                         (encode (nthcdr 2 e*) origin cursor)))
+                           (t (encode e* origin cursor))))))
           (aif (assoc e *symtab*)
                (if (eq (cdr it) '?)
                    (setf (cdr it) cursor)
@@ -92,11 +93,35 @@ expr.")
            (ib (get-value instruction format 'imm8)))))
     (cdr opcode))))
 
-(defun lookup-value (ops cursor origin)
-  "Replace special variables and labels with values if possible. For
-expressions, evaluate if possible."
-  (replacer* ops '$$ origin '$ cursor))
+(defun lookup-value (ops has-real-car? cursor origin)
+  "Replace special variables and labels with values if possible.
+   Note that we do NOT handle car which are lisp
+   operators. has-real-car?  indicates the ops position in original
+   list. T if its car is an operator (real car)."
+  (cond
+    ((atom ops) (operand->value-if ops cursor origin))
+    ((null ops) nil)
+    ((atom (car ops)) 
+     (cons (if has-real-car? 
+               (car ops)
+               (lookup-value (car ops) t cursor origin))
+           (lookup-value (cdr ops) nil cursor origin)))
+    (t (cons (lookup-value (car ops) t cursor origin)
+             (lookup-value (cdr ops) nil cursor origin)))))
 
+(defun operand->value-if (operand cursor origin)
+  "For labels, returns its value if possible.
+   For special variables, returns its value.
+   For all other stuff, just return it."
+  (cond
+    ((eq operand '$) cursor)
+    ((eq operand '$$) origin)
+    ((eq (operand-type operand) 'label)
+     (if (sym-found? operand)
+         (cdr (assoc operand *symtab*))
+         operand))
+    (t operand)))
+         
 (defun get-value (instruction format name)
   "Get the value (in instruction) corresponding to the name (in format)."
   (cdr (assoc name (mapcar #'cons format instruction))))
@@ -111,17 +136,20 @@ expressions, evaluate if possible."
   http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
 
 (defun lookup-sym (sym index length base origin)
-  "If sym has a value other than ? in *symtab*, return the value;
+  "If sym is a number of has a value other than ? in *symtab*, 
+      return the value;
    Otherwise:
      - make a new entry in *symtab* with value ?
      - make a new entry in *revisits*
      - return a length number of ?"
-  (if (sym-found? sym)
-      (list (signed->unsigned (- (cdr (assoc sym *symtab*)) base) length))
-      (progn
-        (push (cons sym '?) *symtab*)
-        (push (list (- index origin) length base sym) *revisits*)
-        (repeat-element length '?))))
+  (cond
+    ((numberp sym) (list (signed->unsigned (- sym base) length)))
+    ((sym-found? sym)
+     (list (signed->unsigned (- (cdr (assoc sym *symtab*)) base) length)))
+    (t
+     (push (cons sym '?) *symtab*)
+     (push (list (- index origin) length base sym) *revisits*)
+     (repeat-element length '?))))
 
 (defun sym-found? (sym)
   "Returns T if sym is found in *symtab*."
