@@ -91,8 +91,7 @@
      (number (car opcode))
      (list (ecase (caar opcode)
              (+ (ecase (caddar opcode)
-                  (r (+ (cadar opcode) 
-                        (register->int (second instruction)))))))))
+                  (r (+ (cadar opcode) (reg->int (second instruction)))))))))
    (mapcan 
     #'(lambda (on) 
         (mklist
@@ -225,7 +224,7 @@ length. Otherwise, just return format."
   (+ (* mod #b1000000) (* reg #b1000) rm))
 
 (defun encode-1-operand (dest reg)
-  (encode-modr/m #b11 (register->int dest) reg))
+  (encode-modr/m #b11 (reg->int dest) reg))
 
 (defun instruction-format (instruction)
   "Returns the instruction format for encoding."
@@ -257,7 +256,7 @@ length. Otherwise, just return format."
        (t                                         'label)
        ))))
 
-(defun register->int (register)
+(defun reg->int (register)
   "Returns the integer representation for register when encode ModR/M byte.
    Returns -1 if not a register."
   (ecase register
