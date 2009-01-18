@@ -32,7 +32,8 @@
     (int     #x10)  
 
     ;; Infinite loop.
-    (jmp     $)
+    loop
+    (jmp     short loop)
 
     ;; Fill up to 510 bytes.
     (times   (- #x200 2 (- $ $$)) db 0)

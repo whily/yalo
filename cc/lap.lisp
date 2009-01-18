@@ -30,19 +30,20 @@ expr.")
         (cursor 0))
     (dolist (e listing)
       (if (listp e) 
-          (setf code 
-                (nconc code
-                       (case (car e)
-                         (org (unless (null code)
-                                (error "asm: org should be placed earlier."))
-                              (setf origin (second e)
-                                    cursor origin)
-                              nil)
-                         (times 
-                          (repeat-list 
-                           (eval (replacer* (second e) '$$ origin '$ cursor))
-                           (encode (nthcdr 2 e) origin cursor)))
-                         (t (encode e origin cursor)))))
+          (progn
+            (rplacd e (lookup-value (cdr e) cursor origin))
+            (setf code 
+                  (nconc code
+                         (case (car e)
+                           (org (unless (null code)
+                                  (error "asm: org should be placed earlier."))
+                                (setf origin (second e)
+                                      cursor origin)
+                                nil)
+                           (times 
+                            (repeat-list (eval (second e)) 
+                                         (encode (nthcdr 2 e) origin cursor)))
+                           (t (encode e origin cursor))))))
           (aif (assoc e *symtab*)
                (if (eq (cdr it) '?)
                    (setf (cdr it) cursor)
@@ -72,7 +73,6 @@ expr.")
              (number (second e))))
        (dw (word->bytes (second e)))
        (jmp (ecase (second e)
-              ($ (list #xeb 254))
               (short (encode-jmp 'jmp (third e) cursor 1 origin))))
        (mov (encode-mov e origin cursor))
        (t (aif (assoc (instruction-format e) *x86-64-syntax* :test #'equal)
@@ -91,6 +91,11 @@ expr.")
          (ecase op
            (ib (get-value instruction format 'imm8)))))
     (cdr opcode))))
+
+(defun lookup-value (ops cursor origin)
+  "Replace special variables and labels with values if possible. For
+expressions, evaluate if possible."
+  (replacer* ops '$$ origin '$ cursor))
 
 (defun get-value (instruction format name)
   "Get the value (in instruction) corresponding to the name (in format)."
@@ -111,12 +116,16 @@ expr.")
      - make a new entry in *symtab* with value ?
      - make a new entry in *revisits*
      - return a length number of ?"
-  (if (and (assoc sym *symtab*) (not (eq (cdr (assoc sym *symtab*)) '?)))
+  (if (sym-found? sym)
       (list (signed->unsigned (- (cdr (assoc sym *symtab*)) base) length))
       (progn
         (push (cons sym '?) *symtab*)
         (push (list (- index origin) length base sym) *revisits*)
         (repeat-element length '?))))
+
+(defun sym-found? (sym)
+  "Returns T if sym is found in *symtab*."
+  (and (assoc sym *symtab*) (not (eq (cdr (assoc sym *symtab*)) '?))))
 
 (defun signed->unsigned (value length)
   "Change value from signed to unsigned."
