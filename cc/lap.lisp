@@ -45,12 +45,7 @@
                             (repeat-list (eval (second e*)) 
                                          (encode (nthcdr 2 e*) cursor)))
                            (t (encode e* cursor))))))
-          ;; TODO: add local label support.
-          (aif (assoc e symtab)
-               (if (eq (cdr it) '?)
-                   (setf (cdr it) cursor)
-                   (error "asm: duplicated symbol ~A." e))
-               (push (cons e cursor) symtab)))
+          (push (cons e cursor) symtab))
       (setf cursor (+ origin (length code))))
     (mapcan 
      #'(lambda (c)
@@ -182,9 +177,9 @@
     ((eq operand '$) cursor)
     ((eq operand '$$) origin)
     ((eq (operand-type operand) 'label)
-     (if (sym-found? operand symtab)
-         (cdr (assoc operand symtab))
-         operand))
+     (aif (assoc operand symtab)
+          (cdr it)
+          operand))
     (t operand)))
          
 (defun get-value (instruction type name)
@@ -219,10 +214,6 @@ length. Otherwise, just return type."
 (defun assoc-x86-64-opcode (type)
   "Returns a associated opcode based on x86-64 syntax."
   (assoc type *x86-64-syntax* :test #'equal))
-
-(defun sym-found? (sym symtab)
-  "Returns T if sym is found in symtab."
-  (and (assoc sym symtab) (not (eq (cdr (assoc sym symtab)) '?))))
 
 (defun signed->unsigned (value length)
   "Change value from signed to unsigned."
