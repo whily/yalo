@@ -10,7 +10,8 @@
 (in-package :cc)
 
 ;;; CL code in this file will be reused by Ink bootstrapping,
-;;; therefore only list data structure is used.
+;;; therefore only list data structure is used even though hash table
+;;; might be better.
 
 (defparameter *symtab* nil)
 (defparameter *revisits* nil "A list of (index length expr) with index
@@ -19,29 +20,9 @@ starting from length bytes will be replaced with value evaluated from
 expr.")
 
 (defun asm (listing)
-  "One pass assembler. For details of the syntax, please refer to
+  "One pass assembler. listing is in the form of LAP as described in
        http://code.google.com/p/yalo/wiki/AssemblySyntax
-
-   Input:
-     listing = (label | instruction)*
-     label is an atom symbol
-     instruction is a list
-
-   Output: a list of bytes.
-
-   Intel syntax is used with some NASM extensions (like $, $$, org, times).
-  
-   Supported pseudo instructions:
-     db              dw              org             times
-
-   Note that org should precede any (pseudo) instructions that
-   actually generating code.
- 
-   Supported instructions:
-     int 3               int imm8           
-     jmp rel8
-     mov r16 imm16       mov r8 imm8
-  "
+   Returns opcodes as a list of bytes."
   (setf *symtab* nil
         *revisits* nil)
   (let (code
