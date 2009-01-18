@@ -125,6 +125,27 @@
                              (on-length on)))))
     (cdr opcode))))
 
+(defun try-encode-bytes (x length)
+  "If x is evaluable, run encode-bytes.
+   Otherwise return the placeholder list."
+  (handler-case (encode-bytes x length)
+    (error ()
+        (cons `(,length ,x) (repeat-element (1- length) '?))))) 
+
+(defun encode-bytes (x length)
+  "Encode byte, word, doubleword, quadword into bytes in
+little-ending. Length is the number of bytes to convert to. X is first
+converted from signed to unsigned."
+  (ecase length
+    ((1 2 4 8) 
+     (do* ((e (1- length) (1- e))
+           (y (signed->unsigned x length))
+           (r (floor y (expt 256 e)) (floor y (expt 256 e)))
+           z)
+          ((zerop e) (push (mod y 256) z) z)
+       (decf y (* r (expt 256 e)))
+       (push r z)))))
+
 (defun try-eval-values (ops cursor origin symtab has-real-car?)
   "Run lookup-value. For each element, evaluate it if possible."
   (let ((vs (lookup-value ops has-real-car? cursor origin symtab)))
@@ -277,23 +298,3 @@ length. Otherwise, just return type."
 (defun string->bytes (s)
   (map 'list #'char-code s))
 
-(defun try-encode-bytes (x length)
-  "If x is evaluable, run encode-bytes.
-   Otherwise return the placeholder list."
-  (handler-case (encode-bytes x length)
-    (error ()
-        (cons `(,length ,x) (repeat-element (1- length) '?))))) 
-
-(defun encode-bytes (x length)
-  "Encode byte, word, doubleword, quadword into bytes in
-little-ending. Length is the number of bytes to convert to. X is first
-converted from signed to unsigned."
-  (ecase length
-    ((1 2 4 8) 
-     (do* ((e (1- length) (1- e))
-           (y (signed->unsigned x length))
-           (r (floor y (expt 256 e)) (floor y (expt 256 e)))
-           z)
-          ((zerop e) (push (mod y 256) z) z)
-       (decf y (* r (expt 256 e)))
-       (push r z)))))
