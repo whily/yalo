@@ -30,7 +30,7 @@ expr.")
         (cursor 0))
     (dolist (e listing)
       (if (listp e) 
-          (let ((e* (cons (car e) (lookup-value (cdr e) t cursor origin))))
+          (let ((e* (cons (car e) (try-eval-value (cdr e) cursor origin))))
             ;; FIXME: the above does not handle var definitions (db, dw
             ;; etc.) and times if labels have same name as instructions.
             (setf code 
@@ -106,6 +106,14 @@ expr.")
            (id (encode-bytes (get-value instruction format 'imm32) 4))
            (io (encode-bytes (get-value instruction format 'imm64) 8)))))
     (cdr opcode))))
+
+(defun try-eval-value (ops cursor origin)
+  "Run lookup-value. For each element, evaluate it if possible."
+  (let ((vs (lookup-value ops t cursor origin)))
+    (mapcar #'(lambda (v)
+                (handler-case (eval v)
+                  (unbound-variable () v)))
+            vs)))
 
 (defun lookup-value (ops has-real-car? cursor origin)
   "Replace special variables and labels with values if possible.
