@@ -16,6 +16,7 @@
   :serial t
   :components
   ((:file "package")
+   (:file "util")
    (:file "bootloader")
    (:file "lap")
    (:file "unit-test")

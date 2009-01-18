@@ -44,14 +44,14 @@ expr.")
               (t (setf snippet (encode e origin cursor))))
             (when snippet 
               (setf code (nconc code snippet))))
-          (if (assoc e *symtab*)
-              (if (eq (cdr (assoc e *symtab*)) '?)
-                  (setf (cdr (assoc e *symtab*)) cursor)
+          (aif (assoc e *symtab*)
+              (if (eq (cdr it) '?)
+                  (setf (cdr it) cursor)
                   (error "asm: duplicated symbol ~A." e))
               (push (cons e cursor) *symtab*)))
       (setf cursor (+ origin (length code))))
-    (when (rassoc '? *symtab*)
-      (error "asm: undefined symbol ~A" (car (rassoc '? *symtab*))))
+    (awhen (rassoc '? *symtab*)
+      (error "asm: undefined symbol ~A" (car it)))
     (dolist (r *revisits*)
       (ecase (second r)
         (1 (setf (elt code (first r)) 
@@ -63,9 +63,10 @@ expr.")
 (defun encode (e origin cursor)
   "Opcode encoding, including pseudo instructions like db/dw."
   (mklist 
-   (cond
-     ((assoc e *x86-64-syntax* :test #'equal) 
-      (second (assoc e *x86-64-syntax* :test #'equal)))
+   (acond
+     ((assoc e *x86-64-syntax* :test #'equal) (second it))
+;;;      ((assoc (instruction-format e) *x86-64-syntax* :test #'equal)
+;;;       (translate e (instruction-format e) (second it)))
      (t (ecase (car e)
           (db (etypecase (second e)
                 (string (string->bytes (second e)))
@@ -195,36 +196,11 @@ expr.")
     ((bh di edi mm7 xmm7) 7)
     (t -1)))
 
-(defun mklist (obj)
-  "Returns obj if it is already a list; otherwise lispy it."
-  (if (listp obj)
-      obj
-      (list obj)))
-
 (defun string->bytes (s)
   (map 'list #'char-code s))
 
 (defun word->bytes (w)
   (list (mod w 256) (floor w 256)))
-
-(defun repeat-element (n element)
-  (loop for i from 0 below n collect element))
-
-(defun repeat-list (n list)
-  (case n
-    (1 list)
-    (t (append list (repeat-list (1- n) list)))))
-
-(defun replacer (list old new)
-  "Recursively search list, replace old with new."
-  (cond
-    ((null list) nil)
-    ((atom (car list)) (cons (if (eq (car list) old)
-                                 new
-                                 (car list))
-                             (replacer (cdr list) old new)))
-    (t (cons (replacer (car list) old new)
-             (replacer (cdr list) old new)))))
 
 (defun read-image (filename)
   "Return a list of bytes contained in the file with filename."
