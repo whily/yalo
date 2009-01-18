@@ -81,7 +81,7 @@ expr.")
           (db (etypecase (second e)
                 (string (string->bytes (second e)))
                 (number (second e))))
-          (dw (word->bytes (second e)))
+          (dw (encode-bytes (second e) 2))
           (jmp (ecase (second e)
                  (short (encode-jmp (third e) cursor 1 origin))))
           (t (multiple-value-bind (format opcode)
@@ -102,9 +102,9 @@ expr.")
         (mklist
          (ecase op
            (ib (get-value instruction format 'imm8))
-           (iw (word->bytes (get-value instruction format 'imm16)))
-           (id (get-value instruction format 'imm32))
-           (io (get-value instruction format 'imm64)))))
+           (iw (encode-bytes (get-value instruction format 'imm16) 2))
+           (id (encode-bytes (get-value instruction format 'imm32) 4))
+           (io (encode-bytes (get-value instruction format 'imm64) 8)))))
     (cdr opcode))))
 
 (defun lookup-value (ops has-real-car? cursor origin)
@@ -240,7 +240,7 @@ length. Otherwise, just return format."
 (defun register->int (register)
   "Returns the integer representation for register when encode ModR/M byte.
    Returns -1 if not a register."
-  (case register
+  (ecase register
     ((al ax eax mm0 xmm0) 0)
     ((cl cx ecx mm1 xmm1) 1)
     ((dl dx edx mm2 xmm2) 2)
@@ -248,14 +248,23 @@ length. Otherwise, just return format."
     ((ah sp esp mm4 xmm4) 4)
     ((ch bp ebp mm5 xmm5) 5)
     ((dh si esi mm6 xmm6) 6)
-    ((bh di edi mm7 xmm7) 7)
-    (t -1)))
+    ((bh di edi mm7 xmm7) 7)))
 
 (defun string->bytes (s)
   (map 'list #'char-code s))
 
-(defun word->bytes (w)
-  (list (mod w 256) (floor w 256)))
+(defun encode-bytes (x length)
+  "Encode byte, word, doubleword, quadword into bytes in
+little-ending. Length is the number of bytes to convert to."
+  (ecase length
+    ((1 2 4 8) 
+     (do* ((e (1- length) (1- e))
+           (y x)
+           (r (floor y (expt 256 e)) (floor y (expt 256 e)))
+           z)
+          ((zerop e) (push (mod y 256) z) z)
+       (decf y (* r (expt 256 e)))
+       (push r z)))))
 
 (defun read-image (filename)
   "Return a list of bytes contained in the file with filename."
