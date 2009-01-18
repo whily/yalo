@@ -79,21 +79,28 @@ expr.")
                                    (second r))))))
     code))
 
+(defparameter *x86-64-syntax*
+  `(((int    3)                 . (#xcc))
+    ((int    imm8)              . (#xcd op1)))
+  "Syntax table for x86-64. For each entry, 1st part is the mnemonic
+  code, 2nd part is the translated machine code.")
+
 (defun encode (e origin cursor)
   "Opcode encoding, including pseudo instructions like db/dw."
   (mklist 
-   (ecase (car e)
-     (db (etypecase (second e)
-           (string (string->bytes (second e)))
-           (number (second e))))
-     (dw (word->bytes (second e)))
-     (int (case (second e)
-            (3 #xcc)
-            (t (list #xcd (second e)))))
-     (jmp (ecase (second e)
-            ($ (list #xeb 254))
-            (short (encode-jmp 'jmp (third e) cursor 1 origin))))
-     (mov (encode-mov e origin cursor)))))
+   (cond
+     ((assoc e *x86-64-syntax* :test #'equal) 
+      (second (assoc e *x86-64-syntax* :test #'equal)))
+     (t (ecase (car e)
+          (db (etypecase (second e)
+                (string (string->bytes (second e)))
+                (number (second e))))
+          (dw (word->bytes (second e)))
+          (int (list #xcd (second e)))
+          (jmp (ecase (second e)
+                 ($ (list #xeb 254))
+                 (short (encode-jmp 'jmp (third e) cursor 1 origin))))
+          (mov (encode-mov e origin cursor)))))))
 
 (defun lookup-sym (sym index length base origin)
   "If sym has a value other than ? in *symtab*, return the value;
