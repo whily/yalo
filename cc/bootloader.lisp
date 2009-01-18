@@ -17,8 +17,7 @@
     (int     #x10)             
 
     ;; Write string.
-    (mov     ah #x13)
-    (mov     al 1)
+    (mov     ax #x1301)
     (mov     bx #xf)
     (mov     cx (- endmsg msg))
     (mov     bp msg)
@@ -27,12 +26,16 @@
     ;; Infinite loop.
     (jmp     short $)
 
+    ;; TESTING of assembler only.
+    (call    msg)
+    (ret)
+
     msg
     (db      "Hello World! ")
     endmsg
 
     ;; Fill up to 510 bytes.
-    (times   (- #x200 2 (- $ $$)) db 0)
-
+    (times   (- 510 (- $ $$)) db 0)
+    
     (dw      #xaa55)           ; Boot sector signature
     ))

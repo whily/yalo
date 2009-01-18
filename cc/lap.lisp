@@ -57,11 +57,13 @@
      code)))
 
 (defparameter *x86-64-syntax*
-  `(((int    3)                 . (#xcc))
+  `(((call   imm16)             . (#xe8 rw))
+    ((int    3)                 . (#xcc))
     ((int    imm8)              . (#xcd ib))
     ((jmp    short imm8)        . (#xeb rb))
     ((mov    r8 imm8)           . ((+ #xb0 r) ib))
-    ((mov    r16 imm16)         . ((+ #xb8 r) iw)))
+    ((mov    r16 imm16)         . ((+ #xb8 r) iw))
+    ((ret)                      . (#xc3)))
   "Syntax table for x86-64. For each entry, 1st part is the
   instruction type, 2nd part is the corresponding opcode. For details,
   refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
@@ -92,7 +94,8 @@
   (aif (assoc e *x86-64-syntax* :test #'equal) 
        ;; Instructions with exact match, e.g. instructions without
        ;; operands (like nop, hlt), or special instructions like int 3.
-       (second it) 
+       (copy-list (cdr it)) ; copy-list is necessary since syntax table 
+                            ; is LITERAL. 
        (case (car e)
          ;; Pseudo instructions.
          (db (etypecase (second e)
@@ -211,7 +214,7 @@ converted from signed to unsigned."
    In the first run, when the type does not appear in syntax table,
      try to match immediate data with register length."
   (aif (assoc-x86-64-opcode type)
-       (values type (cdr it))
+       (values type (copy-list (cdr it)))
        (let ((matched-type (match-type type)))
          (aif (assoc-x86-64-opcode matched-type)
               (values matched-type (cdr it))
@@ -222,16 +225,17 @@ converted from signed to unsigned."
      - Value of expressions cannot get.
      - Length of immediate value is smaller compared with that of register.
    In these cases, match the types accordingly."
-  (if (= (length type) 3)
-      (cond
-        ((and (eq (second type) 'r16) 
-              (member (third type) '(imm8 imm label)))
-         (list (car type) (second type) 'imm16))
-        ((and (eq (second type) 'short) 
-              (member (third type) '(label imm16)))
-         (list (car type) (second type) 'imm8))
-        (t type))
-      type))
+  (cond
+    ((and (eq (first type) 'call)
+          (member (second type) '(imm8 label)))
+     (list 'call 'imm16))
+    ((and (eq (second type) 'r16) 
+          (member (third type) '(imm8 imm label)))
+     (list (car type) (second type) 'imm16))
+    ((and (eq (second type) 'short) 
+          (member (third type) '(label imm16)))
+     (list (car type) (second type) 'imm8))
+    (t type)))
 
 (defun assoc-x86-64-opcode (type)
   "Returns a associated opcode based on x86-64 syntax."
