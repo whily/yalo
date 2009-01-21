@@ -49,7 +49,7 @@
                              (repeat-list (eval (second e*)) 
                                           (encode (nthcdr 2 e*) cursor)))
                             (t (encode e* cursor)))))
-            (when (and (= (length e) 3) (member (car e) '(db dw)))
+            (when (and (= (length e) 3) (member (car e) '(db dw dd dq)))
               (push (cons (second e) cursor) symtab))
             (setf code (nconc code snippet))
             (incf length (length snippet))
@@ -128,14 +128,16 @@
                             ; is LITERAL. 
        (case (car e)
          ;; Pseudo instructions.
-         ((db dw)
+         ((db dw dd dq)
           (let ((val (mklist (nth (1- (length e)) e))))
             (mapcan #'(lambda (v)
                         (ecase (car e)
                           (db (etypecase v
                                 (string (string->bytes v))
                                 (number (list v))))
-                          (dw (encode-bytes v 2))))
+                          (dw (encode-bytes v 2))
+                          (dd (encode-bytes v 4))
+                          (dq (encode-bytes v 8))))
                     val)))
          ;; Normal instructions.
          (t (multiple-value-bind (type opcode)
