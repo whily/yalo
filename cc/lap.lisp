@@ -306,10 +306,10 @@ converted from signed to unsigned."
   (cond
     ((numberp operand)
      (cond 
-       ((and (<= (- (expt 2 7))  operand (1- (expt 2 7))))  'imm8)
-       ((and (<= (- (expt 2 15)) operand (1- (expt 2 15)))) 'imm16)
-       ((and (<= (- (expt 2 31)) operand (1- (expt 2 31)))) 'imm32)
-       ((and (<= (- (expt 2 63)) operand (1- (expt 2 31)))) 'imm64)
+       ((and (<= (- (expt 2 7))  operand (1- (expt 2 8))))  'imm8)
+       ((and (<= (- (expt 2 15)) operand (1- (expt 2 16)))) 'imm16)
+       ((and (<= (- (expt 2 31)) operand (1- (expt 2 32)))) 'imm32)
+       ((and (<= (- (expt 2 63)) operand (1- (expt 2 64)))) 'imm64)
        (t (error "Invalid operand: ~A" operand))))
     ((listp operand)
      'imm)
