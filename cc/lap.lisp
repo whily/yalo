@@ -50,8 +50,8 @@
                                  nil)
                             (times 
                              (repeat-list (eval (second e*)) 
-                                          (encode (nthcdr 2 e*) cursor)))
-                            (t (encode e* cursor)))))
+                                          (encode (nthcdr 2 e*) cursor bits)))
+                            (t (encode e* cursor bits)))))
             (when (and (= (length e) 3) (member (car e) '(db dw dd dq)))
               (push (cons (second e) cursor) symtab))
             (setf code (nconc code snippet))
@@ -71,9 +71,8 @@
            (t           (error "asm: wrong byte for final processing: ~A" c))))
      code)))
 
-(defparameter *x86-64-syntax*
-  `(((call   (imm16 imm8 label))             . (#xe8 rw))
-    ((clc)                                   . (#xf8))
+(defparameter *x86-64-syntax-common*
+  `(((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))
     ((hlt)                                   . (#xf4))
@@ -96,14 +95,7 @@
     ((out    dx al)                          . (#xee))
     ((out    dx ax)                          . (#xef))
     ((pop    r16)                            . ((+ #x58 r)))
-    ((pop    ss)                             . (#x17))
-    ((pop    ds)                             . (#x1f))
-    ((pop    es)                             . (#x07))
     ((push   r16)                            . ((+ #x50 r)))
-    ((push   cs)                             . (#x0e))
-    ((push   ss)                             . (#x16))
-    ((push   ds)                             . (#x1e))
-    ((push   es)                             . (#x06))
     ((rep    movsb)                          . (#xf3 #xa4))
     ((rep    movsw)                          . (#xf3 #xa5))
     ((ret)                                   . (#xc3))
@@ -117,10 +109,41 @@
   for the 1st part, list may be used for the operand to match the
   type (e.g. imm8 converted to imm16). Note that the canonical form
   should be placed first (e.g. if the operand type should be imm16,
-  place it as the car of the list)
+  place it as the car of the list).
+
+  Valid for both 16-bit and 64-bit modes.
 
   For details,
     refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
+
+(defparameter *x86-64-syntax-16-bit-only*
+  `(((call   (imm16 imm8 label))             . (#xe8 rw))
+    ((pop    ss)                             . (#x17))
+    ((pop    ds)                             . (#x1f))
+    ((pop    es)                             . (#x07))
+    ((push   cs)                             . (#x0e))
+    ((push   ss)                             . (#x16))
+    ((push   ds)                             . (#x1e))
+    ((push   es)                             . (#x06)))
+  "Valid for 16-bit mode only.")
+
+(defparameter *x86-64-syntax-64-bit-only*
+  nil
+  "Valid for 64-bit mode only.")
+
+(defparameter *x86-64-syntax-16-bit*
+  (append *x86-64-syntax-common* *x86-64-syntax-16-bit-only*)
+  "Syntax table for 16-bit mode.")
+
+(defparameter *x86-64-syntax-64-bit*
+  (append *x86-64-syntax-common* *x86-64-syntax-64-bit-only*)
+  "Syntax table for 64-bit mode.")
+
+(defun x86-64-syntax (bits)
+  "Returns syntax table according to bit mode (16 or 64)."
+  (ecase bits
+    (16 *x86-64-syntax-16-bit*)
+    (64 *x86-64-syntax-64-bit*)))
 
 (defun write-kernel (filename)
   "Output kernel (including bootloader) as an image file with filename."
@@ -143,13 +166,13 @@
              while byte do (push byte output))
         (nreverse output)))))
 
-(defun encode (e cursor)
+(defun encode (e cursor bits)
   "Opcode encoding, including pseudo instructions like db/dw."
-  (aif (assoc* e *x86-64-syntax* :test #'equal) 
+  (aif (assoc* e (x86-64-syntax bits) :test #'equal) 
        ;; Instructions with exact match, e.g. instructions without
        ;; operands (like nop, hlt), or special instructions like int 3.
        (copy-list it) ; copy-list is necessary since syntax table is
-                      ; LITERAL.
+                                        ; LITERAL.
        (case (car e)
          ;; Pseudo instructions.
          ((db dw dd dq)
@@ -165,7 +188,7 @@
                     val)))
          ;; Normal instructions.
          (t (multiple-value-bind (type opcode)
-                (match-instruction (instruction-type e))
+                (match-instruction (instruction-type e) bits)
               (encode-complex e type opcode cursor))))))
 
 (defun encode-complex (instruction type opcode cursor)
@@ -277,11 +300,11 @@ converted from signed to unsigned."
   "Get the value (in instruction) corresponding to the name (in type)."
   (assoc* name (mapcar #'cons type instruction)))
 
-(defun match-instruction (type)
+(defun match-instruction (type bits)
   "Returns values of (type opcode).
    In the first run, when the type does not appear in syntax table,
      try to match immediate data with register length."
-  (aif (assoc-x86-64-opcode type)
+  (aif (assoc-x86-64-opcode type bits)
        (values (canonical-type (car it)) (copy-list (cdr it)))
        (error "match-instruction: unsupported instruction!")))
 
@@ -289,9 +312,9 @@ converted from signed to unsigned."
   "Return the canonical form of the type."
   (mapcar #'(lambda (x) (if (listp x) (car x) x)) type))
 
-(defun assoc-x86-64-opcode (type)
+(defun assoc-x86-64-opcode (type bits)
   "Returns a associated opcode based on x86-64 syntax."
-  (assoc type *x86-64-syntax* 
+  (assoc type (x86-64-syntax bits)
          :test #'(lambda (x y) 
                    (every #'(lambda (a b) 
                               (if (listp b)
