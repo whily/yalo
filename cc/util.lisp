@@ -41,3 +41,7 @@ is their concatenation. From ON LISP."
            (error "repeat-list: invalid n=~A" n)
            (append list (repeat-list (1- n) list))))))
 
+(defun assoc* (&rest args)
+  "Return the cdr of the result of assoc."
+  (cdr (apply #'assoc args)))
+

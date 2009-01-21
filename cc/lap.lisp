@@ -121,11 +121,11 @@
 
 (defun encode (e cursor)
   "Opcode encoding, including pseudo instructions like db/dw."
-  (aif (assoc e *x86-64-syntax* :test #'equal) 
+  (aif (assoc* e *x86-64-syntax* :test #'equal) 
        ;; Instructions with exact match, e.g. instructions without
        ;; operands (like nop, hlt), or special instructions like int 3.
-       (copy-list (cdr it)) ; copy-list is necessary since syntax table 
-                            ; is LITERAL. 
+       (copy-list it) ; copy-list is necessary since syntax table is
+                      ; LITERAL.
        (case (car e)
          ;; Pseudo instructions.
          ((db dw dd dq)
@@ -241,24 +241,24 @@ converted from signed to unsigned."
     ((eq operand '$) cursor)
     ((eq operand '$$) origin)
     ((eq (operand-type operand) 'label)
-     (aif (assoc operand symtab)
-          (cdr it)
+     (aif (assoc* operand symtab)
+          it
           operand))
     (t operand)))
          
 (defun instruction-value (instruction type name)
   "Get the value (in instruction) corresponding to the name (in type)."
-  (cdr (assoc name (mapcar #'cons type instruction))))
+  (assoc* name (mapcar #'cons type instruction)))
 
 (defun match-instruction (type)
   "Returns values of (type opcode).
    In the first run, when the type does not appear in syntax table,
      try to match immediate data with register length."
   (aif (assoc-x86-64-opcode type)
-       (values type (copy-list (cdr it)))
+       (values type (copy-list it))
        (let ((matched-type (match-type type)))
          (aif (assoc-x86-64-opcode matched-type)
-              (values matched-type (cdr it))
+              (values matched-type it)
               (error "match-instruction: unsupported instruction!")))))
 
 (defun match-type (type)
@@ -280,7 +280,7 @@ converted from signed to unsigned."
 
 (defun assoc-x86-64-opcode (type)
   "Returns a associated opcode based on x86-64 syntax."
-  (assoc type *x86-64-syntax* :test #'equal))
+  (assoc* type *x86-64-syntax* :test #'equal))
 
 (defun signed->unsigned (value length)
   "Change value from signed to unsigned."
