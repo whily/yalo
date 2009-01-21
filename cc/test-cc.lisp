@@ -10,7 +10,8 @@
 (in-package :cc)
 
 (defparameter *test-asm*
-  '((org     #x7c00)
+  '((bits    16)
+    (org     #x7c00)
 
     start
     (call    msg)

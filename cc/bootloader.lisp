@@ -10,7 +10,8 @@
 (in-package :cc)
 
 (defparameter *bootloader* 
-  `((org     #x7c00)
+  `((bits    16)
+    (org     #x7c00)
 
     ;; Get current cursor position.
     (mov     ah 3)

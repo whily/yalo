@@ -29,6 +29,7 @@
         (origin 0)
         (length 0)
         (cursor 0)
+        (bits 64)
         label)
     (dolist (e listing)
       (if (listp e) 
@@ -39,7 +40,9 @@
                  ;; FIXME: the above may not handle times correctly if
                  ;; labels have same name as instructions.
                  (snippet (case (car e*)
-                            (equ (push (cons (second e) (eval (third e))) 
+                            (bits (setf bits (second e*))
+                                  nil)
+                            (equ (push (cons (second e*) (eval (third e*))) 
                                        symtab)
                                  nil)
                             (org (setf origin (second e*)
