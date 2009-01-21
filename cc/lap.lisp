@@ -69,34 +69,40 @@
      code)))
 
 (defparameter *x86-64-syntax*
-  `(((call   imm16)             . (#xe8 rw))
-    ((clc)                      . (#xf8))
-    ((cld)                      . (#xfc))
-    ((cli)                      . (#xfa))
-    ((in     r8 imm8)           . (#xe4 ib))                ; (in al imm8)
-    ((in     r16 imm8)          . (#xe5 ib))                ; (in ax imm8)
-    ((in     al dx)             . (#xec))
-    ((in     ax dx)             . (#xed))
-    ((int    3)                 . (#xcc))
-    ((int    imm8)              . (#xcd ib))
-    ((jmp    short imm8)        . (#xeb rb))
-    ((mov    r8 imm8)           . ((+ #xb0 r) ib))
-    ((mov    r16 imm16)         . ((+ #xb8 r) iw))
-    ((mov    sreg r16)          . (#x8e /r))                ; (mov sreg r/m16)
-    ((mov    r16 sreg)          . (#x8c /r))                ; (mov r/m16 sreg)
-    ((out    imm8 r8)           . (#xe6 ib))                ; (out imm8 al)
-    ((out    imm8 r16)          . (#xe7 ib))                ; (out imm8 ax)
-    ((out    dx al)             . (#xee))
-    ((out    dx ax)             . (#xef))
-    ((rep    movsb)             . (#xf3 #xa4))
-    ((rep    movsw)             . (#xf3 #xa5))
-    ((ret)                      . (#xc3))
-    ((stc)                      . (#xf9))
-    ((std)                      . (#xfd))
-    ((sti)                      . (#xfb)))
+  `(((call   (imm16 imm8 label))             . (#xe8 rw))
+    ((clc)                                   . (#xf8))
+    ((cld)                                   . (#xfc))
+    ((cli)                                   . (#xfa))
+    ((in     r8 imm8)                        . (#xe4 ib))   ; (in al imm8)
+    ((in     r16 imm8)                       . (#xe5 ib))   ; (in ax imm8)
+    ((in     al dx)                          . (#xec))
+    ((in     ax dx)                          . (#xed))
+    ((int    3)                              . (#xcc))
+    ((int    imm8)                           . (#xcd ib))
+    ((jmp    short (imm8 label imm16))       . (#xeb rb))
+    ((mov    r8 imm8)                        . ((+ #xb0 r) ib))
+    ((mov    r16 (imm16 imm8 imm label))     . ((+ #xb8 r) iw))
+    ((mov    sreg r16)                       . (#x8e /r))   ; (mov sreg r/m16)
+    ((mov    r16 sreg)                       . (#x8c /r))   ; (mov r/m16 sreg)
+    ((out    imm8 r8)                        . (#xe6 ib))   ; (out imm8 al)
+    ((out    imm8 r16)                       . (#xe7 ib))   ; (out imm8 ax)
+    ((out    dx al)                          . (#xee))
+    ((out    dx ax)                          . (#xef))
+    ((rep    movsb)                          . (#xf3 #xa4))
+    ((rep    movsw)                          . (#xf3 #xa5))
+    ((ret)                                   . (#xc3))
+    ((stc)                                   . (#xf9))
+    ((std)                                   . (#xfd))
+    ((sti)                                   . (#xfb)))
   "Syntax table for x86-64. For each entry, 1st part is the
-  instruction type, 2nd part is the corresponding opcode. For details,
-  refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
+  instruction type, 2nd part is the corresponding opcode.  Note that
+  for the 1st part, list may be used for the operand to match the
+  type (e.g. imm8 converted to imm16). Note that the canonical form
+  should be placed first (e.g. if the operand type should be imm16,
+  place it as the car of the list)
+
+  For details,
+    refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
 
 (defun write-kernel (filename)
   "Output kernel (including bootloader) as an image file with filename."
@@ -255,32 +261,22 @@ converted from signed to unsigned."
    In the first run, when the type does not appear in syntax table,
      try to match immediate data with register length."
   (aif (assoc-x86-64-opcode type)
-       (values type (copy-list it))
-       (let ((matched-type (match-type type)))
-         (aif (assoc-x86-64-opcode matched-type)
-              (values matched-type it)
-              (error "match-instruction: unsupported instruction!")))))
+       (values (canonical-type (car it)) (copy-list (cdr it)))
+       (error "match-instruction: unsupported instruction!")))
 
-(defun match-type (type)
-  "Special hacks for cases below:
-     - Value of expressions cannot get.
-     - Length of immediate value is smaller compared with that of register.
-   In these cases, match the types accordingly."
-  (cond
-    ((and (eq (first type) 'call)
-          (member (second type) '(imm8 label)))
-     (list 'call 'imm16))
-    ((and (eq (second type) 'r16) 
-          (member (third type) '(imm8 imm label)))
-     (list (car type) (second type) 'imm16))
-    ((and (eq (second type) 'short) 
-          (member (third type) '(label imm16)))
-     (list (car type) (second type) 'imm8))
-    (t type)))
+(defun canonical-type (type)
+  "Return the canonical form of the type."
+  (mapcar #'(lambda (x) (if (listp x) (car x) x)) type))
 
 (defun assoc-x86-64-opcode (type)
   "Returns a associated opcode based on x86-64 syntax."
-  (assoc* type *x86-64-syntax* :test #'equal))
+  (assoc type *x86-64-syntax* 
+         :test #'(lambda (x y) 
+                   (every #'(lambda (a b) 
+                              (if (listp b)
+                                  (member a b)
+                                  (eq a b)))
+                          x y))))
 
 (defun signed->unsigned (value length)
   "Change value from signed to unsigned."
