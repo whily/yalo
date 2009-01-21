@@ -73,6 +73,7 @@
     ((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))
+    ((hlt)                                   . (#xf4))
     ((in     r8 imm8)                        . (#xe4 ib))   ; (in al imm8)
     ((in     r16 imm8)                       . (#xe5 ib))   ; (in ax imm8)
     ((in     al dx)                          . (#xec))
@@ -80,10 +81,13 @@
     ((int    3)                              . (#xcc))
     ((int    imm8)                           . (#xcd ib))
     ((jmp    short (imm8 label imm16))       . (#xeb rb))
+    ((lodsb)                                 . (#xac))
+    ((lodsw)                                 . (#xad))
     ((mov    r8 imm8)                        . ((+ #xb0 r) ib))
     ((mov    r16 (imm16 imm8 imm label))     . ((+ #xb8 r) iw))
     ((mov    sreg r16)                       . (#x8e /r))   ; (mov sreg r/m16)
     ((mov    r16 sreg)                       . (#x8c /r))   ; (mov r/m16 sreg)
+    ((nop)                                   . (#x90))
     ((out    imm8 r8)                        . (#xe6 ib))   ; (out imm8 al)
     ((out    imm8 r16)                       . (#xe7 ib))   ; (out imm8 ax)
     ((out    dx al)                          . (#xee))
@@ -102,7 +106,9 @@
     ((ret)                                   . (#xc3))
     ((stc)                                   . (#xf9))
     ((std)                                   . (#xfd))
-    ((sti)                                   . (#xfb)))
+    ((sti)                                   . (#xfb))
+    ((stosb)                                 . (#xaa))
+    ((stosw)                                 . (#xab)))
   "Syntax table for x86-64. For each entry, 1st part is the
   instruction type, 2nd part is the corresponding opcode.  Note that
   for the 1st part, list may be used for the operand to match the
