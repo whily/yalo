@@ -167,27 +167,30 @@
 
 (defun encode-complex (instruction type opcode cursor)
   "Return opcode for the given instruction."
-  (cons
-   (etypecase (car opcode)
-     (number (car opcode))
-     (list (ecase (caar opcode)
-             (+ (ecase (caddar opcode)
-                  (r (+ (cadar opcode) (reg->int (second instruction)))))))))
-   (mapcan 
-    #'(lambda (on) 
-        (ecase on
-          ((ib iw id io) 
-           (try-encode-bytes (instruction-value instruction type (on->in on))
-                             (on-length on)))
-          ((rb rw rd ro)
-           (try-encode-bytes `(- ,(instruction-value instruction type (on->in on))
-                                 ,(+ cursor 1 (on-length on)))
-                             (on-length on)))
-          (/r (list (encode-modr/m 
-                     #b11 
-                     (reg->int (instruction-value instruction type 'r16))
-                     (sreg->int (instruction-value instruction type 'sreg)))))))
-    (cdr opcode))))
+  (mapcan 
+   #'(lambda (on) 
+       (cond
+         ((numberp on) (list on))
+         ((listp on)  
+          (ecase (car on)
+            (+ (ecase (caddr on)
+                 (r (list (+ (cadr on) (reg->int (second instruction)))))))))
+         (t 
+          (ecase on
+            ((ib iw id io) 
+             (try-encode-bytes (instruction-value instruction type (on->in on))
+                               (on-length on)))
+            ((rb rw rd ro)
+             (try-encode-bytes 
+              `(- ,(instruction-value instruction type (on->in on))
+                  ,(+ cursor 1 (on-length on)))
+              (on-length on)))
+            (/r (list 
+                 (encode-modr/m 
+                  #b11 
+                  (reg->int (instruction-value instruction type 'r16))
+                  (sreg->int (instruction-value instruction type 'sreg)))))))))
+   opcode))
 
 (defun try-encode-bytes (x length)
   "If x is evaluable, run encode-bytes.
