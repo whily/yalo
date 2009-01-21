@@ -71,6 +71,16 @@
            (t           (error "asm: wrong byte for final processing: ~A" c))))
      code)))
 
+;;; Following are syntax tables for x86-64. For each entry, 1st part
+;;; is the instruction type, 2nd part is the corresponding opcode.
+;;; Note that for the 1st part, list may be used for the operand to
+;;; match the type (e.g. imm8 converted to imm16). Note that the
+;;; canonical form should be placed first (e.g. if the operand type
+;;; should be imm16, place it as the car of the list).
+;;;
+;;;  For details,
+;;;    refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
+
 (defparameter *x86-64-syntax-common*
   `(((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
@@ -87,8 +97,8 @@
     ((lodsw)                                 . (#xad))
     ((mov    r8 imm8)                        . ((+ #xb0 r) ib))
     ((mov    r16 (imm16 imm8 imm label))     . ((+ #xb8 r) iw))
-    ((mov    sreg r16)                       . (#x8e /r))   ; (mov sreg r/m16)
-    ((mov    r16 sreg)                       . (#x8c /r))   ; (mov r/m16 sreg)
+    ((mov    sreg (r/m16 r16 m))             . (#x8e /r))   ; (mov sreg r/m16)
+    ((mov    (r/m16 r16 m) sreg)             . (#x8c /r))   ; (mov r/m16 sreg)
     ((nop)                                   . (#x90))
     ((out    imm8 r8)                        . (#xe6 ib))   ; (out imm8 al)
     ((out    imm8 r16)                       . (#xe7 ib))   ; (out imm8 ax)
@@ -104,17 +114,7 @@
     ((sti)                                   . (#xfb))
     ((stosb)                                 . (#xaa))
     ((stosw)                                 . (#xab)))
-  "Syntax table for x86-64. For each entry, 1st part is the
-  instruction type, 2nd part is the corresponding opcode.  Note that
-  for the 1st part, list may be used for the operand to match the
-  type (e.g. imm8 converted to imm16). Note that the canonical form
-  should be placed first (e.g. if the operand type should be imm16,
-  place it as the car of the list).
-
-  Valid for both 16-bit and 64-bit modes.
-
-  For details,
-    refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
+  "Valid for both 16-bit and 64-bit modes.")
 
 (defparameter *x86-64-syntax-16-bit-only*
   `(((call   (imm16 imm8 label))             . (#xe8 rw))
@@ -189,9 +189,9 @@
          ;; Normal instructions.
          (t (multiple-value-bind (type opcode)
                 (match-instruction (instruction-type e) bits)
-              (encode-complex e type opcode cursor))))))
+              (encode-complex e type opcode cursor bits))))))
 
-(defun encode-complex (instruction type opcode cursor)
+(defun encode-complex (instruction type opcode cursor bits)
   "Return opcode for the given instruction."
   (mapcan 
    #'(lambda (on) 
@@ -211,13 +211,77 @@
               `(- ,(instruction-value instruction type (on->in on))
                   ,(+ cursor 1 (on-length on)))
               (on-length on)))
-            (/r (list 
-                 (encode-modr/m 
-                  #b11 
-                  (reg->int (instruction-value instruction type 'r16))
-                  (sreg->int (instruction-value instruction type 'sreg)))))))))
+            (/r (encode-r/m-disp 
+                 (instruction-value instruction type 
+                                    (cond
+                                      ((member 'r/m16 type) 'r/m16)
+                                      ((member 'r/m32 type) 'r/m32)
+                                      ((member 'r/m64 type) 'r/m64)
+                                      (t (error "No r/m operand in ~A~%!" 
+                                                instruction))))
+                 (instruction-value instruction type 
+                                    (cond
+                                      ((member 'sreg type) 'sreg)
+                                      ((member 'r16 type) 'r16)
+                                      ((member 'r32 type) 'r32)
+                                      ((member 'r64 type) 'r64)
+                                      (t (error "No (s)reg operand in ~A~%"
+                                                instruction))))
+                 bits))))))
    opcode))
 
+(defun encode-r/m-disp (r/m reg/opcode bits)
+  "Encode ModR/M byte and displacement (if any)."
+  (let ((r/o (case reg/opcode
+               ((/0 /1 /2 /3 /4 /5 /6 /7) 
+                (- (char-code (elt (symbol-name reg/opcode) 1)) 48))
+               (t (case (operand-type reg/opcode)
+                    (sreg (sreg->int reg/opcode))
+                    (t    (reg->int reg/opcode)))))))
+    (multiple-value-bind (mod rm disp disp-length) 
+        (r/m-values r/m bits)
+      (append (list (encode-modr/m mod rm r/o))
+              (when disp
+                (try-encode-bytes disp disp-length))))))
+
+(defun r/m-values (r/m bits)
+  "Return values: mod, r/m for encoding, disp, and length of disp in
+bytes. Note that if disp is not needed, return nil as disp and
+disp-length could be arbitrary."
+  (ecase (operand-type r/m)
+    ((r8 r16 r32 r64) (values #b11 (reg->int r/m)))
+    (m (ecase bits
+         (16
+          (if (equal r/m '(bp))  ; Special handling of (bp)
+              (values 1 #b110 nil 0)
+              (let ((type (mapcar #'operand-type r/m)))
+                (if (and (= (length r/m) 1) ; Special handling of (disp16)
+                         (or (member 'imm8 type) (member 'imm16 type) 
+                             (member 'label type)))
+                    (values 0 #b110 (car r/m) 2)
+                    (let* (disp
+                           (mod (cond 
+                                  ((member 'imm8 type) 
+                                   (setf disp (instruction-value r/m type 'imm8))
+                                   1)
+                                  ((member 'imm16 type)
+                                   (setf disp 
+                                         (instruction-value r/m type 'imm16))
+                                   2)
+                                  (t 0)))
+                           (rm (cond
+                                 ((and (member 'bx r/m) (member 'si r/m)) #b000)
+                                 ((and (member 'bx r/m) (member 'di r/m)) #b001)
+                                 ((and (member 'bp r/m) (member 'si r/m)) #b010)
+                                 ((and (member 'bp r/m) (member 'di r/m)) #b011)
+                                 ((member 'si r/m) #b100)
+                                 ((member 'di r/m) #b101)
+                                 ((member 'bp r/m) #b110)
+                                 ((member 'bx r/m) #b111)
+                                 (t (error "Incorrect memory addressing: ~A~%" 
+                                           r/m)))))
+                      (values mod rm disp mod))))))))))
+                
 (defun try-encode-bytes (x length)
   "If x is evaluable, run encode-bytes.
    Otherwise return the placeholder list."
@@ -329,12 +393,9 @@ converted from signed to unsigned."
       (ecase length
         ((1 2 4 8) (+ (expt 256 length) value)))))
 
-(defun encode-modr/m (mod rm reg)
+(defun encode-modr/m (mod r/m reg/opcode)
   "Encode ModR/M byte."
-  (+ (* mod #b1000000) (* reg #b1000) rm))
-
-(defun encode-1-operand (dest reg)
-  (encode-modr/m #b11 (reg->int dest) reg))
+  (+ (* mod #b1000000) (* reg/opcode #b1000) r/m))
 
 (defun instruction-type (instruction)
   "Returns the instruction type for encoding."
