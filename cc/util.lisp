@@ -16,15 +16,20 @@
 
 (defun str (&rest args)
   "Take any number of arguments and concatenates their printed
-representations into a string. FROM ON LISP."
+representations into a string. From ON LISP."
   (with-output-to-string (s)
     (dolist (a args) (princ a s))))
 
 (defun symb (&rest args)
   "Takes one or more arguments and returns the symbol whose printname
-is their concatenation."
+is their concatenation. From ON LISP."
   (values (intern (apply #'str args))))
-  
+
+(defun mklist (obj)
+  "Returns obj if it is already a list; otherwise lispy it. From ON LISP."
+  (if (listp obj)
+      obj
+      (list obj)))
 
 (defun repeat-element (n element)
   (loop for i from 0 below n collect element))
