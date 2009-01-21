@@ -129,12 +129,14 @@
        (case (car e)
          ;; Pseudo instructions.
          ((db dw)
-          (let ((val (nth (1- (length e)) e)))
-            (ecase (car e)
-              (db (etypecase val
-                    (string (string->bytes val))
-                    (number (list val))))
-              (dw (encode-bytes val 2)))))
+          (let ((val (mklist (nth (1- (length e)) e))))
+            (mapcan #'(lambda (v)
+                        (ecase (car e)
+                          (db (etypecase v
+                                (string (string->bytes v))
+                                (number (list v))))
+                          (dw (encode-bytes v 2))))
+                    val)))
          ;; Normal instructions.
          (t (multiple-value-bind (type opcode)
                 (match-instruction (instruction-type e))
@@ -190,7 +192,7 @@ converted from signed to unsigned."
   (let ((vs (lookup-value ops has-real-car? cursor origin symtab)))
     (mapcar #'(lambda (v) 
                 (handler-case (eval v)
-                  (unbound-variable () v)))
+                  (error () v)))
             vs)))
 
 (defun eval-final (revisit symtab)

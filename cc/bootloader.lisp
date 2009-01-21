@@ -26,7 +26,7 @@
     ;; Infinite loop.
     (jmp     short $)
 
-    (db       msg "Hello World! ")
+    (db       msg ("Hello World! " 13 10))
     endmsg
 
     ;; Fill up to 510 bytes.
