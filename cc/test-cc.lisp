@@ -12,6 +12,7 @@
 (defparameter *test-asm*
   '((org     #x7c00)
 
+    start
     (call    msg)
     (clc)
     (cld)
@@ -22,7 +23,8 @@
     (in      ax dx)
     (int     3)
     (int     #x10)
-    (jmp     short $)
+    .loop
+    (jmp     short .loop)
     (mov     ah 9)
     (mov     bx (- endmsg msg))
     (mov     ax cs)
@@ -38,7 +40,7 @@
     (std)
     (sti)
     (equ     hi 4)
-    (db       msg "Hello World! ")
+    (db      msg "Hello World! ")
     endmsg
     (times   3 db 0)
     (dw      #xaa55) 

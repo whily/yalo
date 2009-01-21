@@ -28,11 +28,14 @@
         code
         (origin 0)
         (length 0)
-        (cursor 0))
+        (cursor 0)
+        label)
     (dolist (e listing)
       (if (listp e) 
           (let* ((e* (cons (car e) 
-                          (try-eval-values (cdr e) cursor origin symtab t)))
+                          (try-eval-values 
+                           (normalize-local-labels (cdr e) label)
+                           cursor origin symtab t)))
                  ;; FIXME: the above may not handle times correctly if
                  ;; labels have same name as instructions.
                  (snippet (case (car e*)
@@ -51,7 +54,11 @@
             (setf code (nconc code snippet))
             (incf length (length snippet))
             (setf cursor (+ origin length)))
-          (push (cons e cursor) symtab)))  ; Labels
+          ; Labels
+          (progn
+            (unless (local-label? e)
+              (setf label e))
+            (push (cons (normalize-label e label) cursor) symtab))))
     (mapcan 
      #'(lambda (c)
          (cond
@@ -340,4 +347,25 @@ encoding ModR/M byte."
 
 (defun string->bytes (s)
   (map 'list #'char-code s))
+
+(defun local-label? (l)
+  "Returns T is L is a local label (starting with period)."
+  (and (symbolp l) (eq (elt (symbol-name l) 0) #\.)))
+
+(defun normalize-label (e label)
+  "If e is a local label, prefix it with label. Otherwise, return as
+is."
+  (if (local-label? e) 
+      (symb label e) 
+      e))
+
+(defun normalize-local-labels (e label)
+  "For all local labels in E, normalize it by prefixing it with
+current label."
+  (cond
+    ((null e) e)
+    ((atom (car e)) (cons (normalize-label (car e) label)
+                          (normalize-local-labels (cdr e) label)))
+    (t (cons (normalize-local-labels (car e) label)
+             (normalize-local-labels (cdr e) label)))))
 
