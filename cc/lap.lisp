@@ -323,7 +323,9 @@ converted from signed to unsigned."
        ((and (<= (- (expt 2 63)) operand (1- (expt 2 64)))) 'imm64)
        (t (error "Invalid operand: ~A" operand))))
     ((listp operand)
-     'imm)
+     (case (car operand)
+       ((+ -) 'imm)
+       (t     'm)))
     (t 
      (case operand
        ((al cl dl bl ah ch dh bh bpl spl dil sil) 'r8)
