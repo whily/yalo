@@ -97,6 +97,9 @@
     ((lodsw)                                 . (#xad))
     ((mov    r8 imm8)                        . ((+ #xb0 r) ib))
     ((mov    r16 (imm16 imm8 imm label))     . ((+ #xb8 r) iw))
+    ((mov    (r/m16 r16 m) r16)              . (#x89 /r))
+    ((mov    r16 (r/m16 r16 m))              . (#x8b /r))
+    ((mov    word m (imm16 imm8 imm label))  . (#xc7 /0 iw))
     ((mov    sreg (r/m16 r16 m))             . (#x8e /r))   ; (mov sreg r/m16)
     ((mov    (r/m16 r16 m) sreg)             . (#x8c /r))   ; (mov r/m16 sreg)
     ((nop)                                   . (#x90))
@@ -188,7 +191,7 @@
                     val)))
          ;; Normal instructions.
          (t (multiple-value-bind (type opcode)
-                (match-instruction (instruction-type e) bits)
+                (match-instruction e (instruction-type e) bits)
               (encode-complex e type opcode cursor bits))))))
 
 (defun encode-complex (instruction type opcode cursor bits)
@@ -211,24 +214,33 @@
               `(- ,(instruction-value instruction type (on->in on))
                   ,(+ cursor 1 (on-length on)))
               (on-length on)))
+            ((/0 /1 /2 /3 /4 /5 /6 /7) 
+             (encode-r/m-disp
+              (instruction-value instruction type (find-r/m instruction type))
+              on bits))
             (/r (encode-r/m-disp 
-                 (instruction-value instruction type 
-                                    (cond
-                                      ((member 'r/m16 type) 'r/m16)
-                                      ((member 'r/m32 type) 'r/m32)
-                                      ((member 'r/m64 type) 'r/m64)
-                                      (t (error "No r/m operand in ~A~%!" 
-                                                instruction))))
-                 (instruction-value instruction type 
-                                    (cond
-                                      ((member 'sreg type) 'sreg)
-                                      ((member 'r16 type) 'r16)
-                                      ((member 'r32 type) 'r32)
-                                      ((member 'r64 type) 'r64)
-                                      (t (error "No (s)reg operand in ~A~%"
-                                                instruction))))
+                 (instruction-value instruction type (find-r/m instruction type))
+                 (instruction-value instruction type (find-reg instruction type))
                  bits))))))
    opcode))
+
+(defun find-r/m (instruction type)
+  "Return the r/m contained in type."
+  (cond
+    ((member 'r/m16 type) 'r/m16)
+    ((member 'r/m32 type) 'r/m32)
+    ((member 'r/m64 type) 'r/m64)
+    ((member 'm type) 'm)
+    (t (error "No r/m operand in ~A~%!" instruction))))  
+
+(defun find-reg (instruction type)
+  "Return the reg contained in type."
+  (cond
+    ((member 'sreg type) 'sreg)
+    ((member 'r16 type) 'r16)
+    ((member 'r32 type) 'r32)
+    ((member 'r64 type) 'r64)
+    (t (error "No (s)reg operand in ~A~%" instruction))))
 
 (defun encode-r/m-disp (r/m reg/opcode bits)
   "Encode ModR/M byte and displacement (if any)."
@@ -364,13 +376,13 @@ converted from signed to unsigned."
   "Get the value (in instruction) corresponding to the name (in type)."
   (assoc* name (mapcar #'cons type instruction)))
 
-(defun match-instruction (type bits)
+(defun match-instruction (instruction type bits)
   "Returns values of (type opcode).
    In the first run, when the type does not appear in syntax table,
      try to match immediate data with register length."
   (aif (assoc-x86-64-opcode type bits)
        (values (canonical-type (car it)) (copy-list (cdr it)))
-       (error "match-instruction: unsupported instruction!")))
+       (error "match-instruction: unsupported instruction ~A" instruction)))
 
 (defun canonical-type (type)
   "Return the canonical form of the type."
@@ -424,7 +436,7 @@ converted from signed to unsigned."
        ((rax rcx rdx rbx rsp rbp rsi rdi 
              r8 r9 r10 r11 r12 r13 r14 r15)       'r64)
        ((cs ds es ss fs gs)                       'sreg)
-       ((short)                                   operand)
+       ((short byte word dword qword)             operand)
        (t                                         'label)
        ))))
 
