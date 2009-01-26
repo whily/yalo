@@ -82,7 +82,18 @@
 ;;;    refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
 
 (defparameter *x86-64-syntax-common*
-  `(((clc)                                   . (#xf8))
+  `(((add    al imm8)                        . (#x04 ib))
+    ((add    ax (imm16 imm8))                . (#x05 iw))
+    ((add    (r/m8 r8) imm8)                 . (#x80 /0 ib))
+    ((add    byte m imm8)                    . (#x80 /0 ib))
+    ((add    (r/m16 r16 m) imm16)            . (#x81 /0 iw))
+    ((add    (r/m16 r16) imm8)               . (#x83 /0 ib))
+    ((add    word m imm8)                    . (#x83 /0 ib))
+    ((add    (r/m8 r8 m) r8)                 . (#x00 /r))
+    ((add    (r/m16 r16 m) r16)              . (#x01 /r))
+    ((add    r8 (r/m8 r8 m))                 . (#x02 /r))
+    ((add    r16 (r/m16 r16 m))              . (#x03 /r))
+    ((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))
     ((hlt)                                   . (#xf4))
@@ -180,7 +191,8 @@
                     :test #'(lambda (x y)
                               (and (> (length y) 1)
                                    (equal (subseq x 0 2) (subseq y 0 2))
-                                   (member (elt x 1) '(al ax)))))
+                                   (member (elt x 1) '(al ax))
+                                   (numberp (elt x 2)))))
             ;; The case that some registers are explicitly given as
             ;; destination operand.  e.g. (add al imm8).
             (encode-complex e (instruction-type e) it cursor bits)
@@ -239,6 +251,7 @@
 (defun find-r/m (instruction type)
   "Return the r/m contained in type."
   (cond
+    ((member 'r/m8  type) 'r/m8)
     ((member 'r/m16 type) 'r/m16)
     ((member 'r/m32 type) 'r/m32)
     ((member 'r/m64 type) 'r/m64)
@@ -249,6 +262,7 @@
   "Return the reg contained in type."
   (cond
     ((member 'sreg type) 'sreg)
+    ((member 'r8 type)  'r8)
     ((member 'r16 type) 'r16)
     ((member 'r32 type) 'r32)
     ((member 'r64 type) 'r64)
