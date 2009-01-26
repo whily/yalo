@@ -86,8 +86,8 @@
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))
     ((hlt)                                   . (#xf4))
-    ((in     r8 imm8)                        . (#xe4 ib))   ; (in al imm8)
-    ((in     r16 imm8)                       . (#xe5 ib))   ; (in ax imm8)
+    ((in     al imm8)                        . (#xe4 ib)) 
+    ((in     ax imm8)                        . (#xe5 ib))
     ((in     al dx)                          . (#xec))
     ((in     ax dx)                          . (#xed))
     ((int    3)                              . (#xcc))
@@ -176,23 +176,35 @@
        ;; operands (like nop, hlt), or special instructions like int 3.
        (copy-list it) ; copy-list is necessary since syntax table is
                                         ; LITERAL.
-       (case (car e)
-         ;; Pseudo instructions.
-         ((db dw dd dq)
-          (let ((val (mklist (nth (1- (length e)) e))))
-            (mapcan #'(lambda (v)
-                        (ecase (car e)
-                          (db (etypecase v
-                                (string (string->bytes v))
-                                (number (list v))))
-                          (dw (encode-bytes v 2))
-                          (dd (encode-bytes v 4))
-                          (dq (encode-bytes v 8))))
-                    val)))
-         ;; Normal instructions.
-         (t (multiple-value-bind (type opcode)
-                (match-instruction e (instruction-type e) bits)
-              (encode-complex e type opcode cursor bits))))))
+       (aif (assoc* e (x86-64-syntax bits) 
+                    :test #'(lambda (x y)
+                              (and (> (length y) 1)
+                                   (equal (subseq x 0 2) (subseq y 0 2))
+                                   (member (elt x 1) '(al ax)))))
+            ;; The case that some registers are explicitly given as
+            ;; destination operand.  e.g. (add al imm8).
+            (encode-complex e (instruction-type e) it cursor bits)
+            (case (car e)
+              ;; Pseudo instructions.
+              ((db dw dd dq)
+               (let ((val (mklist (nth (1- (length e)) e))))
+                 (mapcan #'(lambda (v)
+                             (ecase (car e)
+                               (db (etypecase v
+                                     (string (string->bytes v))
+                                     (number (list v))))
+                               (dw (encode-bytes v 2))
+                               (dd (encode-bytes v 4))
+                               (dq (encode-bytes v 8))))
+                         val)))
+              ;; Normal instructions.
+              (t (match-n-encode e cursor bits))))))
+
+(defun match-n-encode (e cursor bits)
+  "Match instruction and encode it."
+  (multiple-value-bind (type opcode)
+      (match-instruction e (instruction-type e) bits)
+    (encode-complex e type opcode cursor bits)))
 
 (defun encode-complex (instruction type opcode cursor bits)
   "Return opcode for the given instruction."
