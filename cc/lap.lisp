@@ -126,6 +126,7 @@
     ((int    3)                              . (#xcc))
     ((int    imm8)                           . (#xcd ib))
     ((jmp    short (imm8 label imm16))       . (#xeb rb))
+    ((lldt   (r/m16 r16 m))                  . (#x0f #x00 /2))
     ((lodsb)                                 . (#xac))
     ((lodsw)                                 . (#xad))
     ((loop   (imm8 label imm16))             . (#xe2 rb))
@@ -204,6 +205,8 @@
 
 (defparameter *x86-64-syntax-16-bit-only*
   `(((call   (imm16 imm8 label))             . (#xe8 rw))
+    ((lgdt   m)                              . (#x0f #x01 /2))
+    ((lidt   m)                              . (#x0f #x01 /3))
     ((pop    ss)                             . (#x17))
     ((pop    ds)                             . (#x1f))
     ((pop    es)                             . (#x07))
