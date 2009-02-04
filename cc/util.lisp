@@ -14,6 +14,17 @@
   `(let ((it ,test-form))
      (if it ,then-form ,else-form)))
 
+(defmacro acond (&rest clauses)		
+  "Anaphoric variant of cond."		
+  (if (null clauses)		
+      nil		
+      (let ((cl1 (car clauses))		
+            (sym (gensym)))		
+        `(let ((,sym ,(car cl1)))		
+           (if ,sym		
+               (let ((it ,sym)) ,@(cdr cl1))		
+               (acond ,@(cdr clauses)))))))
+
 (defun str (&rest args)
   "Take any number of arguments and concatenates their printed
 representations into a string. From ON LISP."
