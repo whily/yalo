@@ -174,6 +174,30 @@
     ((rep    movsb)                          . (#xf3 #xa4))
     ((rep    movsw)                          . (#xf3 #xa5))
     ((ret)                                   . (#xc3))
+    ((shl    r8 1)                           . (#xd0 /4))
+    ((shl    byte m 1)                       . (#xd0 /4))
+    ((shl    r8 cl)                          . (#xd2 /4))
+    ((shl    byte m cl)                      . (#xd2 /4))
+    ((shl    r8 imm8)                        . (#xc0 /4 ib))
+    ((shl    byte m imm8)                    . (#xc0 /4 ib))
+    ((shl    r16 1)                          . (#xd1 /4))
+    ((shl    word m 1)                       . (#xd1 /4))
+    ((shl    r16 cl)                         . (#xd3 /4))
+    ((shl    word m cl)                      . (#xd3 /4))
+    ((shl    r16 imm8)                       . (#xc1 /4 ib))
+    ((shl    word m imm8)                    . (#xc1 /4 ib))
+    ((shr    r8 1)                           . (#xd0 /5))
+    ((shr    byte m 1)                       . (#xd0 /5))
+    ((shr    r8 cl)                          . (#xd2 /5))
+    ((shr    byte m cl)                      . (#xd2 /5))
+    ((shr    r8 imm8)                        . (#xc0 /5 ib))
+    ((shr    byte m imm8)                    . (#xc0 /5 ib))
+    ((shr    r16 1)                          . (#xd1 /5))
+    ((shr    word m 1)                       . (#xd1 /5))
+    ((shr    r16 cl)                         . (#xd3 /5))
+    ((shr    word m cl)                      . (#xd3 /5))
+    ((shr    r16 imm8)                       . (#xc1 /5 ib))
+    ((shr    word m imm8)                    . (#xc1 /5 ib))
     ((stc)                                   . (#xf9))
     ((std)                                   . (#xfd))
     ((sti)                                   . (#xfb))
@@ -265,35 +289,52 @@
 
 (defun encode (e cursor bits)
   "Opcode encoding, including pseudo instructions like db/dw."
-  (aif (assoc* e (x86-64-syntax bits) :test #'equal) 
-       ;; Instructions with exact match, e.g. instructions without
-       ;; operands (like nop, hlt), or special instructions like int 3.
-       (copy-list it) ; copy-list is necessary since syntax table is
-                                        ; LITERAL.
-       (aif (assoc* e (x86-64-syntax bits) 
-                    :test #'(lambda (x y)
-                              (and (> (length y) 1)
-                                   (equal (subseq x 0 2) (subseq y 0 2))
-                                   (member (elt x 1) '(al ax))
-                                   (numberp (elt x 2)))))
-            ;; The case that some registers are explicitly given as
-            ;; destination operand.  e.g. (add al imm8).
-            (encode-complex e (instruction-type e) it cursor bits)
-            (case (car e)
-              ;; Pseudo instructions.
-              ((db dw dd dq)
-               (let ((val (mklist (nth (1- (length e)) e))))
-                 (mapcan #'(lambda (v)
-                             (ecase (car e)
-                               (db (etypecase v
-                                     (string (string->bytes v))
-                                     (number (list v))))
-                               (dw (encode-bytes v 2))
-                               (dd (encode-bytes v 4))
-                               (dq (encode-bytes v 8))))
-                         val)))
-              ;; Normal instructions.
-              (t (match-n-encode e cursor bits))))))
+  (acond
+   ((assoc* e (x86-64-syntax bits) :test #'equal) 
+    ;; Instructions with exact match, e.g. instructions without
+    ;; operands (like nop, hlt), or special instructions like int 3.
+    ;; copy-list is necessary since syntax table is LITERAL.
+    (copy-list it)) 
+   ((assoc* e (x86-64-syntax bits)
+            :test #'(lambda (x y)
+                      (and (> (length y) 1)
+                           (equal (subseq x 0 2) (subseq y 0 2))
+                           (member (elt x 1) '(al ax))
+                           (numberp (elt x 2)))))
+    ;; Some registers are explicitly given as destination operand,
+    ;; e.g. (add al imm8).
+    (encode-complex e (instruction-type e) it cursor bits))
+   ((assoc* e (x86-64-syntax bits)
+            :test #'(lambda (x y)
+                      (and (member (car x) '(shl shr))
+                           (> (length y) 2)
+                           (= (length x) (length y))
+                           (eq (car x) (car y))
+                           (eq (car (last x)) (car (last y)))
+                           (eq (operand-type (car (last x 2))) (car (last y 2)))
+                           (if (= (length x) 3)
+                               t
+                               (eq (second x) (second y)))
+                           (member (car (last x)) '(1 cl)))))
+    ;; Special case for (shl/shr r/m8/16 1/cl).
+    (encode-complex (butlast e) (butlast (instruction-type e)) it cursor bits))
+   (t
+    (declare (ignore it))
+    (case (car e)
+      ;; Pseudo instructions.
+      ((db dw dd dq)
+       (let ((val (mklist (nth (1- (length e)) e))))
+         (mapcan #'(lambda (v)
+                     (ecase (car e)
+                       (db (etypecase v
+                             (string (string->bytes v))
+                             (number (list v))))
+                       (dw (encode-bytes v 2))
+                       (dd (encode-bytes v 4))
+                       (dq (encode-bytes v 8))))
+                 val)))
+      ;; Normal instructions.
+      (t (match-n-encode e cursor bits))))))
 
 (defun match-n-encode (e cursor bits)
   "Match instruction and encode it."
@@ -333,13 +374,11 @@
 
 (defun find-r/m (instruction type)
   "Return the r/m contained in type."
-  (cond
-    ((member 'r/m8  type) 'r/m8)
-    ((member 'r/m16 type) 'r/m16)
-    ((member 'r/m32 type) 'r/m32)
-    ((member 'r/m64 type) 'r/m64)
-    ((member 'm type) 'm)
-    (t (error "No r/m operand in ~A~%!" instruction))))  
+  (block alpha 
+    (dolist (r/m '(m r/m8 r/m16 r/m32 r/m64 r8 r16 r32 r64))
+      (when (member r/m type)
+        (return-from alpha r/m)))
+    (error "No r/m operand in ~A~%!" instruction)))
 
 (defun find-reg (instruction type)
   "Return the reg contained in type."
