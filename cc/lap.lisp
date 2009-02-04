@@ -149,7 +149,15 @@
     ((sub    (r/m8 r8 m) r8)                 . (#x28 /r))
     ((sub    (r/m16 r16 m) r16)              . (#x29 /r))
     ((sub    r8 (r/m8 r8 m))                 . (#x2a /r))
-    ((sub    r16 (r/m16 r16 m))              . (#x2b /r)))
+    ((sub    r16 (r/m16 r16 m))              . (#x2b /r))
+    ((test    al imm8)                       . (#xa8 ib))
+    ((test    ax (imm16 imm8))               . (#xa9 iw))
+    ((test    (r/m8 r8) imm8)                . (#xf6 /0 ib))
+    ((test    byte m imm8)                   . (#xf6 /0 ib))
+    ((test    (r/m16 r16 m) (imm16 imm8))    . (#xf7 /0 iw))
+    ((test    word m (imm16 imm8))           . (#xf7 /0 iw))
+    ((test    (r/m8 r8 m) r8)                . (#x84 /r))
+    ((test    (r/m16 r16 m) r16)             . (#x85 /r)))
   "Valid for both 16-bit and 64-bit modes.")
 
 (defparameter *x86-64-syntax-16-bit-only*
