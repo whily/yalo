@@ -128,6 +128,7 @@
     ((jmp    short (imm8 label imm16))       . (#xeb rb))
     ((lodsb)                                 . (#xac))
     ((lodsw)                                 . (#xad))
+    ((loop   (imm8 label imm16))             . (#xe2 rb))
     ((mov    r8 imm8)                        . ((+ #xb0 r) ib))
     ((mov    r16 (imm16 imm8 imm label))     . ((+ #xb8 r) iw))
     ((mov    (r/m16 r16 m) r16)              . (#x89 /r))
