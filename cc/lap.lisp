@@ -336,12 +336,12 @@
        (let ((val (mklist (nth (1- (length e)) e))))
          (mapcan #'(lambda (v)
                      (ecase (car e)
-                       (db (etypecase v
-                             (string (string->bytes v))
-                             (number (list v))))
-                       (dw (encode-bytes v 2))
-                       (dd (encode-bytes v 4))
-                       (dq (encode-bytes v 8))))
+                       (db (cond
+                             ((stringp v) (string->bytes v))
+                             (t (try-encode-bytes v 1))))
+                       (dw (try-encode-bytes v 2))
+                       (dd (try-encode-bytes v 4))
+                       (dq (try-encode-bytes v 8))))
                  val)))
       ;; Normal instructions.
       (t (match-n-encode e cursor bits))))))
@@ -425,7 +425,7 @@ in bytes.
 
    Note 
      1. If sib is not needed, return nil.
-     1. If disp is not needed, return nil as disp and disp-length
+     2. If disp is not needed, return nil as disp and disp-length
      could be arbitrary."
   (ecase (operand-type r/m)
     ((r8 r16 r32 r64) (values #b11 (reg->int r/m) nil nil 0))
@@ -562,7 +562,7 @@ converted from signed to unsigned."
     ((atom e) (numberp e))
     ((null e) t)
     ((atom (car e)) (and (member (car e) '(+ -)) 
-                         (every #'evaulable? (cdr e))))
+                         (every #'evaluable? (cdr e))))
     (t nil)))
 
 (defun eval-final (revisit symtab)
