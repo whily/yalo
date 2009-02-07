@@ -15,7 +15,7 @@
      (if it ,then-form ,else-form)))
 
 (defmacro acond (&rest clauses)		
-  "Anaphoric variant of cond."		
+  "Anaphoric variant of cond. From ON LISP."
   (if (null clauses)		
       nil		
       (let ((cl1 (car clauses))		
