@@ -144,6 +144,9 @@ sub, and xor."
     ((mov    dword m (imm32 imm16 imm8 imm label)) . (o32 #xc7 /0 id))
     ((mov    sreg (r/m16 r16 m))             . (#x8e /r)) 
     ((mov    (r/m16 r16 m) sreg)             . (#x8c /r)) 
+    ((movsb)                                 . (#xa4))
+    ((movsw)                                 . (o16 #xa5))
+    ((movsd)                                 . (o32 #xa5))
     ((mul    (r/m8 r8))                      . (#xf6 /4))
     ((mul    byte m)                         . (#xf6 /4))
     ((mul    (r/m16 r16))                    . (#xf7 /4))
@@ -164,8 +167,6 @@ sub, and xor."
     ((out    dx ax)                          . (#xef))
     ((pop    r16)                            . ((+ #x58 r)))
     ((push   r16)                            . ((+ #x50 r)))
-    ((rep    movsb)                          . (#xf3 #xa4))
-    ((rep    movsw)                          . (#xf3 #xa5))
     ((ret)                                   . (#xc3))
     ((shl    r8 1)                           . (#xd0 /4))
     ((shl    byte m 1)                       . (#xd0 /4))
@@ -260,14 +261,24 @@ sub, and xor."
              while byte do (push byte output))
         (nreverse output)))))
 
+(defparameter *prefix-mapping*
+  `((lock . #xf0) 
+    (repne . #xf2) (repnz .#xf2) 
+    (rep   . #xf3) (repe  . #xf3) (repz . #xf3))
+  "Prefix mapping table.")
+
 (defun encode (e cursor bits)
   "Opcode encoding, including pseudo instructions like db/dw."
   (acond
+   ((assoc* (car e) *prefix-mapping*)
+    (cons it (encode (cdr e) (1+ cursor) bits)))
    ((assoc* e (x86-64-syntax bits) :test #'equal) 
     ;; Instructions with exact match, e.g. instructions without
     ;; operands (like nop, hlt), or special instructions like int 3.
     ;; copy-list is necessary since syntax table is LITERAL.
-    (copy-list it)) 
+    (if (member (car it) '(o16 o32 a16 a32))
+        (append (size-prefix (car it) bits) (copy-list (cdr it)))
+        (copy-list it)))
    ((assoc* e (x86-64-syntax bits)
             :test #'(lambda (x y)
                       (and (> (length y) 1)
@@ -327,15 +338,7 @@ sub, and xor."
                  (r (list (+ (cadr on) (reg->int (second instruction)))))))))
          (t 
           (ecase on
-            ((o16 o32 a16 a32)
-             (let* ((s (str on))
-                    (st (symb (subseq s 0 1)))
-                    (sbit (read-from-string (subseq s 1 3))))
-               (if (= sbit bits)
-                   nil
-                   (list (ecase st
-                           (o #x66)
-                           (a #x67))))))
+            ((o16 o32 a16 a32) (size-prefix on bits))
             ((ib iw id io) 
              (try-encode-bytes (instruction-value instruction type (on->in on))
                                (on-length on)))
@@ -353,6 +356,16 @@ sub, and xor."
                  (instruction-value instruction type (find-reg instruction type))
                  bits))))))
    opcode))
+
+(defun size-prefix (op bits)
+  "Handles operand/address-size override prefix o16 & o32. Returns nil
+  if no prefix is needed, otherwise corresponding prefix #x66 or #x67."
+  (let* ((s (str op))
+         (st (symb (subseq s 0 1)))
+         (sbit (read-from-string (subseq s 1 3))))
+    (if (= sbit bits) nil (list (ecase st
+                                  (o #x66)
+                                  (a #x67))))))
 
 (defun find-r/m (instruction type)
   "Return the r/m contained in type."
