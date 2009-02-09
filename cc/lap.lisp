@@ -223,8 +223,7 @@ sub, and xor."
   "Valid for 16-bit mode only.")
 
 (defparameter *x86-64-syntax-64-bit-only*
-  nil
-  "Valid for 64-bit mode only.")
+  `(((add    rax (imm32 imm16 imm8))         . (rex.w #x05 id))))
 
 (defparameter *x86-64-syntax-16/32-bit*
   (append *x86-64-syntax-common* *x86-64-syntax-16/32-bit-only*)
@@ -283,7 +282,7 @@ sub, and xor."
             :test #'(lambda (x y)
                       (and (> (length y) 1)
                            (equal (subseq x 0 2) (subseq y 0 2))
-                           (member (elt x 1) '(al ax))
+                           (member (elt x 1) '(al ax eax rax))
                            (numberp (elt x 2)))))
     ;; Some registers are explicitly given as destination operand,
     ;; e.g. (add al imm8).
@@ -338,6 +337,7 @@ sub, and xor."
                  (r (list (+ (cadr on) (reg->int (second instruction)))))))))
          (t 
           (ecase on
+            (rex.w (list #b01001000))
             ((o16 o32 a16 a32) (size-prefix on bits))
             ((ib iw id io) 
              (try-encode-bytes (instruction-value instruction type (on->in on))
