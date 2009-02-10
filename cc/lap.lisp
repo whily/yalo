@@ -337,7 +337,7 @@ sub, and xor."
                  (r (list (+ (cadr on) (reg->int (second instruction)))))))))
          (t 
           (ecase on
-            (rex.w (list #b01001000))
+            (rex.w (list (encode-rex 1 0 0 0)))
             ((o16 o32 a16 a32) (size-prefix on bits))
             ((ib iw id io) 
              (try-encode-bytes (instruction-value instruction type (on->in on))
@@ -348,10 +348,10 @@ sub, and xor."
                   ,(+ cursor 1 (on-length on)))
               (on-length on)))
             ((/0 /1 /2 /3 /4 /5 /6 /7) 
-             (encode-r/m-disp
+             (encode-r/m-sib-disp
               (instruction-value instruction type (find-r/m instruction type))
               on bits))
-            (/r (encode-r/m-disp 
+            (/r (encode-r/m-sib-disp 
                  (instruction-value instruction type (find-r/m instruction type))
                  (instruction-value instruction type (find-reg instruction type))
                  bits))))))
@@ -379,8 +379,8 @@ sub, and xor."
        it
        (error "No (s)reg operand in ~A~%" instruction)))
 
-(defun encode-r/m-disp (r/m reg/opcode bits)
-  "Encode ModR/M byte and displacement (if any)."
+(defun encode-r/m-sib-disp (r/m reg/opcode bits)
+  "Encode ModR/M, SIB byte (if any) and displacement (if any)."
   (let ((r/o (case reg/opcode
                ((/0 /1 /2 /3 /4 /5 /6 /7) 
                 (- (char-code (elt (symbol-name reg/opcode) 1)) 48))
@@ -630,6 +630,10 @@ converted from signed to unsigned."
 (defun encode-sib (scale index base)
   "Encode SIB byte."
   (+ (* scale #b1000000) (* index #b1000) base))
+
+(defun encode-rex (w r x b)
+  "Encode rex prefix."
+  (+ #b01000000 (* w #b1000) (* r #b100) (* x #b10) b))
 
 (defun instruction-type (instruction)
   "Returns the instruction type for encoding."
