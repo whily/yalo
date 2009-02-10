@@ -75,9 +75,8 @@
   "Processing the list with asm, and pretty print the bytes with pp-hex."
   (pp-hex (asm listing)))
 
-(defun arith-syntax (mnemonic)
-  "Return syntax table for arithmetic operations: add, and, cmp, or,
-sub, and xor."
+(defun arith-syntax-1 (mnemonic)
+  "Return syntax table for arithmetic operations: add/and/cmp/or/sub/xor."
   (let ((base   ; Base opcode for operation on r/m8 r8.
          (ecase mnemonic
            (add #x00) (and #x20) (cmp #x38)
@@ -86,23 +85,32 @@ sub, and xor."
          (ecase mnemonic
            (add '/0) (and '/4) (cmp '/7)
            (or  '/1) (sub '/5) (xor '/6))))
-    `(((,mnemonic    al imm8)                . (,(+ base #x04) ib))
-      ((,mnemonic    ax (imm16 imm8))        . (o16 ,(+ base #x05) iw))
-      ((,mnemonic    eax (imm32 imm16 imm8)) . (o32 ,(+ base #x05) id))
-      ((,mnemonic    (r/m8 r8) imm8)         . (#x80 ,opcode ib))
-      ((,mnemonic    byte m imm8)            . (#x80 ,opcode ib))
-      ((,mnemonic    (r/m16 r16 m) imm16)    . (o16 #x81 ,opcode iw))
-      ((,mnemonic    (r/m32 r32 m) imm32)    . (o32 #x81 ,opcode id))
-      ((,mnemonic    (r/m16 r16) imm8)       . (o16 #x83 ,opcode ib))
-      ((,mnemonic    (r/m32 r32) imm8)       . (o32 #x83 ,opcode ib))
-      ((,mnemonic    word m imm8)            . (o16 #x83 ,opcode ib))
-      ((,mnemonic    dword m imm8)           . (o32 #x83 ,opcode ib))
-      ((,mnemonic    (r/m8 r8 m) r8)         . (,base /r))
-      ((,mnemonic    (r/m16 r16 m) r16)      . (o16 ,(+ base #x01) /r))
-      ((,mnemonic    (r/m32 r32 m) r32)      . (o32 ,(+ base #x01) /r))
-      ((,mnemonic    r8 (r/m8 r8 m))         . (,(+ base #x02) /r))
-      ((,mnemonic    r16 (r/m16 r16 m))      . (o16 ,(+ base #x03) /r))
-      ((,mnemonic    r32 (r/m32 r32 m))      . (o32 ,(+ base #x03) /r)))))
+    `(((,mnemonic al imm8)                   . (,(+ base #x04) ib))
+      ((,mnemonic ax (imm16 imm8))           . (o16 ,(+ base #x05) iw))
+      ((,mnemonic eax (imm32 imm16 imm8))    . (o32 ,(+ base #x05) id))
+      ((,mnemonic (r/m8 r8) imm8)            . (#x80 ,opcode ib))
+      ((,mnemonic byte m imm8)               . (#x80 ,opcode ib))
+      ((,mnemonic (r/m16 r16 m) imm16)       . (o16 #x81 ,opcode iw))
+      ((,mnemonic (r/m32 r32 m) imm32)       . (o32 #x81 ,opcode id))
+      ((,mnemonic (r/m16 r16) imm8)          . (o16 #x83 ,opcode ib))
+      ((,mnemonic (r/m32 r32) imm8)          . (o32 #x83 ,opcode ib))
+      ((,mnemonic word m imm8)               . (o16 #x83 ,opcode ib))
+      ((,mnemonic dword m imm8)              . (o32 #x83 ,opcode ib))
+      ((,mnemonic (r/m8 r8 m) r8)            . (,base /r))
+      ((,mnemonic (r/m16 r16 m) r16)         . (o16 ,(+ base #x01) /r))
+      ((,mnemonic (r/m32 r32 m) r32)         . (o32 ,(+ base #x01) /r))
+      ((,mnemonic r8 (r/m8 r8 m))            . (,(+ base #x02) /r))
+      ((,mnemonic r16 (r/m16 r16 m))         . (o16 ,(+ base #x03) /r))
+      ((,mnemonic r32 (r/m32 r32 m))         . (o32 ,(+ base #x03) /r)))))
+
+(defun arith-syntax-2 (mnemonic)
+  "Return syntax table for arithmetic operations: div/mul/neg/not."
+  (let ((opcode (ecase mnemonic
+                  (div '/6) (mul '/4) (neg '/3) (not '/2))))
+    `(((,mnemonic (r/m8 r8))                 . (#xf6 ,opcode))
+      ((,mnemonic byte m)                    . (#xf6 ,opcode))
+      ((,mnemonic (r/m16 r16))               . (#xf7 ,opcode))
+      ((,mnemonic word m)                    . (#xf7 ,opcode)))))
 
 ;;; Following are syntax tables for x86-64. For each entry, 1st part
 ;;; is the instruction type, 2nd part is the corresponding opcode.
@@ -115,16 +123,13 @@ sub, and xor."
 ;;;    refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
 
 (defparameter *x86-64-syntax-common*
-  `(,@(arith-syntax 'add)
-    ,@(arith-syntax 'and)  
+  `(,@(arith-syntax-1 'add)
+    ,@(arith-syntax-1 'and)  
     ((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))
-    ,@(arith-syntax 'cmp)
-    ((div    (r/m8 r8))                      . (#xf6 /6))
-    ((div    byte m)                         . (#xf6 /6))
-    ((div    (r/m16 r16))                    . (#xf7 /6))
-    ((div    word m)                         . (#xf7 /6))
+    ,@(arith-syntax-1 'cmp)
+    ,@(arith-syntax-2 'div)
     ((hlt)                                   . (#xf4))
     ((in     al imm8)                        . (#xe4 ib)) 
     ((in     ax imm8)                        . (#xe5 ib))
@@ -151,20 +156,11 @@ sub, and xor."
     ((movsb)                                 . (#xa4))
     ((movsw)                                 . (o16 #xa5))
     ((movsd)                                 . (o32 #xa5))
-    ((mul    (r/m8 r8))                      . (#xf6 /4))
-    ((mul    byte m)                         . (#xf6 /4))
-    ((mul    (r/m16 r16))                    . (#xf7 /4))
-    ((mul    word m)                         . (#xf7 /4))
-    ((neg    (r/m8 r8))                      . (#xf6 /3))
-    ((neg    byte m)                         . (#xf6 /3))
-    ((neg    (r/m16 r16))                    . (#xf7 /3))
-    ((neg    word m)                         . (#xf7 /3))
+    ,@(arith-syntax-2 'mul)
+    ,@(arith-syntax-2 'neg)   
     ((nop)                                   . (#x90))
-    ((not    (r/m8 r8))                      . (#xf6 /2))
-    ((not    byte m)                         . (#xf6 /2))
-    ((not    (r/m16 r16))                    . (#xf7 /2))
-    ((not    word m)                         . (#xf7 /2))
-    ,@(arith-syntax 'or)
+    ,@(arith-syntax-2 'not)
+    ,@(arith-syntax-1 'or)
     ((out    imm8 r8)                        . (#xe6 ib))   ; (out imm8 al)
     ((out    imm8 r16)                       . (#xe7 ib))   ; (out imm8 ax)
     ((out    dx al)                          . (#xee))
@@ -201,7 +197,7 @@ sub, and xor."
     ((sti)                                   . (#xfb))
     ((stosb)                                 . (#xaa))
     ((stosw)                                 . (#xab))
-    ,@(arith-syntax 'sub)
+    ,@(arith-syntax-1 'sub)
     ((test    al imm8)                       . (#xa8 ib))
     ((test    ax (imm16 imm8))               . (#xa9 iw))
     ((test    (r/m8 r8) imm8)                . (#xf6 /0 ib))
@@ -210,7 +206,7 @@ sub, and xor."
     ((test    word m (imm16 imm8))           . (#xf7 /0 iw))
     ((test    (r/m8 r8 m) r8)                . (#x84 /r))
     ((test    (r/m16 r16 m) r16)             . (#x85 /r))
-    ,@(arith-syntax 'xor))
+    ,@(arith-syntax-1 'xor))
   "Valid for both 16-bit and 64-bit modes.")
 
 (defparameter *x86-64-syntax-16/32-bit-only*
@@ -733,7 +729,7 @@ current label."
       (return o))))
 
 (defun scaled-index? (v)
-  "Returns T is v is a scaled index (e.g. eax*2)."
+  "Returns T if v is a scaled index (e.g. eax*2)."
   ;; TODO: using regular expression when available.
   (let ((s (str v)))
     (and (= (length s) 5)
