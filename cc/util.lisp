@@ -56,3 +56,31 @@ is their concatenation. From ON LISP."
   "Return the cdr of the result of assoc."
   (cdr (apply #'assoc args)))
 
+(defun segment (list n)
+  "Segment list with each sublist containing n elements."
+  (cond
+    ((null list) nil)
+    ((<= (length list) n) (list list))
+    (t (append (list (subseq list 0 n)) (segment (nthcdr n list) n)))))
+
+(defun printable? (c)
+  "Returns T if char (as integer) is printable."
+  (<= 32 c 126)) ; Seems that graphic-char-p allows more chars as printable.
+
+(defun pp-char (c)
+  "Returns the character form of c if printable; otherwise ."
+  (if (printable? c) (code-char c) #\.))
+
+(defun pp-hex (s)
+  "Pretty print S (stream of bytes) in hexadecimal manner. Output is
+same as Emacs hexl-mode."
+  (format 
+   t "87654321  0011 2233 4455 6677 8899 aabb ccdd eeff  0123456789abcdef~%")
+  (let ((ss (segment s 16)))
+    (loop for i from 0 below (length ss)
+       do (format t "~8,'0X: ~{~{~2,'0X~} ~}~51T~{~c~}~%" 
+                  (* i 16) (segment (nth i ss) 2) 
+                  (mapcar #'pp-char (nth i ss))))))
+
+  
+

@@ -71,6 +71,10 @@
            (t           (error "asm: wrong byte for final processing: ~A" c))))
      code)))
 
+(defun pp-asm (listing)
+  "Processing the list with asm, and pretty print the bytes with pp-hex."
+  (pp-hex (asm listing)))
+
 (defun arith-syntax (mnemonic)
   "Return syntax table for arithmetic operations: add, and, cmp, or,
 sub, and xor."
@@ -259,6 +263,10 @@ sub, and xor."
         (loop for byte = (read-byte s nil)
              while byte do (push byte output))
         (nreverse output)))))
+
+(defun pp-image (filename)
+  "Pretty print the image file."
+  (pp-hex (read-image filename)))
 
 (defparameter *prefix-mapping*
   `((lock . #xf0) 
