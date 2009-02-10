@@ -36,9 +36,7 @@
           (let* ((e* (cons (car e) 
                           (try-eval-values 
                            (normalize-local-labels (cdr e) label)
-                           cursor origin symtab t)))
-                 ;; FIXME: the above may not handle times correctly if
-                 ;; labels have same name as instructions.
+                           cursor origin symtab)))
                  (snippet (case (car e*)
                             (bits (setf bits (second e*))
                                   nil)
@@ -522,14 +520,12 @@ converted from signed to unsigned."
        (decf y (* r (expt 256 e)))
        (push r z)))))
 
-(defun try-eval-values (ops cursor origin symtab has-real-car?)
+(defun try-eval-values (ops cursor origin symtab)
   "Run lookup-value. For each element, evaluate it if possible."
-  (let ((vs (lookup-value ops has-real-car? cursor origin symtab)))
-    (mapcar #'(lambda (v) 
-                (if (evaluable? v)
-                    (eval v)
-                    v))
-            vs)))
+  (mapcar #'(lambda (v) 
+              (let ((v* (lookup-value v cursor origin symtab)))
+                (if (evaluable? v*) (eval v*) v*)))
+          ops))
 
 (defun evaluable? (e)
   "Returns T is expression e is evaluable."
@@ -542,7 +538,7 @@ converted from signed to unsigned."
 
 (defun eval-final (revisit symtab)
   "Final evaluation of the revisit."
-  (car (try-eval-values (cdr revisit) -1 -1 symtab nil)))
+  (car (try-eval-values (cdr revisit) -1 -1 symtab)))
 
 (defun on->in (on)
   "Maps opcode notation (e.g. ib, iw) to instruction notation (e.g. imm8)."
@@ -560,21 +556,18 @@ converted from signed to unsigned."
     ((id rd) 4)
     ((io ro) 8)))
 
-(defun lookup-value (ops has-real-car? cursor origin symtab)
-  "Replace special variables and labels with values if possible.
-   Note that we do NOT handle car which are lisp
-   operators. has-real-car?  indicates the ops position in original
-   list. T if its car is an operator (real car)."
+(defun lookup-value (ops cursor origin symtab)
+  "Replace special variables and labels with values if possible."
   (cond
     ((atom ops) (operand->value ops cursor origin symtab))
     ((null ops) nil)
     ((atom (car ops)) 
-     (cons (if has-real-car? 
-               (car ops)
-               (lookup-value (car ops) t cursor origin symtab))
-           (lookup-value (cdr ops) nil cursor origin symtab)))
-    (t (cons (lookup-value (car ops) t cursor origin symtab)
-             (lookup-value (cdr ops) nil cursor origin symtab)))))
+     (cons (car ops)
+           (mapcar #'(lambda (co)
+                       (lookup-value co cursor origin symtab))
+                   (cdr ops))))
+    (t (cons (lookup-value (car ops) cursor origin symtab)
+             (lookup-value (cdr ops) cursor origin symtab)))))
 
 (defun operand->value (operand cursor origin symtab)
   "For labels, returns its value if possible.
