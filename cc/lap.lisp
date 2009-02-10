@@ -446,18 +446,19 @@ in bytes.
          ((and (= (length r/m) 1) ; Special handling of (disp32)
                (member* '(imm8 imm16 imm32 label) type))
           (values 0 #b101 nil (car r/m) 4))
-         ((and (member 'esp r/m) (member 'imm8 type))
+         ((and (= (length r/m) 2) (member 'esp r/m) (member 'imm8 type))
           ;; Special handling of (esp + disp8)
           (values 1 #b100  (encode-sib 0 #b100 4) 
                   (instruction-value r/m type 'imm8) 1))
-         ((and (member 'esp r/m) (member* '(imm16 imm32) type))
+         ((and (= (length r/m) 2) (member 'esp r/m) 
+               (member* '(imm16 imm32) type))
           ;; Special handling of (esp + disp32)
           (values 2 #b100  (encode-sib 0 #b100 4) 
                   (instruction-value r/m type (member* '(imm16 imm32) type)) 4))
          (t (let* ((mod (cond 
-                         ((member 'imm8 type) 1)
-                         ((member* '(imm16 imm32) type) 2)
-                         (t 0)))
+                          ((member 'imm8 type) 1)
+                          ((member* '(imm16 imm32) type) 2)
+                          (t 0)))
                    (disp (ecase mod
                            (1 (instruction-value r/m type 'imm8))
                            (2 (instruction-value r/m type 
@@ -475,10 +476,9 @@ in bytes.
                                                       (subseq sis 4 5))
                                                      2)))
                                   (index (reg->int (symb (subseq sis 0 3))))
-                                  (base (aif (find-if #'r32? r/m)
-                                             (reg->int it)
-                                             5)))
-                             (when (= base 5)
+                                  (base-reg (find-if #'r32? r/m))
+                                  (base (if base-reg (reg->int base-reg) 5)))
+                             (unless base-reg
                                ;; Special case of (scaled-index + disp32)
                                (setf mod 0
                                      disp (instruction-value 
