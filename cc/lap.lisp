@@ -59,7 +59,10 @@
           (progn
             (unless (local-label? e)
               (setf label e))
-            (push (cons (normalize-label e label) cursor) symtab))))
+            (let ((nl (normalize-label e label)))
+              (when (assoc nl symtab)
+                (error "asm: duplicated label ~A." nl))
+              (push (cons nl cursor) symtab)))))
     (mapcan 
      #'(lambda (c)
          (cond
