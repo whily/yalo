@@ -73,7 +73,7 @@
   "Processing the list with asm, and pretty print the bytes with pp-hex."
   (pp-hex (asm listing)))
 
-(defun arith-syntax-1 (mnemonic)
+(defun arith-syntax-1 (mnemonic 64bit-only?)
   "Return syntax table for arithmetic operations: add/and/cmp/or/sub/xor."
   (let ((base   ; Base opcode for operation on r/m8 r8.
          (ecase mnemonic
@@ -83,23 +83,32 @@
          (ecase mnemonic
            (add '/0) (and '/4) (cmp '/7)
            (or  '/1) (sub '/5) (xor '/6))))
-    `(((,mnemonic al imm8)                   . (,(+ base #x04) ib))
-      ((,mnemonic ax (imm16 imm8))           . (o16 ,(+ base #x05) iw))
-      ((,mnemonic eax (imm32 imm16 imm8))    . (o32 ,(+ base #x05) id))
-      ((,mnemonic (r/m8 r8) imm8)            . (#x80 ,opcode ib))
-      ((,mnemonic byte m imm8)               . (#x80 ,opcode ib))
-      ((,mnemonic (r/m16 r16 m) imm16)       . (o16 #x81 ,opcode iw))
-      ((,mnemonic (r/m32 r32 m) imm32)       . (o32 #x81 ,opcode id))
-      ((,mnemonic (r/m16 r16) imm8)          . (o16 #x83 ,opcode ib))
-      ((,mnemonic (r/m32 r32) imm8)          . (o32 #x83 ,opcode ib))
-      ((,mnemonic word m imm8)               . (o16 #x83 ,opcode ib))
-      ((,mnemonic dword m imm8)              . (o32 #x83 ,opcode ib))
-      ((,mnemonic (r/m8 r8 m) r8)            . (,base /r))
-      ((,mnemonic (r/m16 r16 m) r16)         . (o16 ,(+ base #x01) /r))
-      ((,mnemonic (r/m32 r32 m) r32)         . (o32 ,(+ base #x01) /r))
-      ((,mnemonic r8 (r/m8 r8 m))            . (,(+ base #x02) /r))
-      ((,mnemonic r16 (r/m16 r16 m))         . (o16 ,(+ base #x03) /r))
-      ((,mnemonic r32 (r/m32 r32 m))         . (o32 ,(+ base #x03) /r)))))
+    (if 64bit-only?
+        `(;; TODO: For imm8, encode with imm8 seems to save 3 bytes.
+          ((,mnemonic rax (imm32 imm16 imm8))    . (,(+ base #x05) id))
+          ((,mnemonic (r/m64 r64) (imm32 imm16)) . (#x81 ,opcode id))
+          ((,mnemonic qword m (imm32 imm16))     . (#x81 ,opcode id))
+          ((,mnemonic (r/m64 r64) imm8)          . (#x83 ,opcode ib))
+          ((,mnemonic qword m imm8)              . (#x83 ,opcode ib)))
+        `(((,mnemonic al imm8)                   . (,(+ base #x04) ib))
+          ((,mnemonic ax (imm16 imm8))           . (o16 ,(+ base #x05) iw))
+          ((,mnemonic eax (imm32 imm16 imm8))    . (o32 ,(+ base #x05) id))
+          ((,mnemonic (r/m8 r8) imm8)            . (#x80 ,opcode ib))
+          ((,mnemonic byte m imm8)               . (#x80 ,opcode ib))
+          ((,mnemonic (r/m16 r16) imm16)         . (o16 #x81 ,opcode iw))
+          ((,mnemonic word m imm16)              . (o16 #x81 ,opcode iw))
+          ((,mnemonic (r/m32 r32) (imm32 imm16)) . (o32 #x81 ,opcode id))
+          ((,mnemonic dword m (imm32 imm16))     . (o32 #x81 ,opcode id))
+          ((,mnemonic (r/m16 r16) imm8)          . (o16 #x83 ,opcode ib))
+          ((,mnemonic (r/m32 r32) imm8)          . (o32 #x83 ,opcode ib))
+          ((,mnemonic word m imm8)               . (o16 #x83 ,opcode ib))
+          ((,mnemonic dword m imm8)              . (o32 #x83 ,opcode ib))
+          ((,mnemonic (r/m8 r8 m) r8)            . (,base /r))
+          ((,mnemonic (r/m16 r16 m) r16)         . (o16 ,(+ base #x01) /r))
+          ((,mnemonic (r/m32 r32 m) r32)         . (o32 ,(+ base #x01) /r))
+          ((,mnemonic r8 (r/m8 r8 m))            . (,(+ base #x02) /r))
+          ((,mnemonic r16 (r/m16 r16 m))         . (o16 ,(+ base #x03) /r))
+          ((,mnemonic r32 (r/m32 r32 m))         . (o32 ,(+ base #x03) /r))))))
 
 (defun arith-syntax-2 (mnemonic)
   "Return syntax table for arithmetic operations: div/mul/neg/not."
@@ -138,12 +147,12 @@
 ;;;    refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
 
 (defparameter *x86-64-syntax-common*
-  `(,@(arith-syntax-1 'add)
-    ,@(arith-syntax-1 'and)  
+  `(,@(arith-syntax-1 'add nil)
+    ,@(arith-syntax-1 'and nil)  
     ((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))
-    ,@(arith-syntax-1 'cmp)
+    ,@(arith-syntax-1 'cmp nil)
     ,@(arith-syntax-2 'div)
     ((hlt)                                   . (#xf4))
     ((in     al imm8)                        . (#xe4 ib)) 
@@ -175,7 +184,7 @@
     ,@(arith-syntax-2 'neg)   
     ((nop)                                   . (#x90))
     ,@(arith-syntax-2 'not)
-    ,@(arith-syntax-1 'or)
+    ,@(arith-syntax-1 'or nil)
     ((out    imm8 r8)                        . (#xe6 ib))   ; (out imm8 al)
     ((out    imm8 r16)                       . (#xe7 ib))   ; (out imm8 ax)
     ((out    dx al)                          . (#xee))
@@ -190,7 +199,7 @@
     ((sti)                                   . (#xfb))
     ((stosb)                                 . (#xaa))
     ((stosw)                                 . (#xab))
-    ,@(arith-syntax-1 'sub)
+    ,@(arith-syntax-1 'sub nil)
     ((test    al imm8)                       . (#xa8 ib))
     ((test    ax (imm16 imm8))               . (#xa9 iw))
     ((test    (r/m8 r8) imm8)                . (#xf6 /0 ib))
@@ -199,7 +208,7 @@
     ((test    word m (imm16 imm8))           . (#xf7 /0 iw))
     ((test    (r/m8 r8 m) r8)                . (#x84 /r))
     ((test    (r/m16 r16 m) r16)             . (#x85 /r))
-    ,@(arith-syntax-1 'xor))
+    ,@(arith-syntax-1 'xor nil))
   "Valid for both 16-bit and 64-bit modes.")
 
 (defparameter *x86-64-syntax-16/32-bit-only*
@@ -216,7 +225,7 @@
   "Valid for 16-bit mode only.")
 
 (defparameter *x86-64-syntax-64-bit-only*
-  `(((add    rax (imm32 imm16 imm8))         . (rex.w #x05 id))))
+  `(,@(arith-syntax-1 'add t)))
 
 (defparameter *x86-64-syntax-16/32-bit*
   (append *x86-64-syntax-common* *x86-64-syntax-16/32-bit-only*)
@@ -275,7 +284,7 @@
     (if (member (car it) '(o16 o32 a16 a32))
         (append (size-prefix (car it) bits) (copy-list (cdr it)))
         (copy-list it)))
-   ((assoc* e (x86-64-syntax bits)
+   ((assoc e (x86-64-syntax bits)
             :test #'(lambda (x y)
                       (and (> (length y) 1)
                            (equal (subseq x 0 2) (subseq y 0 2))
@@ -283,7 +292,7 @@
                            (numberp (elt x 2)))))
     ;; Some registers are explicitly given as destination operand,
     ;; e.g. (add al imm8).
-    (encode-complex e (instruction-type e) it cursor bits))
+    (encode-complex e (canonical-type (car it)) (cdr it) cursor bits))
    ((assoc* e (x86-64-syntax bits)
             :test #'(lambda (x y)
                       (and (member (car x) '(shl shr))
@@ -323,36 +332,62 @@
     (encode-complex e type opcode cursor bits)))
 
 (defun encode-complex (instruction type opcode cursor bits)
-  "Return opcode for the given instruction."
-  (mapcan 
-   #'(lambda (on) 
-       (cond
-         ((numberp on) (list on))
-         ((listp on)  
-          (ecase (car on)
-            (+ (ecase (caddr on)
-                 (r (list (+ (cadr on) (reg->int (second instruction)))))))))
-         (t 
-          (ecase on
-            (rex.w (list (encode-rex 1 0 0 0)))
-            ((o16 o32 a16 a32) (size-prefix on bits))
-            ((ib iw id io) 
-             (try-encode-bytes (instruction-value instruction type (on->in on))
-                               (on-length on)))
-            ((rb rw rd ro)
-             (try-encode-bytes 
-              `(- ,(instruction-value instruction type (on->in on))
-                  ,(+ cursor 1 (on-length on)))
-              (on-length on)))
-            ((/0 /1 /2 /3 /4 /5 /6 /7) 
-             (encode-r/m-sib-disp
-              (instruction-value instruction type (find-r/m instruction type))
-              on bits))
-            (/r (encode-r/m-sib-disp 
-                 (instruction-value instruction type (find-r/m instruction type))
-                 (instruction-value instruction type (find-reg instruction type))
-                 bits))))))
-   opcode))
+  "Encode instruction (with optional rex prefix). Other prefixes like
+lock are directly handled in encode()."
+  (let* (rex-set ; Possibly containing a subset of {w r x b}.
+         (dummy (when (member* '(r/m64 r64 rax qword) type)
+                  (push 'w rex-set)))
+         (remaining
+          (mapcan 
+           #'(lambda (on) 
+               (cond
+                 ((numberp on) (list on))
+                 ((listp on)  
+                  (ecase (car on)
+                    (+ (ecase (caddr on)
+                         (r (list (+ (cadr on) 
+                                     (reg->int (second instruction)))))))))
+                 (t 
+                  (ecase on
+                    ((o16 o32 a16 a32) (size-prefix on bits))
+                    ((ib iw id io) 
+                     (try-encode-bytes (instruction-value instruction type 
+                                                          (on->in on))
+                                       (on-length on)))
+                    ((rb rw rd ro)
+                     (try-encode-bytes 
+                      `(- ,(instruction-value instruction type (on->in on))
+                          ,(+ cursor 1 (on-length on)))
+                      (on-length on)))
+                    ((/0 /1 /2 /3 /4 /5 /6 /7) 
+                     (multiple-value-bind (mod-sib-disp rex-set*)
+                         (encode-r/m-sib-disp
+                          (instruction-value instruction type 
+                                             (find-r/m instruction type))
+                          on bits)
+                       (setf rex-set (append rex-set rex-set*))
+                       mod-sib-disp))
+                    (/r 
+                     (multiple-value-bind (mod-sib-disp rex-set*)
+                         (encode-r/m-sib-disp 
+                          (instruction-value instruction type 
+                                             (find-r/m instruction type))
+                          (instruction-value instruction type 
+                                             (find-reg instruction type))
+                          bits)
+                       (setf rex-set (append rex-set rex-set*))
+                       mod-sib-disp))))))
+           opcode)))
+    (declare (ignore dummy))
+    (when (and rex-set (/= bits 64))
+      (error "Instruction ~A only supported in 64-bit mode." instruction))
+    (append (if (null rex-set)
+                nil
+                (list (encode-rex (if (member 'w rex-set) 1 0)
+                                  (if (member 'r rex-set) 1 0)
+                                  (if (member 'x rex-set) 1 0)
+                                  (if (member 'b rex-set) 1 0))))
+            remaining)))
 
 (defun size-prefix (op bits)
   "Handles operand/address-size override prefix o16 & o32. Returns nil
@@ -360,9 +395,11 @@
   (let* ((s (str op))
          (st (symb (subseq s 0 1)))
          (sbit (read-from-string (subseq s 1 3))))
-    (if (= sbit bits) nil (list (ecase st
-                                  (o #x66)
-                                  (a #x67))))))
+    (if (or (= sbit bits) (and (member bits '(32 64)) (member sbit '(32 64))))
+         nil 
+        (list (ecase st
+                (o #x66)
+                (a #x67))))))
 
 (defun find-r/m (instruction type)
   "Return the r/m contained in type."
@@ -377,42 +414,57 @@
        (error "No (s)reg operand in ~A~%" instruction)))
 
 (defun encode-r/m-sib-disp (r/m reg/opcode bits)
-  "Encode ModR/M, SIB byte (if any) and displacement (if any)."
-  (let ((r/o (case reg/opcode
-               ((/0 /1 /2 /3 /4 /5 /6 /7) 
-                (- (char-code (elt (symbol-name reg/opcode) 1)) 48))
-               (t (case (operand-type reg/opcode)
-                    (sreg (sreg->int reg/opcode))
-                    (t    (reg->int reg/opcode)))))))
-    (multiple-value-bind (mod rm sib disp disp-length) 
+  "Return 2 values:
+     - Encode ModR/M, SIB byte (if any) and displacement (if any).
+     - A list of (w r x b) if present."
+  (let* (rex-set
+         (r/o (case reg/opcode
+                ((/0 /1 /2 /3 /4 /5 /6 /7) 
+                 (- (char-code (elt (symbol-name reg/opcode) 1)) 48))
+                (t (case (operand-type reg/opcode)
+                     (sreg (sreg->int reg/opcode))
+                     (t    (multiple-value-bind (regi rex)
+                               (reg->int reg/opcode)
+                             (when rex (push (ecase rex
+                                               (p 'p)
+                                               (e 'r)) 
+                                             rex-set))
+                             regi)))))))
+    (multiple-value-bind (mod rm sib disp disp-length rex-set*) 
         (r/m-values r/m bits)
-      (append (list (encode-modr/m mod rm r/o))
-              (when sib
-                (list sib))
-              (when disp
-                (try-encode-bytes disp disp-length))))))
+      (values (append (list (encode-modr/m mod rm r/o))
+                      (when sib (list sib))
+                      (when disp (try-encode-bytes disp disp-length)))
+              (append rex-set rex-set*)))))
 
 (defun r/m-values (r/m bits)
-  "Return values: mod, r/m for encoding, sib, disp, and length of disp
-in bytes. 
+  "Return values: mod, r/m for encoding, sib, disp, length of disp
+in bytes, and rex-set.
 
    Note 
      1. If sib is not needed, return nil.
      2. If disp is not needed, return nil as disp and disp-length
      could be arbitrary."
   (ecase (operand-type r/m)
-    ((r8 r16 r32 r64) (values #b11 (reg->int r/m) nil nil 0))
+    ((r8 r16 r32 r64) 
+     (multiple-value-bind (regi rex)
+         (reg->int r/m)
+       (values #b11 regi nil nil 0 (if rex 
+                                       (list (ecase rex
+                                               (p 'p)
+                                               (e 'b)))
+                                       nil))))
     (m (ecase bits ;; FIXME: should be directly related to address mode.
          (16 (r/m-values-16 r/m))
          (32 (r/m-values-32 r/m))))))
 
 (defun r/m-values-16 (r/m)
   (if (equal r/m '(bp))  ; Special handling of (bp)
-      (values 1 #b110 nil 0 1)
+      (values 1 #b110 nil 0 1 nil)
       (let ((type (mapcar #'operand-type r/m)))
         (if (and (= (length r/m) 1) ; Special handling of (disp16)
                  (member* '(imm8 imm16 label) type))
-            (values 0 #b110 nil (car r/m) 2)
+            (values 0 #b110 nil (car r/m) 2 nil)
             (let* ((mod (cond 
                           ((member 'imm8 type) 1)
                           ((member 'imm16 type) 2)
@@ -432,29 +484,30 @@ in bytes.
                          ((member 'bx r/m) #b111)
                          (t (error "Incorrect memory addressing: ~A~%" 
                                    r/m)))))
-              (values mod rm nil disp mod))))))
+              (values mod rm nil disp mod nil))))))
 
 (defun r/m-values-32 (r/m)
   (cond
     ((equal r/m '(ebp))  ; Special handling of (ebp)
-     (values 1 #b101 nil 0 1))
+     (values 1 #b101 nil 0 1 nil))
     ((equal r/m '(esp))  ; Special handling of (esp)
-     (values 0 #b100  (encode-sib 0 #b100 4) nil 0))
+     (values 0 #b100  (encode-sib 0 #b100 4) nil 0 nil))
     (t 
      (let ((type (mapcar #'operand-type r/m)))
        (cond 
          ((and (= (length r/m) 1) ; Special handling of (disp32)
                (member* '(imm8 imm16 imm32 label) type))
-          (values 0 #b101 nil (car r/m) 4))
+          (values 0 #b101 nil (car r/m) 4 nil))
          ((and (= (length r/m) 2) (member 'esp r/m) (member 'imm8 type))
           ;; Special handling of (esp + disp8)
           (values 1 #b100  (encode-sib 0 #b100 4) 
-                  (instruction-value r/m type 'imm8) 1))
+                  (instruction-value r/m type 'imm8) 1 nil))
          ((and (= (length r/m) 2) (member 'esp r/m) 
                (member* '(imm16 imm32) type))
           ;; Special handling of (esp + disp32)
           (values 2 #b100  (encode-sib 0 #b100 4) 
-                  (instruction-value r/m type (member* '(imm16 imm32) type)) 4))
+                  (instruction-value r/m type (member* '(imm16 imm32) type)) 4
+                  nil))
          (t (let* ((mod (cond 
                           ((member 'imm8 type) 1)
                           ((member* '(imm16 imm32) type) 2)
@@ -497,7 +550,7 @@ in bytes.
                            #b100
                            (reg->int (member* '(eax ecx edx ebx ebp esi edi) 
                                               r/m)))))
-              (values mod rm sib disp disp-length))))))))  
+              (values mod rm sib disp disp-length nil))))))))  
                 
 (defun try-encode-bytes (x length)
   "If x is evaluable, run encode-bytes.
@@ -648,32 +701,51 @@ converted from signed to unsigned."
        (t     'm)))
     (t 
      (case operand
-       ((al cl dl bl ah ch dh bh bpl spl dil sil) 'r8)
-       ((ax cx dx bx sp bp si di)                 'r16)
-       ((eax ecx edx ebx esp ebp esi edi)         'r32)
+       ((al cl dl bl ah ch dh bh bpl spl dil sil 
+            r8l r9l r10l r11l r12l r13l r14l r15l)  'r8)
+       ((ax cx dx bx sp bp si di 
+            r8w r9w r10w r11w r12w r13w r14w r15w)  'r16)
+       ((eax ecx edx ebx esp ebp esi edi
+             r8d r9d r10d r11d r12d r13d r14d r15d) 'r32)
        ((rax rcx rdx rbx rsp rbp rsi rdi 
-             r8 r9 r10 r11 r12 r13 r14 r15)       'r64)
-       ((cs ds es ss fs gs)                       'sreg)
-       ((short byte word dword qword)             operand)
-       (t                                         'label)
-       ))))
+             r8 r9 r10 r11 r12 r13 r14 r15)         'r64)
+       ((cs ds es ss fs gs)                         'sreg)
+       ((short byte word dword qword)               operand)
+       (t                                           'label)))))
 
 (defun r32? (op)
   "Returns T if operand op is a 32-bit general purpose register."
   (eq (operand-type op) 'r32))
 
 (defun reg->int (reg)
-  "Returns the integer representation for register when encoding
-ModR/M byte."
+  "Returns values of:
+     - the integer representation for register when encoding
+       ModR/M byte.
+     - whether extension (e.g. rex.b) is needed:
+       * nil: no REX extension
+       * p: REX extension is present but no field (e.g. rex.b or rex.r) is used.
+       * e: REX extension is used and one field will be set."
   (ecase reg
-    ((al ax eax mm0 xmm0) 0)
-    ((cl cx ecx mm1 xmm1) 1)
-    ((dl dx edx mm2 xmm2) 2)
-    ((bl bx ebx mm3 xmm3) 3)
-    ((ah sp esp mm4 xmm4) 4)
-    ((ch bp ebp mm5 xmm5) 5)
-    ((dh si esi mm6 xmm6) 6)
-    ((bh di edi mm7 xmm7) 7)))
+    ((al ax eax rax mm0 xmm0) (values 0 nil))
+    ((cl cx ecx rcx mm1 xmm1) (values 1 nil))
+    ((dl dx edx rdx mm2 xmm2) (values 2 nil))
+    ((bl bx ebx rbx mm3 xmm3) (values 3 nil))
+    ((ah sp esp rsp mm4 xmm4) (values 4 nil))
+    ((ch bp ebp rbp mm5 xmm5) (values 5 nil))
+    ((dh si esi rsi mm6 xmm6) (values 6 nil))
+    ((bh di edi rdi mm7 xmm7) (values 7 nil))
+    (spl                      (values 4 'p))
+    (bpl                      (values 5 'p))
+    (sil                      (values 6 'p))
+    (dil                      (values 7 'p))
+    ((r8l  r8w  r8d  r8)      (values 0 'e)) 
+    ((r9l  r9w  r9d  r9)      (values 1 'e))
+    ((r10l r10w r10d r10)     (values 2 'e))
+    ((r11l r11w r11d r11)     (values 3 'e))
+    ((r12l r12w r12d r12)     (values 4 'e))
+    ((r13l r13w r13d r13)     (values 5 'e))
+    ((r14l r14w r14d r14)     (values 6 'e))
+    ((r15l r15w r15d r15)     (values 7 'e))))
 
 (defun sreg->int (sreg)
   "Returns the integer representation for segment register when
