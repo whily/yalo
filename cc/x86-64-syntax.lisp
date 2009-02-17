@@ -161,7 +161,9 @@
   "Valid for 16-bit mode only.")
 
 (defparameter *x86-64-syntax-64-bit-only*
-  `(,@(arith-syntax-1 'add t)))
+  `(,@(arith-syntax-1 'add t)
+    ((syscall)                               . (#x0f #x05))
+    ((sysret)                                . (#x0f #x07))))
 
 (defparameter *x86-64-syntax-16/32-bit*
   (append *x86-64-syntax-common* *x86-64-syntax-16/32-bit-only*)
