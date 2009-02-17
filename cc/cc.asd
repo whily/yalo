@@ -18,6 +18,7 @@
   ((:file "package")
    (:file "util")
    (:file "bootloader")
+   (:file "x86-64-syntax")
    (:file "lap")
    (:file "unit-test")
    (:file "test-cc")))
