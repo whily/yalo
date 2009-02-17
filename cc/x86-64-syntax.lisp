@@ -13,19 +13,22 @@
   "Return syntax table for arithmetic operations: add/and/cmp/or/sub/xor."
   (let ((base   ; Base opcode for operation on r/m8 r8.
          (ecase mnemonic
-           (add #x00) (and #x20) (cmp #x38)
-           (or  #x08) (sub #x28) (xor #x30)))
+           (adc #x10) (add #x00) (and #x20) (cmp #x38)
+           (or  #x08) (sbb #x18) (sub #x28) (xor #x30)))
         (opcode ; Opcode used when one operand is immediate.
          (ecase mnemonic
-           (add '/0) (and '/4) (cmp '/7)
-           (or  '/1) (sub '/5) (xor '/6))))
+           (adc '/2) (add '/0) (and '/4) (cmp '/7)
+           (or  '/1) (sbb '/3) (sub '/5) (xor '/6))))
     (if 64bit-only?
-        `(;; TODO: For imm8, encode with imm8 seems to save 3 bytes.
+        `(;; TODO: For imm8, encode with imm8 with generic r64
+          ;; (instead of rax) seems to save 3 bytes.
           ((,mnemonic rax (imm32 imm16 imm8))    . (,(+ base #x05) id))
           ((,mnemonic (r/m64 r64) (imm32 imm16)) . (#x81 ,opcode id))
           ((,mnemonic qword m (imm32 imm16))     . (#x81 ,opcode id))
           ((,mnemonic (r/m64 r64) imm8)          . (#x83 ,opcode ib))
-          ((,mnemonic qword m imm8)              . (#x83 ,opcode ib)))
+          ((,mnemonic qword m imm8)              . (#x83 ,opcode ib))
+          ((,mnemonic (r/m64 r64 m) r64)         . (,(+ base #x01) /r))
+          ((,mnemonic r64 (r/m64 r64 m))         . (,(+ base #x03) /r)))
         `(((,mnemonic al imm8)                   . (,(+ base #x04) ib))
           ((,mnemonic ax (imm16 imm8))           . (o16 ,(+ base #x05) iw))
           ((,mnemonic eax (imm32 imm16 imm8))    . (o32 ,(+ base #x05) id))
@@ -83,7 +86,8 @@
 ;;;    refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
 
 (defparameter *x86-64-syntax-common*
-  `(,@(arith-syntax-1 'add nil)
+  `(,@(arith-syntax-1 'adc nil)
+    ,@(arith-syntax-1 'add nil)
     ,@(arith-syntax-1 'and nil)  
     ((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
@@ -135,6 +139,7 @@
     ((sti)                                   . (#xfb))
     ((stosb)                                 . (#xaa))
     ((stosw)                                 . (#xab))
+    ,@(arith-syntax-1 'sbb nil)
     ,@(arith-syntax-1 'sub nil)
     ((test    al imm8)                       . (#xa8 ib))
     ((test    ax (imm16 imm8))               . (#xa9 iw))
@@ -161,9 +166,16 @@
   "Valid for 16-bit mode only.")
 
 (defparameter *x86-64-syntax-64-bit-only*
-  `(,@(arith-syntax-1 'add t)
+  `(,@(arith-syntax-1 'adc t)
+    ,@(arith-syntax-1 'add t)
+    ,@(arith-syntax-1 'and t)
+    ,@(arith-syntax-1 'cmp t)
+    ,@(arith-syntax-1 'or  t)
+    ,@(arith-syntax-1 'sbb t)
+    ,@(arith-syntax-1 'sub t)
     ((syscall)                               . (#x0f #x05))
-    ((sysret)                                . (#x0f #x07))))
+    ((sysret)                                . (#x0f #x07))
+    ,@(arith-syntax-1 'xor t)))
 
 (defparameter *x86-64-syntax-16/32-bit*
   (append *x86-64-syntax-common* *x86-64-syntax-16/32-bit-only*)

@@ -288,7 +288,7 @@ in bytes, and rex-set.
                                        nil))))
     (m (ecase bits ;; FIXME: should be directly related to address mode.
          (16 (r/m-values-16 r/m))
-         (32 (r/m-values-32 r/m))))))
+         ((32 64) (r/m-values-32 r/m))))))
 
 (defun r/m-values-16 (r/m)
   (if (equal r/m '(bp))  ; Special handling of (bp)
