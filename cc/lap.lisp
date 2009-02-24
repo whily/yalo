@@ -102,7 +102,7 @@
   (pp-hex (read-image filename)))
 
 (defparameter *prefix-mapping*
-  `((lock . #xf0) 
+  `((lock  . #xf0) 
     (repne . #xf2) (repnz .#xf2) 
     (rep   . #xf3) (repe  . #xf3) (repz . #xf3))
   "Prefix mapping table.")
@@ -142,6 +142,14 @@
                            (member (car (last x)) '(1 cl)))))
     ;; Special case for (shl/shr r/m8/16 1/cl).
     (encode-complex (butlast e) (butlast (instruction-type e)) it cursor bits))
+   ((and (>= (length (str (car e))) 5) (string= (subseq (str (car e)) 0 4) "CMOV")
+         (>= (cc->int (symb (subseq (str (car e)) 4))) 0))
+    ;; CMOVcc.
+    (declare (ignore it))
+    (let* ((cc (symb (subseq (str (car e)) 4)))
+           (cc-code (cc->int cc))
+           (e* (cons 'cmovcc (cdr e))))
+      (match-n-encode e* cursor bits cc-code)))
    (t
     (declare (ignore it))
     (case (car e)
@@ -160,13 +168,13 @@
       ;; Normal instructions.
       (t (match-n-encode e cursor bits))))))
 
-(defun match-n-encode (e cursor bits)
+(defun match-n-encode (e cursor bits &optional (cc-code 0))
   "Match instruction and encode it."
   (multiple-value-bind (type opcode)
       (match-instruction e (instruction-type e) bits)
-    (encode-complex e type opcode cursor bits)))
+    (encode-complex e type opcode cursor bits cc-code)))
 
-(defun encode-complex (instruction type opcode cursor bits)
+(defun encode-complex (instruction type opcode cursor bits &optional (cc-code 0))
   "Encode instruction (with optional rex prefix). Other prefixes like
 lock are directly handled in encode()."
   (let* (rex-set ; Possibly containing a subset of {w r x b}.
@@ -181,7 +189,8 @@ lock are directly handled in encode()."
                   (ecase (car on)
                     (+ (ecase (caddr on)
                          (r (list (+ (cadr on) 
-                                     (reg->int (second instruction)))))))))
+                                     (reg->int (second instruction)))))
+                         (cc (list (+ (cadr on) cc-code)))))))
                  (t 
                   (ecase on
                     ((o16 o32 a16 a32) (size-prefix on bits))
@@ -279,7 +288,7 @@ in bytes, and rex-set.
    Note 
      1. If sib is not needed, return nil.
      2. If disp is not needed, return nil as disp and disp-length
-     could be arbitrary."
+        could be arbitrary."
   (ecase (operand-type r/m)
     ((r8 r16 r32 r64) 
      (multiple-value-bind (regi rex)
@@ -592,6 +601,16 @@ encoding ModR/M byte."
     (ds 3)
     (fs 4)
     (gs 5)))
+
+(defun cc->int (cc)
+  "Returns the integer representing conditional codes (cc) used by
+cmovcc and jcc. Returns -1 if cc is not a valid value."
+  (case cc
+    (o          0)  (no         1)  ((b c nae)  2)  ((ae nb nc) 3)
+    ((e z)      4)  ((ne nz)    5)  ((be na)    6)  ((a nbe)    7)
+    (s          8)  (ns         9)  ((p pe)     10) ((np po)    11)
+    ((l nge)    12) ((ge nl)    13) ((le ng)    14) ((g nle)    15)
+    (t -1)))
 
 (defun string->bytes (s)
   (map 'list #'char-code s))

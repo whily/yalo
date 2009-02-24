@@ -10,7 +10,8 @@
 (in-package :cc)
 
 (defun arith-syntax-1 (mnemonic 64bit-only?)
-  "Return syntax table for arithmetic operations: add/and/cmp/or/sub/xor."
+  "Return syntax table for arithmetic operations:
+adc/add/and/cmp/or/sbb/sub/xor."
   (let ((base   ; Base opcode for operation on r/m8 r8.
          (ecase mnemonic
            (adc #x10) (add #x00) (and #x20) (cmp #x38)
@@ -92,6 +93,8 @@
     ((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))
+    ((cmovcc r16 (r/m16 r16 m))              . (o16 #x0f (+ #x40 cc) /r))
+    ((cmovcc r32 (r/m32 r32 m))              . (o32 #x0f (+ #x40 cc) /r))      
     ,@(arith-syntax-1 'cmp nil)
     ((dec    (r/m8 r8))                      . (#xfe /1))
     ((dec    byte m)                         . (#xfe /1))
@@ -185,6 +188,7 @@
   `(,@(arith-syntax-1 'adc t)
     ,@(arith-syntax-1 'add t)
     ,@(arith-syntax-1 'and t)
+    ((cmovcc r64 (r/m64 r64 m))              . (#x0f (+ #x40 cc) /r))
     ,@(arith-syntax-1 'cmp t)
     ((dec    (r/m64 r64))                    . (#xff /1))
     ((dec    qword m)                        . (#xff /1))
