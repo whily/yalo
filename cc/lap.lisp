@@ -142,14 +142,12 @@
                            (member (car (last x)) '(1 cl)))))
     ;; Special case for (shl/shr r/m8/16 1/cl).
     (encode-complex (butlast e) (butlast (instruction-type e)) it cursor bits))
-   ((and (>= (length (str (car e))) 5) (string= (subseq (str (car e)) 0 4) "CMOV")
-         (>= (cc->int (symb (subseq (str (car e)) 4))) 0))
-    ;; CMOVcc.
+   ((cc-instruction? e 'cmov) ; CMOVcc.
     (declare (ignore it))
-    (let* ((cc (symb (subseq (str (car e)) 4)))
-           (cc-code (cc->int cc))
-           (e* (cons 'cmovcc (cdr e))))
-      (match-n-encode e* cursor bits cc-code)))
+    (cc-encode e 'cmov cursor bits))
+   ((cc-instruction? e 'j)    ; Jcc.
+    (declare (ignore it))
+    (cc-encode e 'j cursor bits))
    (t
     (declare (ignore it))
     (case (car e)
@@ -174,53 +172,58 @@
       (match-instruction e (instruction-type e) bits)
     (encode-complex e type opcode cursor bits cc-code)))
 
-(defun encode-complex (instruction type opcode cursor bits &optional (cc-code 0))
+(defun encode-complex (instruction type opcode cursor bits 
+                       &optional (cc-code 0))
   "Encode instruction (with optional rex prefix). Other prefixes like
 lock are directly handled in encode()."
   (let* (rex-set ; Possibly containing a subset of {w r x b}.
          (dummy (when (member* '(r/m64 r64 rax qword) type)
                   (push 'w rex-set)))
+         (encoded-len 0) ; Tracking for (R)IP relative encoding.
          (remaining
           (mapcan 
            #'(lambda (on) 
-               (cond
-                 ((numberp on) (list on))
-                 ((listp on)  
-                  (ecase (car on)
-                    (+ (ecase (caddr on)
-                         (r (list (+ (cadr on) 
-                                     (reg->int (second instruction)))))
-                         (cc (list (+ (cadr on) cc-code)))))))
-                 (t 
-                  (ecase on
-                    ((o16 o32 a16 a32) (size-prefix on bits))
-                    ((ib iw id io) 
-                     (try-encode-bytes (instruction-value instruction type 
-                                                          (on->in on))
-                                       (on-length on)))
-                    ((rb rw rd ro)
-                     (try-encode-bytes 
-                      `(- ,(instruction-value instruction type (on->in on))
-                          ,(+ cursor 1 (on-length on)))
-                      (on-length on)))
-                    ((/0 /1 /2 /3 /4 /5 /6 /7) 
-                     (multiple-value-bind (mod-sib-disp rex-set*)
-                         (encode-r/m-sib-disp
-                          (instruction-value instruction type 
-                                             (find-r/m instruction type))
-                          on bits)
-                       (setf rex-set (append rex-set rex-set*))
-                       mod-sib-disp))
-                    (/r 
-                     (multiple-value-bind (mod-sib-disp rex-set*)
-                         (encode-r/m-sib-disp 
-                          (instruction-value instruction type 
-                                             (find-r/m instruction type))
-                          (instruction-value instruction type 
-                                             (find-reg instruction type))
-                          bits)
-                       (setf rex-set (append rex-set rex-set*))
-                       mod-sib-disp))))))
+               (let ((x
+                      (cond
+                        ((numberp on) (list on))
+                        ((listp on)  
+                         (ecase (car on)
+                           (+ (ecase (caddr on)
+                                (r (list (+ (cadr on) 
+                                            (reg->int (second instruction)))))
+                                (cc (list (+ (cadr on) cc-code)))))))
+                        (t 
+                         (ecase on
+                           ((o16 o32 a16 a32) (size-prefix on bits))
+                           ((ib iw id io) 
+                            (try-encode-bytes (instruction-value instruction type 
+                                                                 (on->in on))
+                                              (on-length on)))
+                           ((rb rw rd ro)
+                            (try-encode-bytes 
+                             `(- ,(instruction-value instruction type (on->in on))
+                                 ,(+ cursor encoded-len (on-length on)))
+                             (on-length on)))
+                           ((/0 /1 /2 /3 /4 /5 /6 /7) 
+                            (multiple-value-bind (mod-sib-disp rex-set*)
+                                (encode-r/m-sib-disp
+                                 (instruction-value instruction type 
+                                                    (find-r/m instruction type))
+                                 on bits)
+                              (setf rex-set (append rex-set rex-set*))
+                              mod-sib-disp))
+                           (/r 
+                            (multiple-value-bind (mod-sib-disp rex-set*)
+                                (encode-r/m-sib-disp 
+                                 (instruction-value instruction type 
+                                                    (find-r/m instruction type))
+                                 (instruction-value instruction type 
+                                                    (find-reg instruction type))
+                                 bits)
+                              (setf rex-set (append rex-set rex-set*))
+                              mod-sib-disp)))))))
+                 (incf encoded-len (length x))
+                 x))
            opcode)))
     (declare (ignore dummy))
     (when (and rex-set (/= bits 64))
@@ -554,7 +557,7 @@ converted from signed to unsigned."
        ((rax rcx rdx rbx rsp rbp rsi rdi 
              r8 r9 r10 r11 r12 r13 r14 r15)         'r64)
        ((cs ds es ss fs gs)                         'sreg)
-       ((short byte word dword qword)               operand)
+       ((near short byte word dword qword)           operand)
        (t                                           'label)))))
 
 (defun r32? (op)
@@ -611,6 +614,22 @@ cmovcc and jcc. Returns -1 if cc is not a valid value."
     (s          8)  (ns         9)  ((p pe)     10) ((np po)    11)
     ((l nge)    12) ((ge nl)    13) ((le ng)    14) ((g nle)    15)
     (t -1)))
+
+(defun cc-instruction? (e prefix)
+  "Returns T if instruction e contains instruction code with prefix."
+  (let* ((mnemonic (str (car e)))
+         (prefix-s (str prefix))
+         (prefix-len (length prefix-s)))
+    (and (>= (length mnemonic) (1+ prefix-len))
+         (string= (subseq mnemonic 0 prefix-len) prefix-s)
+         (>= (cc->int (symb (subseq mnemonic prefix-len))) 0))))
+
+(defun cc-encode (e prefix cursor bits)
+  "Encode instructions with conditional codes."
+  (let* ((cc (symb (subseq (str (car e)) (length (str prefix)))))
+         (cc-code (cc->int cc))
+         (e* (cons (symb prefix 'cc) (cdr e))))
+    (match-n-encode e* cursor bits cc-code)))
 
 (defun string->bytes (s)
   (map 'list #'char-code s))
