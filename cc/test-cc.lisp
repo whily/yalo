@@ -329,7 +329,6 @@
 
 (deftest test-cc ()
   (check 
-    (equal (asm *bootloader*) *bootloader-code*)
     (equal (asm *address-asm*) *address-code*)
     (equal (asm *arith-asm*) *arith-code*)
     (equal (asm *misc-asm*)  *misc-code*)))

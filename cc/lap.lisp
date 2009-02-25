@@ -432,7 +432,7 @@ converted from signed to unsigned."
   (cond
     ((atom e) (numberp e))
     ((null e) t)
-    ((atom (car e)) (and (member (car e) '(+ -)) 
+    ((atom (car e)) (and (member (car e) '(+ - ceiling)) 
                          (every #'evaluable? (cdr e))))
     (t nil)))
 
