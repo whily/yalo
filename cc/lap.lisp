@@ -107,64 +107,72 @@
     (rep   . #xf3) (repe  . #xf3) (repz . #xf3))
   "Prefix mapping table.")
 
-(defun encode (e cursor bits)
+(defun encode (e* cursor bits)
   "Opcode encoding, including pseudo instructions like db/dw."
-  (acond
-   ((assoc* (car e) *prefix-mapping*)
-    (cons it (encode (cdr e) (1+ cursor) bits)))
-   ((assoc* e (x86-64-syntax bits) :test #'equal) 
-    ;; Instructions with exact match, e.g. instructions without
-    ;; operands (like nop, hlt), or special instructions like int 3.
-    ;; copy-list is necessary since syntax table is LITERAL.
-    (if (member (car it) '(o16 o32 a16 a32))
-        (append (size-prefix (car it) bits) (copy-list (cdr it)))
-        (copy-list it)))
-   ((assoc e (x86-64-syntax bits)
-            :test #'(lambda (x y)
-                      (and (> (length y) 1)
-                           (equal (subseq x 0 2) (subseq y 0 2))
-                           (member (elt x 1) '(al ax eax rax))
-                           (numberp (elt x 2)))))
-    ;; Some registers are explicitly given as destination operand,
-    ;; e.g. (add al imm8).
-    (encode-complex e (canonical-type (car it)) (cdr it) cursor bits))
-   ((assoc* e (x86-64-syntax bits)
-            :test #'(lambda (x y)
-                      (and (member (car x) '(shl shr))
-                           (> (length y) 2)
-                           (= (length x) (length y))
-                           (eq (car x) (car y))
-                           (eq (car (last x)) (car (last y)))
-                           (eq (operand-type (car (last x 2))) (car (last y 2)))
-                           (if (= (length x) 3)
-                               t
-                               (eq (second x) (second y)))
-                           (member (car (last x)) '(1 cl)))))
-    ;; Special case for (shl/shr r/m8/16 1/cl).
-    (encode-complex (butlast e) (butlast (instruction-type e)) it cursor bits))
-   ((cc-instruction? e 'cmov) ; CMOVcc.
-    (declare (ignore it))
-    (cc-encode e 'cmov cursor bits))
-   ((cc-instruction? e 'j)    ; Jcc.
-    (declare (ignore it))
-    (cc-encode e 'j cursor bits))
-   (t
-    (declare (ignore it))
-    (case (car e)
-      ;; Pseudo instructions.
-      ((db dw dd dq)
-       (let ((val (mklist (nth (1- (length e)) e))))
-         (mapcan #'(lambda (v)
-                     (ecase (car e)
-                       (db (cond
-                             ((stringp v) (string->bytes v))
-                             (t (try-encode-bytes v 1))))
-                       (dw (try-encode-bytes v 2))
-                       (dd (try-encode-bytes v 4))
-                       (dq (try-encode-bytes v 8))))
-                 val)))
-      ;; Normal instructions.
-      (t (match-n-encode e cursor bits))))))
+  (let ((e (if (and (eq (car e*) 'xchg)
+                    (member (second e*) '(ax eax rax)))
+               (list (car e*) (third e*) (second e*))
+               e*)))
+    (acond
+     ((assoc* (car e) *prefix-mapping*)
+      (cons it (encode (cdr e) (1+ cursor) bits)))
+     ((assoc* e (x86-64-syntax bits) :test #'equal) 
+      ;; Instructions with exact match, e.g. instructions without
+      ;; operands (like nop, hlt), or special instructions like int 3.
+      ;; copy-list is necessary since syntax table is LITERAL.
+      (if (member (car it) '(o16 o32 a16 a32))
+          (append (size-prefix (car it) bits) (copy-list (cdr it)))
+          (copy-list it)))
+     ((assoc e (x86-64-syntax bits)
+             :test #'(lambda (x y)
+                       (and (> (length y) 1)
+                            (eq (car x) (car y))
+                            (or (and (member (elt x 1) '(al ax eax rax))
+                                     (numberp (elt x 2))
+                                     (eq (second x) (second y)))
+                                (and (eq (car x) 'xchg)
+                                     (member (third x) '(ax eax rax))
+                                     (eq (third x) (third y)))))))
+      ;; Some registers are explicitly given as destination operand,
+      ;; e.g. (add al imm8).
+      (encode-complex e (canonical-type (car it)) (cdr it) cursor bits))
+     ((assoc* e (x86-64-syntax bits)
+              :test #'(lambda (x y)
+                        (and (member (car x) '(shl shr))
+                             (> (length y) 2)
+                             (= (length x) (length y))
+                             (eq (car x) (car y))
+                             (eq (car (last x)) (car (last y)))
+                             (eq (operand-type (car (last x 2))) (car (last y 2)))
+                             (if (= (length x) 3)
+                                 t
+                                 (eq (second x) (second y)))
+                             (member (car (last x)) '(1 cl)))))
+      ;; Special case for (shl/shr r/m8/16 1/cl).
+      (encode-complex (butlast e) (butlast (instruction-type e)) it cursor bits))
+     ((cc-instruction? e 'cmov) ; CMOVcc.
+      (declare (ignore it))
+      (cc-encode e 'cmov cursor bits))
+     ((cc-instruction? e 'j)    ; Jcc.
+      (declare (ignore it))
+      (cc-encode e 'j cursor bits))
+     (t
+      (declare (ignore it))
+      (case (car e)
+        ;; Pseudo instructions.
+        ((db dw dd dq)
+         (let ((val (mklist (nth (1- (length e)) e))))
+           (mapcan #'(lambda (v)
+                       (ecase (car e)
+                         (db (cond
+                               ((stringp v) (string->bytes v))
+                               (t (try-encode-bytes v 1))))
+                         (dw (try-encode-bytes v 2))
+                         (dd (try-encode-bytes v 4))
+                         (dq (try-encode-bytes v 8))))
+                   val)))
+        ;; Normal instructions.
+        (t (match-n-encode e cursor bits)))))))
 
 (defun match-n-encode (e cursor bits &optional (cc-code 0))
   "Match instruction and encode it."
