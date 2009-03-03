@@ -177,7 +177,8 @@
   "Encode instruction (with optional rex prefix). Other prefixes like
 lock are directly handled in encode()."
   (let* (rex-set ; Possibly containing a subset of {w r x b}.
-         (dummy (when (member* '(r/m64 r64 rax qword) type)
+         (dummy (when (or (member* '(r/m64 r64 rax qword) type)
+                          (eq (car instruction) 'cmpxchg16b))
                   (push 'w rex-set)))
          (encoded-len 0) ; Tracking for (R)IP relative encoding.
          (remaining
@@ -306,7 +307,8 @@ in bytes, and rex-set.
                                        nil))))
     (m (ecase bits ;; FIXME: should be directly related to address mode.
          (16 (r/m-values-16 r/m))
-         ((32 64) (r/m-values-32 r/m))))))
+         (32 (r/m-values-32 r/m))
+         (64 (r/m-values-64 r/m))))))
 
 (defun r/m-values-16 (r/m)
   (if (equal r/m '(bp))  ; Special handling of (bp)
@@ -399,6 +401,73 @@ in bytes, and rex-set.
                    (rm (if sib
                            #b100
                            (reg->int (member* '(eax ecx edx ebx ebp esi edi) 
+                                              r/m)))))
+              (values mod rm sib disp disp-length nil))))))))  
+
+(defun r/m-values-64 (r/m)
+  ;; TODO: overhaul (currently only something like a placeholder).
+  (cond
+    ((equal r/m '(rbp))  ; Special handling of (rbp)
+     (values 1 #b101 nil 0 1 nil))
+    ((equal r/m '(rsp))  ; Special handling of (rsp)
+     (values 0 #b100  (encode-sib 0 #b100 4) nil 0 nil))
+    (t 
+     (let ((type (mapcar #'operand-type r/m)))
+       (cond 
+         ((and (= (length r/m) 1) ; Special handling of (disp32)
+               (member* '(imm8 imm16 imm32 label) type))
+          (values 0 #b101 nil (car r/m) 4 nil))
+         ((and (= (length r/m) 2) (member 'rsp r/m) (member 'imm8 type))
+          ;; Special handling of (rsp + disp8)
+          (values 1 #b100  (encode-sib 0 #b100 4) 
+                  (instruction-value r/m type 'imm8) 1 nil))
+         ((and (= (length r/m) 2) (member 'rsp r/m) 
+               (member* '(imm16 imm32) type))
+          ;; Special handling of (rsp + disp32)
+          (values 2 #b100  (encode-sib 0 #b100 4) 
+                  (instruction-value r/m type (member* '(imm16 imm32) type)) 4
+                  nil))
+         (t (let* ((mod (cond 
+                          ((member 'imm8 type) 1)
+                          ((member* '(imm16 imm32) type) 2)
+                          (t 0)))
+                   (disp (ecase mod
+                           (1 (instruction-value r/m type 'imm8))
+                           (2 (instruction-value r/m type 
+                                                 (member* '(imm16 imm32) type)))
+                           (0 nil)))
+                   (disp-length
+                    (if (= mod 2)
+                        4
+                        mod))
+                   (sib (cond
+                          ((some #'scaled-index? r/m)  
+                           (let* ((si (find-if #'scaled-index? r/m))
+                                  (sis (str si))
+                                  (scale (floor (log (read-from-string 
+                                                      (subseq sis 4 5))
+                                                     2)))
+                                  (index (reg->int (symb (subseq sis 0 3))))
+                                  (base-reg (find-if #'r32? r/m))
+                                  (base (if base-reg (reg->int base-reg) 5)))
+                             (unless base-reg
+                               ;; Special case of (scaled-index + disp32)
+                               (setf mod 0
+                                     disp (instruction-value 
+                                           r/m type 
+                                           (member* '(imm8 imm16 imm32) type))
+                                     disp-length 4))
+                             (encode-sib scale index base)))
+                          ((= (count-if #'r32? r/m) 2)
+                           (let* ((scale 0)
+                                  (base (reg->int (find-if #'r32? r/m))) 
+                                  (index (reg->int (find-if #'r32? r/m 
+                                                            :from-end t))))
+                             (encode-sib scale index base)))
+                          (t nil)))
+                   (rm (if sib
+                           #b100
+                           (reg->int (member* '(rax rcx rdx rbx rbp rsi rdi) 
                                               r/m)))))
               (values mod rm sib disp disp-length nil))))))))  
                 
