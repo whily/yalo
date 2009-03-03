@@ -169,7 +169,7 @@
     (int     3)
     (int     #x10)
     .loop
-    (je      short .loop)
+    (je      .loop)
     (jmp     short .loop)
     (lgdt    (msg))
     (lidt    (msg))

@@ -116,7 +116,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((inc    dword m)                        . (o32 #xff /0))
     ((int    3)                              . (#xcc))
     ((int    imm8)                           . (#xcd ib))
-    ((jcc    short (imm8 label imm16))       . ((+ #x70 cc) rb))
+    ((jcc    (imm8 label imm16))             . ((+ #x70 cc) rb))
     ((jcc    near (imm32 label imm8 imm16))  . (#x0f (+ #x80 cc) rd))
     ((jmp    short (imm8 label imm16))       . (#xeb rb))
     ((lldt   (r/m16 r16 m))                  . (#x0f #x00 /2))
