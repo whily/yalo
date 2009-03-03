@@ -58,5 +58,4 @@
     (db       msg ("Hello World! " 13 10))
     endmsg    
 
-    kernel-end
-    ))
+    kernel-end))

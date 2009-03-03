@@ -189,8 +189,11 @@ lock are directly handled in encode()."
                         ((listp on)  
                          (ecase (car on)
                            (+ (ecase (caddr on)
-                                (r (list (+ (cadr on) 
-                                            (reg->int (second instruction)))))
+                                (r (multiple-value-bind (regi rex)
+                                       (reg->int (second instruction))
+                                     (when rex (push 'b rex-set))
+                                     (list (+ (cadr on) 
+                                              regi))))
                                 (cc (list (+ (cadr on) cc-code)))))))
                         (t 
                          (ecase on
