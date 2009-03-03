@@ -171,6 +171,9 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((test    word m (imm16 imm8))           . (#xf7 /0 iw))
     ((test    (r/m8 r8 m) r8)                . (#x84 /r))
     ((test    (r/m16 r16 m) r16)             . (#x85 /r))
+    ((xadd (r/m8 r8 m) r8)                   . (#x0f #xc0 /r))
+    ((xadd (r/m16 r16 m) r16)                . (o16 #x0f #xc1 /r))
+    ((xadd (r/m32 r32 m) r32)                . (o32 #x0f #xc1 /r))
     ,@(arith-syntax-1 'xor nil))
   "Valid for both 16-bit and 64-bit modes.")
 
@@ -209,6 +212,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ,@(arith-syntax-1 'sub t)
     ((syscall)                               . (#x0f #x05))
     ((sysret)                                . (#x0f #x07))
+    ((xadd (r/m64 r64 m) r64)                . (#x0f #xc1 /r))
     ,@(arith-syntax-1 'xor t)))
 
 (defparameter *x86-64-syntax-16/32-bit*
