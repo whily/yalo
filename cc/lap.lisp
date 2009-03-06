@@ -249,12 +249,13 @@ lock are directly handled in encode()."
             remaining)))
 
 (defun size-prefix (op bits)
-  "Handles operand/address-size override prefix o16 & o32. Returns nil
-  if no prefix is needed, otherwise corresponding prefix #x66 or #x67."
+  "Handles operand/address-size override prefix o16/o32 and
+  a16/a32. Returns nil if no prefix is needed, otherwise corresponding
+  prefix #x66 or #x67."
   (let* ((s (str op))
          (st (symb (subseq s 0 1)))
          (sbit (read-from-string (subseq s 1 3))))
-    (if (or (= sbit bits) (and (member bits '(32 64)) (member sbit '(32 64))))
+    (if (or (= sbit bits) (and (eq op 'o32) (member bits '(32 64))))
          nil 
         (list (ecase st
                 (o #x66)
