@@ -17,6 +17,7 @@
   :components
   ((:file "package")
    (:file "util")
+   (:file "bga")
    (:file "bootloader")
    (:file "x86-64-syntax")
    (:file "lap")
