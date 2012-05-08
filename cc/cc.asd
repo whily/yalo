@@ -22,4 +22,5 @@
    (:file "x86-64-syntax")
    (:file "lap")
    (:file "unit-test")
+   (:file "nasm")
    (:file "test-cc")))
