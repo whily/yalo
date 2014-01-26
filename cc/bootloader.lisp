@@ -41,6 +41,24 @@
     ;; Real start up code.
     real-start
 
+    ;; Check whether BGA is available
+    (call    bga-available)
+    (jc      no-bga-error)
+    ;; Set target screen mode.
+    ;(call    set-bga-mode)
+    ;; Show all red.
+    ;(mov     ecx ,(/ 65536 4))
+    ;(mov     eax #xa000)
+    ;(mov     es ax)
+    ;(xor     edi edi)
+    ;(mov     eax #xff0000) ; Red
+    ;(cld)
+    ;(rep     stosd)
+
+    ;; Check whether CPU supports Long Mode or not.
+    ;(call    check-cpu)
+    ;(jc      no-long-mode-error)
+
     (mov     cx (- end-banner banner))
     (mov     bp banner)
     (call    println)
@@ -72,6 +90,53 @@
     
     ;;; REPL: loop
     (jmp     short read-start) 
+
+    no-bga-error
+    (mov     cx (- end-no-bga-message no-bga-message))
+    (mov     bp no-bga-message)
+    (call    println)
+    (hlt)
+    (db      no-bga-message "ERROR: BGA not available.")
+    end-no-bga-message      
+
+    no-long-mode-error
+    (mov     cx (- end-no-long-mode-message no-long-mode-message))
+    (mov     bp no-long-mode-message)
+    (call    println)
+    (hlt)
+    (db      no-long-mode-message "ERROR: CPU does not support long mode.")
+    end-no-long-mode-message      
+
+    ;; Function check-cpu. From http://wiki.osdev.org/Entering_Long_Mode_Directly
+    
+    check-cpu
+    (pushfd)
+    (pop     eax)
+    (mov     ecx eax)
+    (xor     eax #x200000)
+    (push    eax)
+    (popfd)
+    (pushfd)
+    (pop     eax)
+    (xor     eax ecx)
+    (shr     eax 21)         ; If bit 21 is set, CPUID instruction is supported.
+    (and     eax 1)
+    (push    ecx)
+    (popfd)
+    (test    eax eax)
+    (jz      no-long-mode)
+    (mov     eax #x80000000)
+    (cpuid)
+    (cmp     eax #x80000001)  ; Check whether extended function 0x800000001 is available or not.
+    (jb      no-long-mode)
+    (mov     eax #x80000001)
+    (cpuid)
+    (test    edx ,(ash 1 29))  ; Check whether LM-bit is set or not
+    (jz      no-long-mode)
+    (ret)
+    no-long-mode
+    (stc)
+    (ret)
 
     ;;; Function println. Write a string and start a new line.
     ;;; It is equivalent to calling print twice: first to print the string,
@@ -168,5 +233,11 @@
     (inc     dl)
     (call    set-cursor)
     (ret)
+
+    ;; Include content from bga.lisp.
+    ,@*bga*
+
+    ;; Fill up to multiple of sectors, otherwise VirtualBox complains.
+    (times   (- 8192 (- $ $$)) db 0)
 
     kernel-end))

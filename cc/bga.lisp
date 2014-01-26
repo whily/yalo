@@ -6,7 +6,7 @@
 ;;;; License: 
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
-;;;; Copyright (C) 2009-2012 Yujian Zhang
+;;;; Copyright (C) 2012 Yujian Zhang
 
 (in-package :cc)
 
