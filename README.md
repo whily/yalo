@@ -27,7 +27,7 @@ it is only tested on SBCL. Therefore the following discussion is
 focused on how to build yalo from SBCL.
 
 Mandatory Requirements:
-* [http://sbcl.sourceforge.net SBCL]
+* [SBCL](http://sbcl.sourceforge.net SBCL)
 * git
 
 Optional Requirements:
@@ -71,6 +71,7 @@ One may type `Ctrl-d` to exit from SBCL.
 ##### With Emacs+SLIME
 
 Inside Emacs,
+
 1. First type `M-x slime` if SLIME is not started.
 2. Type `M-x slime-load-system` then type `cc` when prompted for the
    system.
