@@ -27,12 +27,12 @@ it is only tested on SBCL. Therefore the following discussion is
 focused on how to build yalo from SBCL.
 
 Mandatory Requirements:
- * [http://sbcl.sourceforge.net SBCL]
- * git
+* [http://sbcl.sourceforge.net SBCL]
+* git
 
 Optional Requirements:
- * Emacs
- * SLIME
+* Emacs
+* SLIME
 
 #### Getting Source Code
 
@@ -71,12 +71,12 @@ One may type `Ctrl-d` to exit from SBCL.
 ##### With Emacs+SLIME
 
 Inside Emacs,
- # First type `M-x slime` if SLIME is not started.
- # Type `M-x slime-load-system` then type `cc` when prompted for the
- system.
- # At REPL, type `(in-package :cc)` to switch to package *cc*
- (alternatively, one can user keyboard shortcut `C-x M-p` and then type `cc`).
- # Type `(write-kernel "floppy.img")` at SLIME REPL to generate the kernel.
+1. First type `M-x slime` if SLIME is not started.
+2. Type `M-x slime-load-system` then type `cc` when prompted for the
+   system.
+3. At REPL, type `(in-package :cc)` to switch to package *cc*
+   (alternatively, one can user keyboard shortcut `C-x M-p` and then type `cc`).
+4. Type `(write-kernel "floppy.img")` at SLIME REPL to generate the kernel.
 
 ## Run Image
 
