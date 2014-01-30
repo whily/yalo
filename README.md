@@ -97,9 +97,10 @@ above command) if `floppy.img` is placed in the same directory.
 
 ### VirtualBox
 
-First, add the generated floopy.img to the Virtual Media Manager. Then
-for the virtual machine settings, select the image file for floppy
-drive. Make sure that Floppy is checked for Boot order.
+In the **Storage** page of the virtual machine settings, right click
+and select "Add Floppy Controller". And the select the image file
+`floppy.img` for floppy drive. In the **System** page of virtual
+machine settings, make sure that Floppy is checked for Boot order.
 
 
 
