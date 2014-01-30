@@ -42,8 +42,11 @@
     real-start
 
     ;; Check whether BGA is available
-    (call    bga-available)
-    (jc      no-bga-error)
+    ;; The following two lines are disabled for now as BGA mode is not used currently.
+    ;; If not disabled, error will be thrown on VirtualBox (however osdev.org actually says that
+    ;; VirtualBox supports BGA: http://wiki.osdev.org/BGA)
+    ;;(call    bga-available)
+    ;;(jc      no-bga-error)
     ;; Set target screen mode.
     ;(call    set-bga-mode)
     ;; Show all red.
@@ -227,7 +230,7 @@
     ;;; Note that wrap and scrolling not considered.
     ;;; Input: None
     ;;; Output: None
-    ;;; Modifie registers: AH, BH, CX, DX
+    ;;; Modify registers: AH, BH, CX, DX
     forward-cursor
     (call    get-cursor)
     (inc     dl)
