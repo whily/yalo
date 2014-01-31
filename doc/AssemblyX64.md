@@ -116,8 +116,8 @@ before *times* instruction.
 # Special Variables of Assembly.
 
 Following special variables are supported:
-* *$* Location of the start of current instruction.
-* *$$* Origin (start address) of current assembly program.
+* **$** Location of the start of current instruction.
+* **$$** Origin (start address) of current assembly program.
 
 # Overview of x86-64 Assembly
 
@@ -129,37 +129,37 @@ should refer to Intel or AMD manuals for complete reference.
 
 For each mnemonic, one table is provided to list the supported
 instructions. There are 5 columns in the table:
-* *Instruction*: documents mnemonic and operands.
-* *Opcode*: documents the translated opcode.
-* *64-bit Mode*: whether the instruction is supported in 64-bit mode. 
-* *16/32-bit Mode*: whether the instruction is supported in 16/32-bit mode.
-* *Description*: short description about the instruction.
+* **Instruction**: documents mnemonic and operands.
+* **Opcode**: documents the translated opcode.
+* **64-bit Mode**: whether the instruction is supported in 64-bit mode. 
+* **16/32-bit Mode**: whether the instruction is supported in 16/32-bit mode.
+* **Description**: short description about the instruction.
 
-*16-bit Mode* is used for bootloaders only.
+**16-bit Mode** is used for bootloaders only.
 
-*32-bit Mode* is provided for completeness only.
+**32-bit Mode** is provided for completeness only.
 
-For columns *64-bit Mode* and *16/32-bit Mode*, following notations are used:
-* *Valid*: supported.
-* *Invalid*: not supported.
-* *N.E.*: not encodable. The opcode may be part of a sequence of other valid instructions.
-* *N.S.*: not supported. The instruction requires an address override prefix.
+For columns **64-bit Mode** and **16/32-bit Mode**, following notations are used:
+* **Valid**: supported.
+* **Invalid**: not supported.
+* **N.E.**: not encodable. The opcode may be part of a sequence of other valid instructions.
+* **N.S.**: not supported. The instruction requires an address override prefix.
 
 ## Notations for Instructions
   
 Following notations are used:
-* *imm8*: immediate byte value in the range of -128..+255.
-* *imm16*: immediate word value in the range of -32,768..+65,535.
-* *imm32*: immediate doubleword value in the range of -2,147,483,648..+4,294,967,295.
-* *imm64*: immediate quadword value in the range of -9,223,372,036,854,775,808..+18,446,744,073,709,551,615..
-* *!r8*: one of the byte general-purpose registers: al, cl, dl, bl, ah, ch, dh, bh, bpl, spl, dil, and sil.
-* *!r16*: one of the word general-purpose registers: ax, cx, dx, bx, sp, bp, si, di.
-* *!r32*: one of the doubleword general-purpose registers: eax, ecx, edx, ebx, esp, ebp, esi, edi.
-* *!r64*: one of the quadword general-purpose registers: rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, !r8-!r15.
-* *m8, m16, m32, m64, m128*: memory references. Specifier (`byte`, `word`, `dword`, `qword`) is needed for ambiguous cases. For example in  `(mov word [12345] 16).
-* *m16&32*, *m16&16*, *m32&32*, *m16&64*, a memory operand containing one pair whose sizes are indicated on the left and right size of the ampersand.
-* *r/m8, r/m16, r/m32, r/m64*: register or memeory choices. For example, r/m8 means that either r8 or m8 can be used as operand.
-* *sreg*: segment register.
+* **imm8**: immediate byte value in the range of -128..+255.
+* **imm16**: immediate word value in the range of -32,768..+65,535.
+* **imm32**: immediate doubleword value in the range of -2,147,483,648..+4,294,967,295.
+* **imm64**: immediate quadword value in the range of -9,223,372,036,854,775,808..+18,446,744,073,709,551,615..
+* **r8**: one of the byte general-purpose registers: al, cl, dl, bl, ah, ch, dh, bh, bpl, spl, dil, and sil.
+* **r16**: one of the word general-purpose registers: ax, cx, dx, bx, sp, bp, si, di.
+* **r32**: one of the doubleword general-purpose registers: eax, ecx, edx, ebx, esp, ebp, esi, edi.
+* **r64**: one of the quadword general-purpose registers: rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8-r15.
+* **m8, m16, m32, m64, m128**: memory references. Specifier (`byte`, `word`, `dword`, `qword`) is needed for ambiguous cases. For example in  `(mov word [12345] 16).
+* **m16&32**, **m16&16**, **m32&32**, **m16&64**, a memory operand containing one pair whose sizes are indicated on the left and right size of the ampersand.
+* **r/m8, r/m16, r/m32, r/m64**: register or memeory choices. For example, r/m8 means that either r8 or m8 can be used as operand.
+* **sreg**: segment register.
 
 ## Range of Immediate Values
 
@@ -181,13 +181,13 @@ of register*scale, e.g. eax*8.
 
 Following notations are used:
 * A hex number, such as CC, indicates a fixed byte containing that number.
-* A hex number followed by *+r*, like *B0+r*, indicates that one of the operands is a register, and correspondign register value should be added to the opcode.
-* */n* (where n is 0 to 7): indictes that one of the operand is r/m, and the field Reg/Opcode should be encoded with n.
-* */r*: ModR/M byte of the instruction contains a register operand (encoded in field Reg/Opcode) and an r/m operand (encoded in field R/M).
-* *rb, rw, rd, ro*: one of the operands is an immediate value, and the _difference_ between this value and the end address of the instruction is to be encoded as byte (rb), little-endian word (rw), little-endian doubleword (rd), and little-endian quadword (ro) respectively.
-* *ib, iw, id, io*: one of the operands is an immediate value, and it is to be encoded as byte (rb), little-endian word (rw), little-endian doubleword (rd), and little-endian quadword (ro) respectively.
-* *o16, o32*: operand-size override prefix. o16 generates no code in 16-bit mode, but indicates a 66h prefix in 32/64-bit mode; similarly, o32 generates no code in 32/64-bit mode, but indicates a 66h prefix in 16-bit mode.
-* *a16, a32*: address-size override prefix. a16 generates no code in 16-bit mode, but indicates a 67h prefix in 32/64-bit mode; similarly, a32 generates no code in 32-bit mode, but indicates a 67h prefix in 16/64-bit mode.
+* A hex number followed by **+r**, like **B0+r**, indicates that one of the operands is a register, and correspondign register value should be added to the opcode.
+* **/n** (where n is 0 to 7): indictes that one of the operand is r/m, and the field Reg/Opcode should be encoded with n.
+* **/r**: ModR/M byte of the instruction contains a register operand (encoded in field Reg/Opcode) and an r/m operand (encoded in field R/M).
+* **rb, rw, rd, ro**: one of the operands is an immediate value, and the _difference_ between this value and the end address of the instruction is to be encoded as byte (rb), little-endian word (rw), little-endian doubleword (rd), and little-endian quadword (ro) respectively.
+* **ib, iw, id, io**: one of the operands is an immediate value, and it is to be encoded as byte (rb), little-endian word (rw), little-endian doubleword (rd), and little-endian quadword (ro) respectively.
+* **o16, o32**: operand-size override prefix. o16 generates no code in 16-bit mode, but indicates a 66h prefix in 32/64-bit mode; similarly, o32 generates no code in 32/64-bit mode, but indicates a 66h prefix in 16-bit mode.
+* **a16, a32**: address-size override prefix. a16 generates no code in 16-bit mode, but indicates a 67h prefix in 32/64-bit mode; similarly, a32 generates no code in 32-bit mode, but indicates a 67h prefix in 16/64-bit mode.
 
 Note that REX prefix are not used in opcode notations. The prefix is
 automatically generated by analyzing the operands.
