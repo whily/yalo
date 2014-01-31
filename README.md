@@ -11,7 +11,8 @@ is: <https://github.com/whily/yalo>
 # Status
 
 The project is only at very very initial stage, with an
-assembler written in Common Lisp, and a 16 bit bootloader.
+[assembler](https://github.com/whily/yalo/blob/master/doc/AssemblyX64.md)
+written in Common Lisp, and a 16 bit bootloader.
 
 # Getting Started
 
