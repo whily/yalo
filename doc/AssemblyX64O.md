@@ -1,21 +1,23 @@
-#summary x86-64 Instruction Set O
-#labels Phase-Implementation
-#sidebar SBX64Assembly
+x86-64 Instruction Set O
+========================
 
-<wiki:toc max_depth="1" />
+[Assembly syntax](AssemblyX64.md)
+[A](AssemblyX64A.md) [B](AssemblyX64B.md) [C](AssemblyX64C.md)
+[D](AssemblyX64D.md) [H](AssemblyX64H.md) [I](AssemblyX64I.md)
+[J](AssemblyX64J.md) [L](AssemblyX64L.md) [M](AssemblyX64M.md)
+[N](AssemblyX64N.md) O [P](AssemblyX64P.md)
+[R](AssemblyX64R.md) [S](AssemblyX64S.md) [T](AssemblyX64T.md)
+[X](AssemblyX64X.md)
 
---------
+### or: Logical Inclusive OR
 
-= or: Logical Inclusive OR = 
+Please refer to [x86-64 arithmetic instructions](AssemblyX64Arith.md) for details.
 
-Please refer to [AssemblyX64Arith x86-64 arithmetic instructions] for details.
+### out: Output from Port
 
---------
-
-= out: Output from Port =
-
-|| Instruction || Opcode || 64-Bit Mode || 16/32-Bit Mode || Description                                   ||
-|| out imm8 al || E6 ib  || Valid       || Valid          || Output byte in al to I/O port address in imm8 ||
-|| out imm8 ax || E7 ib  || Valid       || Valid          || Output word in ax to I/O port address in imm8 ||
-|| out dx al   || EE     || Valid       || Valid          || Output byte in al to I/O port address in dx   ||
-|| out dx ax   || EF     || Valid       || Valid          || Output word in ax to I/O port address in dx   ||
+| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                                   |
+| ----------- | ------ | ----------- | -------------- | --------------------------------------------- |
+| out imm8 al | E6 ib  | Valid       | Valid          | Output byte in al to I/O port address in imm8 |
+| out imm8 ax | E7 ib  | Valid       | Valid          | Output word in ax to I/O port address in imm8 |
+| out dx al   | EE     | Valid       | Valid          | Output byte in al to I/O port address in dx   |
+| out dx ax   | EF     | Valid       | Valid          | Output word in ax to I/O port address in dx   |
