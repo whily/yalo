@@ -21,7 +21,7 @@ written in Common Lisp, and a 16 bit bootloader.
 Currently, cross compilation is needed to build one floppy image
 containing yalo.
 
-### Cross compilation
+### [Cross compilation](https://github.com/whily/yalo/blob/master/doc/CrossCompilation.md)
 
 Although yalo should compile on any Ansi Common Lisp implementation,
 it is only tested on SBCL. Therefore the following discussion is
