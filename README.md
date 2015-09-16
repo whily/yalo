@@ -50,7 +50,7 @@ Run following commands to make SBCL aware of the ASDF file for the
 cross compiler.
 
 ```shell
-$ cd yalo/cc  
+$ cd yalo/cc
 $ ./lnasdf
 ```
 
@@ -82,7 +82,7 @@ Inside Emacs,
 
 ## Run Image
 
-There are various ways to run the image. 
+There are various ways to run the image.
 
 ### Bochs
 
@@ -96,15 +96,21 @@ bochs -n 'boot: a' 'floppya: 1_44=floppy.img, status=inserted'
 One may also use the script `run-bochs` (which basically wraps up
 above command) if `floppy.img` is placed in the same directory.
 
+### QEMU
+
+Similar to Bochs, go to the directory where floppy image file is
+located. Then run the command to start emulation.
+
+```shell
+qemu-system-x86_64 -fda floppy.img -m 32
+```
+
+One may also use the script `run-qemu` (which basically wraps up above
+command) if `floppy.img` is placed in the same directory.
+
 ### VirtualBox
 
 In the **Storage** page of the virtual machine settings, right click
 and select "Add Floppy Controller". And the select the image file
 `floppy.img` for floppy drive. In the **System** page of virtual
 machine settings, make sure that Floppy is checked for Boot order.
-
-
-
-
-
-   
