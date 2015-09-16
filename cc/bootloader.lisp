@@ -1,16 +1,16 @@
 ;;;; -*- Mode: Lisp -*-
-;;;; Author: 
+;;;; Author:
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
 ;;;;     Bootloader.
-;;;; License: 
+;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
 ;;;; Copyright (C) 2009-2012 Yujian Zhang
 
 (in-package :cc)
 
-(defparameter *bootloader* 
+(defparameter *bootloader*
   `((bits    16)
     (org     #x7c00)
 
@@ -20,7 +20,7 @@
     (mov     es ax)
     (mov     fs ax)
     (mov     gs ax)
-    (mov     ss ax) 
+    (mov     ss ax)
 
     ;; Load other sectors from floppy disk.
     ;; AL: # of sectors
@@ -29,13 +29,13 @@
     (mov     cx 2)            ; CH: cylinder; CL: sector
     (xor     dx dx)           ; DH: head; DL: drive
     (int     #x13)
-    
+
     (times   480 nop)         ; To be removed once near jmp is available
     (jmp     short real-start)
 
     ;; Fill up to 510 bytes.
     (times   (- 510 (- $ $$)) db 0)
-    
+
     (dw      #xaa55)           ; Boot sector signature
 
     ;; Real start up code.
@@ -67,32 +67,32 @@
     (call    println)
     (jmp     short read-start)
     (db      banner "Start your journey on yalo v0.0.0!")
-    end-banner  
+    end-banner
 
     ;;; REPL: read
     read-start
     (mov     cx (- read repl))
     (mov     bp repl)
     (call    print)
-    (jmp     short read) 
-    (db      repl ("REPL>")) 
-    read 
+    (jmp     short read)
+    (db      repl ("REPL>"))
+    read
     (call    getchar)
-    (cmp     al 13) 
-    (je      eval-start) 
+    (cmp     al 13)
+    (je      eval-start)
     (call    putchar)
     (call    forward-cursor)
     (jmp     short read)
-    
+
     ;;; REPL: eval
     eval-start
 
     ;;; REPL: print
     (call    printcrlf)
     (call    printcrlf)
-    
+
     ;;; REPL: loop
-    (jmp     short read-start) 
+    (jmp     short read-start)
 
     no-bga-error
     (mov     cx (- end-no-bga-message no-bga-message))
@@ -100,7 +100,7 @@
     (call    println)
     (hlt)
     (db      no-bga-message "ERROR: BGA not available.")
-    end-no-bga-message      
+    end-no-bga-message
 
     no-long-mode-error
     (mov     cx (- end-no-long-mode-message no-long-mode-message))
@@ -108,10 +108,10 @@
     (call    println)
     (hlt)
     (db      no-long-mode-message "ERROR: CPU does not support long mode.")
-    end-no-long-mode-message      
+    end-no-long-mode-message
 
     ;; Function check-cpu. From http://wiki.osdev.org/Entering_Long_Mode_Directly
-    
+
     check-cpu
     (pushfd)
     (pop     eax)
@@ -147,8 +147,9 @@
     println
     (call    print)
     (call    printcrlf)
-  
-    ;;; Function printcrlf. Print crlf only. 
+    (ret)
+
+    ;;; Function printcrlf. Print crlf only.
     ;;; Input: None
     ;;; Output: None
     ;;; Modified reisters: AX, BX, CX, and DX.
@@ -157,7 +158,7 @@
     (mov     bp crlf)
     (call    print)
     (ret)
-    (db      crlf (13 10)) 
+    (db      crlf (13 10))
 
     ;;; Function print. Write string to screen.
     ;;; Input:
@@ -172,7 +173,7 @@
     ;; Write the string.
     (mov     ax #x1301)
     (mov     bx #xf)
-    (int     #x10) 
+    (int     #x10)
     (ret)
 
     ;;; Function getchar. Get keystroke from keyboard without echo. If
@@ -188,7 +189,7 @@
     (ret)
 
     ;;; Function putchar. Writer character at cursor position.
-    ;;; Input: 
+    ;;; Input:
     ;;;   AL: character to display
     ;;;   BH: page number
     ;;;   CX: number of times to writer character.
@@ -203,7 +204,7 @@
 
     ;;; Function get-cursor. Get current cursor position, stored in CX and DX.
     ;;; Input: None
-    ;;; Output: 
+    ;;; Output:
     ;;;   DH: row
     ;;;   DL: column
     ;;;   CH: cursor start line
@@ -211,11 +212,11 @@
     get-cursor
     (mov     ah 3)
     (xor     bh bh)                ; Page number (0)
-    (int     #x10)           
+    (int     #x10)
     (ret)
 
     ;;; Function set-curor. Set cursor position.
-    ;;; Input: 
+    ;;; Input:
     ;;;   DH: row
     ;;;   DL: column
     ;;; Output: None
