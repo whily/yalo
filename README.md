@@ -96,6 +96,13 @@ Similar to Bochs, Copy floppy image file to the directory where script
 `run-qemu` is located (the directory of the source code). Run the
 script.
 
+In current script, QEMU monitor is redirectted to stdio (via argument
+`-monitor stdio`). In addition, `-s` argument makes QEMU listens to
+port 1234 for GDB, while `-S` argument makes QEMU pauses at the
+beginning for GDB's `continue` command. After start GDB, first type
+`target remote :1234` to connect to QEMU, then type command `continue`
+to resume the emulation.
+
 ### VirtualBox
 
 In the **Storage** page of the virtual machine settings, right click
