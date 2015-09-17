@@ -86,27 +86,15 @@ There are various ways to run the image.
 
 ### Bochs
 
-First go to the directory where floppy image file is located. Then run
-the command below and select *6* to proceed emulation.
-
-```shell
-bochs -n 'boot: a' 'floppya: 1_44=floppy.img, status=inserted'
-```
-
-One may also use the script `run-bochs` (which basically wraps up
-above command) if `floppy.img` is placed in the same directory.
+Copy floppy image file to the directory where script `run-bochs` is
+located (the directory of the source code). Run the script and select
+*6* to proceed emulation.
 
 ### QEMU
 
-Similar to Bochs, go to the directory where floppy image file is
-located. Then run the command to start emulation.
-
-```shell
-qemu-system-x86_64 -fda floppy.img -m 32
-```
-
-One may also use the script `run-qemu` (which basically wraps up above
-command) if `floppy.img` is placed in the same directory.
+Similar to Bochs, Copy floppy image file to the directory where script
+`run-qemu` is located (the directory of the source code). Run the
+script.
 
 ### VirtualBox
 
