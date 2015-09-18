@@ -78,7 +78,10 @@ Inside Emacs,
    system.
 3. At REPL, type `(in-package :cc)` to switch to package *cc*
    (alternatively, one can user keyboard shortcut `C-x M-p` and then type `cc`).
-4. Type `(write-kernel "floppy.img")` at SLIME REPL to generate the kernel.
+4. Type `(write-kernel "../floppy.img")` at SLIME REPL to generate the kernel.
+   Here we assume that current directory is `cc` of the source tree, therefore
+   `floppy.img` is written directly to the source tree, where scripts to run the
+   image (e.g. `run-bochs`) are located.
 
 ## Run Image
 
@@ -86,17 +89,19 @@ There are various ways to run the image.
 
 ### Bochs
 
-Copy floppy image file to the directory where script `run-bochs` is
-located (the directory of the source code). Run the script and select
-*6* to proceed emulation.
+Go to the root directory of the source code, where script `run-bochs`
+is located. Run the script and select *6* to proceed emulation.
+
+On Mac OS X, it might be possible that Bochs debugger automatically
+pause the emulation. If that is the case, simply type `c` to continue
+the emulation.
 
 ### QEMU
 
-Similar to Bochs, Copy floppy image file to the directory where script
-`run-qemu` is located (the directory of the source code). Run the
-script.
+Similar to Bochs, go to the root directory of the source code, where
+script `run-qemu` is located. Run the script.
 
-In current script, QEMU monitor is redirectted to stdio (via argument
+In the script, QEMU monitor is redirectted to stdio (via argument
 `-monitor stdio`). In addition, `-s` argument makes QEMU listens to
 port 1234 for GDB, while `-S` argument makes QEMU pauses at the
 beginning for GDB's `continue` command. After start GDB, first type
@@ -110,5 +115,6 @@ and select "Add Floppy Controller". And the select the image file
 `floppy.img` for floppy drive. In the **System** page of virtual
 machine settings, make sure that Floppy is checked for Boot order.
 
-Assume the VM name is `yalo`, execute script `run-virtualbox` to start
-the emulator with debug window.
+Assuming the VM name is `yalo`, go to the root directory of the source
+code, where script `run-virtualbox` is located. Run the script to
+start the emulator with debug window.
