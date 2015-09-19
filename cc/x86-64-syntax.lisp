@@ -1,12 +1,12 @@
 ;;;; -*- Mode: Lisp -*-
-;;;; Author: 
+;;;; Author:
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
 ;;;;     Syntax tables for x86-64.
-;;;; License: 
+;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
-;;;; Copyright (C) 2009-2012 Yujian Zhang
+;;;; Copyright (C) 2009-2015 Yujian Zhang
 
 (in-package :cc)
 
@@ -55,7 +55,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
   "Return syntax table for arithmetic operations: div/mul/neg/not."
   (let ((opcode (ecase mnemonic
                   (div '/6) (mul '/4) (neg '/3) (not '/2))))
-    (if 64bit-only? 
+    (if 64bit-only?
         `(((,mnemonic (r/m64 r64))               . (#xf7 ,opcode))
           ((,mnemonic qword m)                   . (#xf7 ,opcode)))
         `(((,mnemonic (r/m8 r8))                 . (#xf6 ,opcode))
@@ -96,18 +96,18 @@ adc/add/and/cmp/or/sbb/sub/xor."
 ;;; should be imm16, place it as the car of the list).
 ;;;
 ;;;  For details,
-;;;    refer to http://code.google.com/p/yalo/wiki/AssemblyX64Overview")
+;;;    refer to http://code.google.com/p/yalo/wiki/AssemblySyntax
 
 (defparameter *x86-64-syntax-common*
   `(,@(arith-syntax-1 'adc nil)
     ,@(arith-syntax-1 'add nil)
-    ,@(arith-syntax-1 'and nil)  
+    ,@(arith-syntax-1 'and nil)
     ((bswap r32)                             . (#x0f (+ #xc8 r)))
     ((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))
     ((cmovcc r16 (r/m16 r16 m))              . (o16 #x0f (+ #x40 cc) /r))
-    ((cmovcc r32 (r/m32 r32 m))              . (o32 #x0f (+ #x40 cc) /r))      
+    ((cmovcc r32 (r/m32 r32 m))              . (o32 #x0f (+ #x40 cc) /r))
     ,@(arith-syntax-1 'cmp nil)
     ((cmpxchg (r/m8 r8 m) r8)                . (#x0f #xb0 /r))
     ((cmpxchg (r/m16 r16 m) r16)             . (o16 #x0f #xb1 /r))
@@ -122,7 +122,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((dec    dword m)                        . (o32 #xff /1))
     ,@(arith-syntax-2 'div nil)
     ((hlt)                                   . (#xf4))
-    ((in     al imm8)                        . (#xe4 ib)) 
+    ((in     al imm8)                        . (#xe4 ib))
     ((in     ax imm8)                        . (#xe5 ib))
     ((in     al dx)                          . (#xec))
     ((in     ax dx)                          . (#xed))
@@ -152,13 +152,13 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((mov    r32 (r/m32 r32 m))              . (o32 #x8b /r))
     ((mov    word m (imm16 imm8 imm label))  . (o16 #xc7 /0 iw))
     ((mov    dword m (imm32 imm16 imm8 imm label)) . (o32 #xc7 /0 id))
-    ((mov    sreg (r/m16 r16 m))             . (#x8e /r)) 
-    ((mov    (r/m16 r16 m) sreg)             . (#x8c /r)) 
+    ((mov    sreg (r/m16 r16 m))             . (#x8e /r))
+    ((mov    (r/m16 r16 m) sreg)             . (#x8c /r))
     ((movsb)                                 . (#xa4))
     ((movsw)                                 . (o16 #xa5))
     ((movsd)                                 . (o32 #xa5))
     ,@(arith-syntax-2 'mul nil)
-    ,@(arith-syntax-2 'neg nil)   
+    ,@(arith-syntax-2 'neg nil)
     ((nop)                                   . (#x90))
     ,@(arith-syntax-2 'not nil)
     ,@(arith-syntax-1 'or nil)
@@ -168,11 +168,14 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((out    dx ax)                          . (#xef))
     ((pop    r16)                            . ((+ #x58 r)))
     ((pop    r32)                            . ((+ #x58 r)))
-    ((popfd)                                 . (#x9d))
+    ;; Seems NASM generates prefix #x66.
+    ((popfd)                                 . (#x66 #x9d))
     ((push   r16)                            . ((+ #x50 r)))
     ((push   r32)                            . ((+ #x50 r)))
-    ((pushfd)                                . (#x9c))
+    ;; Seems NASM generates prefix #x66.
+    ((pushfd)                                . (#x66 #x9c))
     ((ret)                                   . (#xc3))
+    ((rdmsr)                                 . (#x0f #x32))
     ,@(shift-syntax 'shl)
     ,@(shift-syntax 'shr)
     ((stc)                                   . (#xf9))
@@ -194,6 +197,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((test    (r/m8 r8 m) r8)                . (#x84 /r))
     ((test    (r/m16 r16 m) r16)             . (#x85 /r))
     ((test    (r/m32 r32 m) r32)             . (#x85 /r))
+    ((wdmsr)                                 . (#x0f #x30))
     ((xadd    (r/m8 r8 m) r8)                . (#x0f #xc0 /r))
     ((xadd    (r/m16 r16 m) r16)             . (o16 #x0f #xc1 /r))
     ((xadd    (r/m32 r32 m) r32)             . (o32 #x0f #xc1 /r))
@@ -268,4 +272,3 @@ adc/add/and/cmp/or/sbb/sub/xor."
   (ecase bits
     ((16 32) *x86-64-syntax-16/32-bit*)
     (64 *x86-64-syntax-64-bit*)))
-

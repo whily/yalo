@@ -1,9 +1,9 @@
 ;;;; -*- Mode: Lisp -*-
-;;;; Author: 
+;;;; Author:
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
 ;;;;     Regression tests. Cross checked with NASM.
-;;;; License: 
+;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
 ;;;; Copyright (C) 2009-2012 Yujian Zhang
@@ -25,7 +25,7 @@
     (,mnemonic cx bx)
     (,mnemonic (msg) dx)
     (,mnemonic ch (msg))
-    (,mnemonic dx (msg))))  
+    (,mnemonic dx (msg))))
 
 (defun arith-test-2 (mnemonic)
   "Return test codes for arithmetic operations: div/mul/neg/not"
@@ -118,7 +118,7 @@
     (neg      rcx)
     (not      qword (rbx))
     (sbb      rbx rdx)
-    
+
     (db      msg "Hello World! ")
     endmsg)
   "Arithmetic instructions are tested separately.")
@@ -210,6 +210,7 @@
     (pop     ds)
     (pop     es)
     (popfd)
+    (rdmsr)
     (rep     movsb)
     (rep     movsw)
     (rep     movsd)
@@ -219,6 +220,7 @@
     (sti)
     (stosb)
     (stosw)
+    (wdmsr)
 
     (bits 64)
     (bswap   ebx)
@@ -248,7 +250,7 @@
     (xchg    ecx eax)
     (xchg    rax rbx)
     (xchg    rcx rax)
-    ;; (xchg a b) is equivalent to NASM's xchg b, a. 
+    ;; (xchg a b) is equivalent to NASM's xchg b, a.
     ;; They are semantically equivalent anyway.
     (xchg    al cl)
     (xchg    cx bx)
@@ -260,23 +262,23 @@
     (db      msg "Hello World! ")
     endmsg
     (times   3 db 0)
-    (dw      #xaa55) 
+    (dw      #xaa55)
     (dd      (123456 7891011))
     (dq      3372036854775808))
   "Miscellaneous instructions.")
 
 (defparameter *misc-code*
-  '(232 188 0 248 252 250 244 228 3 229 4 236 237 204 205 16 227 254 116 252 235
-    250 15 1 22 191 124 15 1 30 191 124 15 0 210 15 0 22 191 124 172 173 226 228
-    180 9 187 13 0 137 200 137 30 191 124 139 14 123 28 199 6 191 124 123 0 142
-    195 140 200 144 230 3 231 4 238 239 81 14 22 30 6 156 90 23 31 7 157 243 164
-    243 165 243 102 165 195 249 253 251 170 171 15 203 72 15 200 73 15 202 102 15
-    71 195 15 66 194 73 15 68 210 15 176 209 102 15 177 209 15 177 215 76 15 177
-    209 15 199 11 72 15 199 11 15 130 45 0 0 0 103 227 42 227 40 15 5 15 7 15 192
-    209 102 15 193 209 15 193 215 76 15 193 209 102 147 102 145 147 145 72 147 72
-    145 134 200 102 135 217 135 218 77 135 250 191 124 72 101 108 108 111 32 87
-    111 114 108 100 33 32 0 0 0 85 170 64 226 1 0 67 104 120 0 0 0 230 130 217 250
-    11 0))
+  '(232 194 0 248 252 250 244 228 3 229 4 236 237 204 205 16 227 254 116 252 235
+    250 15 1 22 197 124 15 1 30 197 124 15 0 210 15 0 22 197 124 172 173 226 228
+    180 9 187 13 0 137 200 137 30 197 124 139 14 123 28 199 6 197 124 123 0 142
+    195 140 200 144 230 3 231 4 238 239 81 14 22 30 6 102 156 90 23 31 7 102 157
+    15 50 243 164 243 165 243 102 165 195 249 253 251 170 171 15 48 15 203 72 15
+    200 73 15 202 102 15 71 195 15 66 194 73 15 68 210 15 176 209 102 15 177 209
+    15 177 215 76 15 177 209 15 199 11 72 15 199 11 15 130 45 0 0 0 103 227 42 227
+    40 15 5 15 7 15 192 209 102 15 193 209 15 193 215 76 15 193 209 102 147 102
+    145 147 145 72 147 72 145 134 200 102 135 217 135 218 77 135 250 197 124 72
+    101 108 108 111 32 87 111 114 108 100 33 32 0 0 0 85 170 64 226 1 0 67 104 120
+    0 0 0 230 130 217 250 11 0))
 
 (defparameter *address-asm*
   '((org     #x7c00)
@@ -322,7 +324,7 @@
     (mov     (esp #x12345678) ecx)
     (mov     (eax ebx) ecx)
     (mov     (esi edi) edx)
-    (mov     (esi ebp) edx) 
+    (mov     (esi ebp) edx)
     ;; (mov     (eax*2 3456) edx) ; NASM encodes as (eax eax 3456)
     (mov     (eax*2 esi) edx)
     (mov     (esi*2 ebp 123) edx)
@@ -336,7 +338,7 @@
     endmsg)
   "Test addressing modes.")
 
-(defparameter *address-code* 
+(defparameter *address-code*
   '(140 70 0 140 24 140 1 140 26 140 19 140 28 140 13 140 30 74 126
     140 30 162 124 140 15 140 88 1 140 65 2 140 90 3 140 83 4 140 92 5
     140 77 6 140 94 7 140 79 8 142 29 142 152 233 3 142 129 234 3 142
@@ -367,11 +369,7 @@
     0 0 0 0 0 0 85 170))
 
 (deftest test-cc ()
-  (check 
+  (check
     (equal (asm *address-asm*) *address-code*)
     (equal (asm *arith-asm*) *arith-code*)
     (equal (asm *misc-asm*)  *misc-code*)))
-
-
-
-
