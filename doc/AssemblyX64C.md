@@ -18,18 +18,19 @@ x86-64 Instruction Set C
 
 ### clc: Clear Carry Flag
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description |
+| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description   |
 | ----------- | ------ | ----------- | -------------- | ------------- |
 | clc         | F8     | Valid       | Valid          | Clear CF flag |
 
 ### cld: Clear Direction Flag
 | Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                                 |
-| ----------- | ------ | ----------- | -------------- | ---------------------------------------- |
+| ----------- | ------ | ----------- | -------------- | ------------------------------------------- |
 | cld         | FC     | Valid       | Valid          | String operations increment index registers |
 
 ### cli: Clear Interrupt Flag
 
 | Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                           |
+| ----------- | ------ | ----------- | -------------- | ------------------------------------- |
 | cli         | FA     | Valid       | Valid          | Disable external, maskable interrupts |
 
 ### cmovcc: Conditional Move
@@ -40,7 +41,7 @@ x86-64 Instruction Set C
 | cmovcc r32 r/m32  | o32 0F (+ 40 cc) /r | Valid       | Valid          |             |
 | cmovcc r64 r/m64  | 0F (+ 40 cc) /r     | Valid       | ~~N.E.~~       |             |
 
-Please refer [AssemblyX64Overview#Conditional_Codes conditional codes] for details.
+Please refer [x86-64 conditional codes](AssemblyX64.md#conditional_codes) for details.
 
 ### cmp: Compare
 
