@@ -31,7 +31,7 @@ here too.
 
 ## db: Declaring initialized byte value(s)
 
-| Instruction                         | Description | 
+| Instruction                         | Description |
 | ----------------------------------- | ----------- |
 | db [_var_] [_number_ | _string_]    | Declare byte values via atoms |
 | db [_var_] ([_number_ | _string_]*) | Declare byte values via lists |
@@ -54,7 +54,7 @@ Note:
 * _number_ should be in range -32,768..+65,535. Expression within the same
 range can be used as well.
 
-## dd: Declaring initialized doubleword value(s) 
+## dd: Declaring initialized doubleword value(s)
 
 | Instruction            | Description                          |
 | ---------------------- | ------------------------------------ |
@@ -75,7 +75,7 @@ Expression within the same range can be used as well.
 
 Note:
 
-* _number_ should be in range 
+* _number_ should be in range
 -9,223,372,036,854,775,808..+18,446,744,073,709,551,615.
 Expression within the same range can be used as well.
 
@@ -90,11 +90,11 @@ Note:
 * _expr_ should be evaulated when encoutering the instruction,
 i.e. forward reference is not allowed.
 
-## org: Define Origin 
+## org: Define Origin
 
 | Instruction | Description             |
 | ----------- | ----------------------- |
-| org val     | Define origin to be val | 
+| org val     | Define origin to be val |
 
 Note:
 
@@ -131,7 +131,7 @@ For each mnemonic, one table is provided to list the supported
 instructions. There are 5 columns in the table:
 * **Instruction**: documents mnemonic and operands.
 * **Opcode**: documents the translated opcode.
-* **64-bit Mode**: whether the instruction is supported in 64-bit mode. 
+* **64-bit Mode**: whether the instruction is supported in 64-bit mode.
 * **16/32-bit Mode**: whether the instruction is supported in 16/32-bit mode.
 * **Description**: short description about the instruction.
 
@@ -146,7 +146,7 @@ For columns **64-bit Mode** and **16/32-bit Mode**, following notations are used
 * **N.S.**: not supported. The instruction requires an address override prefix.
 
 ## Notations for Instructions
-  
+
 Following notations are used:
 * **imm8**: immediate byte value in the range of -128..+255.
 * **imm16**: immediate word value in the range of -32,768..+65,535.
@@ -175,7 +175,7 @@ Memory address operands are supported, e.g. `(bp)`, `(var)`, `(bp si
 equivalent to `(si 3 bp)`.
 
 For scaled index of 32-bit addressing modes, one has to use the form
-of register*scale, e.g. eax*8. 
+of register*scale, e.g. eax*8.
 
 ## Notations for Opcodes
 
@@ -219,11 +219,9 @@ encoded as (+ xx cc). Meaning of conditional codes are listed below.
 # Instruction set
 
 [A](AssemblyX64A.md) [B](AssemblyX64B.md) [C](AssemblyX64C.md)
-[D](AssemblyX64D.md) [H](AssemblyX64H.md) [I](AssemblyX64I.md)
-[J](AssemblyX64J.md) [L](AssemblyX64L.md) [M](AssemblyX64M.md)
-[N](AssemblyX64N.md) [O](AssemblyX64O.md) [P](AssemblyX64P.md)
-[R](AssemblyX64R.md) [S](AssemblyX64S.md) [T](AssemblyX64T.md)
-[X](AssemblyX64X.md)
-
-
-
+[D](AssemblyX64D.md) [E](AssemblyX64E.md) [F](AssemblyX64F.md)
+[H](AssemblyX64H.md) [I](AssemblyX64I.md) [J](AssemblyX64J.md)
+[L](AssemblyX64L.md) [M](AssemblyX64M.md) [N](AssemblyX64N.md)
+[O](AssemblyX64O.md) [P](AssemblyX64P.md) [R](AssemblyX64R.md)
+[S](AssemblyX64S.md) [T](AssemblyX64T.md) [U](AssemblyX64U.md)
+[V](AssemblyX64V.md) [W](AssemblyX64W.md) [X](AssemblyX64X.md)
