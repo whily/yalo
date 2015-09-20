@@ -6,7 +6,7 @@
 ;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
-;;;; Copyright (C) 2009-2012 Yujian Zhang
+;;;; Copyright (C) 2009-2015 Yujian Zhang
 
 (in-package :cc)
 
@@ -59,8 +59,9 @@
     ;(rep     stosd)
 
     ;; Check whether CPU supports Long Mode or not.
-    ;(call    check-cpu)
-    ;(jc      no-long-mode-error)
+    (call    check-cpu)
+    (jnc     no-long-mode-error)
+    (clc)
 
     (mov     cx (- end-banner banner))
     (mov     bp banner)
@@ -110,35 +111,24 @@
     (db      no-long-mode-message "ERROR: CPU does not support long mode.")
     end-no-long-mode-message
 
-    ;; Function check-cpu. From http://wiki.osdev.org/Entering_Long_Mode_Directly
+    ;; Function check-cpu. Use CPUID to check if the process supports long mode.
+    ;; From section 14.8 of AMD64 Architecture Programmer's Manual
+    ;;     Volume 2: System Programming.
+    ;;     Publication No. 24593; Revision: 3.25
+    ;; If long mode is supported, CF is set; otherwise CF is cleared.
 
     check-cpu
-    (pushfd)
-    (pop     eax)
-    (mov     ecx eax)
-    (xor     eax #x200000)
-    (push    eax)
-    (popfd)
-    (pushfd)
-    (pop     eax)
-    (xor     eax ecx)
-    (shr     eax 21)         ; If bit 21 is set, CPUID instruction is supported.
-    (and     eax 1)
-    (push    ecx)
-    (popfd)
-    (test    eax eax)
-    (jz      no-long-mode)
     (mov     eax #x80000000)
     (cpuid)
-    (cmp     eax #x80000001)  ; Check whether extended function 0x800000001 is available or not.
-    (jb      no-long-mode)
+    (cmp     eax #x80000000)  ; Whether any extended function > 0x800000000 is available?
+    (jbe     no-long-mode)
     (mov     eax #x80000001)
     (cpuid)
-    (test    edx ,(ash 1 29))  ; Check whether LM-bit is set or not
-    (jz      no-long-mode)
+    (bt      edx 29)          ; Test if long mode is supported.
+    (jnc     no-long-mode)
     (ret)
     no-long-mode
-    (stc)
+    (clc)
     (ret)
 
     ;;; Function println. Write a string and start a new line.
