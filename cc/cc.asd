@@ -1,9 +1,9 @@
 ;;;; -*- Mode: Lisp -*-
-;;;; Author: 
+;;;; Author:
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
 ;;;;     ASDF definition.
-;;;; License: 
+;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,6 +18,7 @@
   ((:file "package")
    (:file "util")
    (:file "bga")
+   (:file "console")
    (:file "bootloader")
    (:file "x86-64-syntax")
    (:file "lap")
