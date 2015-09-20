@@ -96,13 +96,17 @@ adc/add/and/cmp/or/sbb/sub/xor."
 ;;; should be imm16, place it as the car of the list).
 ;;;
 ;;;  For details,
-;;;    refer to http://code.google.com/p/yalo/wiki/AssemblySyntax
+;;;    refer to https://github.com/whily/yalo/blob/master/doc/AssemblyX64.md
 
 (defparameter *x86-64-syntax-common*
   `(,@(arith-syntax-1 'adc nil)
     ,@(arith-syntax-1 'add nil)
     ,@(arith-syntax-1 'and nil)
     ((bswap r32)                             . (#x0f (+ #xc8 r)))
+    ((bt (r/m16 r16 m) r16)                  . (o16 #x0f #xa3 /r))
+    ((bt (r/m32 r32 m) r32)                  . (o32 #x0f #xa3 /r))
+    ((bt (r/m16 r16 m) imm8)                 . (o16 #x0f #xba /4 ib))
+    ((bt (r/m32 r32 m) imm8)                 . (o32 #x0f #xba /4 ib))
     ((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))
@@ -235,6 +239,8 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ,@(arith-syntax-1 'add t)
     ,@(arith-syntax-1 'and t)
     ((bswap r64)                             . (#x0f (+ #xc8 r)))
+    ((bt (r/m64 r64 m) r64)                  . (#x0f #xa3 /r))
+    ((bt (r/m64 r64 m) imm8)                 . (#x0f #xba /4 ib))
     ((cmovcc r64 (r/m64 r64 m))              . (#x0f (+ #x40 cc) /r))
     ((cmpxchg (r/m64 r64 m) r64)             . (#x0f #xb1 /r))
     ((cmpxchg16b m)                          . (#x0f #xc7 /1))
