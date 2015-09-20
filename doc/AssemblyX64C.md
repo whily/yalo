@@ -41,7 +41,7 @@ x86-64 Instruction Set C
 | cmovcc r32 r/m32  | o32 0F (+ 40 cc) /r | Valid       | Valid          |             |
 | cmovcc r64 r/m64  | 0F (+ 40 cc) /r     | Valid       | ~~N.E.~~       |             |
 
-Please refer [x86-64 conditional codes](AssemblyX64.md#conditional_codes) for details.
+Please refer [x86-64 conditional codes](AssemblyX64.md#conditional-codes) for details.
 
 ### cmp: Compare
 
