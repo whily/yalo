@@ -118,3 +118,15 @@ machine settings, make sure that Floppy is checked for Boot order.
 Assuming the VM name is `yalo`, go to the root directory of the source
 code, where script `run-virtualbox` is located. Run the script to
 start the emulator with debug window.
+
+## Software version
+
+So far, the development is done on OS X Yosemite. For above-mentioned
+software, the corresponding version is listed below:
+
+* SBCL: 1.2.12
+* Emacs: 24.5.1
+* SLIME: 2015-08-24
+* Bochs: 2.6.8
+* QEMU: 2.4.0
+* VirtualBox: 5.0.4
