@@ -99,12 +99,14 @@ the emulation.
 ### QEMU
 
 Similar to Bochs, go to the root directory of the source code, where
-script `run-qemu` is located. Run the script.
+script `run-qemu` or `debug-qemu` is located.
 
-In the script, QEMU monitor is redirectted to stdio (via argument
-`-monitor stdio`). In addition, `-s` argument makes QEMU listens to
-port 1234 for GDB, while `-S` argument makes QEMU pauses at the
-beginning for GDB's `continue` command. After start GDB, first type
+In both `run-qemu` and `debug-qemu`, QEMU monitor is redirectted to
+stdio (via argument `-monitor stdio`). Script `run-qemu` will start
+the emulator without GDB support; while `debug-qemu` enables GDB
+support: `-s` argument makes QEMU listens to port 1234 for GDB, while
+`-S` argument makes QEMU pauses at the beginning for GDB's `continue`
+command. After running `debug-qemu` and starting GDB, first type
 `target remote :1234` to connect to QEMU, then type command `continue`
 to resume the emulation.
 
@@ -116,8 +118,9 @@ and select "Add Floppy Controller". And the select the image file
 machine settings, make sure that Floppy is checked for Boot order.
 
 Assuming the VM name is `yalo`, go to the root directory of the source
-code, where script `run-virtualbox` is located. Run the script to
-start the emulator with debug window.
+code, where script `run-virtualbox` or `debug-virtualbox` is
+located. Run script `run-virtualbox` to start the emulator, or script
+`debug-virtualbox` to start the emulator with debug window.
 
 ## Software version
 

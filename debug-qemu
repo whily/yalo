@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Emulate with qemu, enabling debug settings for GDB.
+qemu-system-x86_64 -fda floppy.img -m 32 -monitor stdio -s -S
