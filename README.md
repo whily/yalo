@@ -14,6 +14,14 @@ The project is only at very very initial stage, with an
 [assembler](https://github.com/whily/yalo/blob/master/doc/AssemblyX64.md)
 written in Common Lisp, and a 16 bit bootloader.
 
+"Short term" plan:
+
+- [ ] VGA text mode and keyboard handling without using BIOS.
+- [ ] Switch to 32 bit protected mode.
+- [ ] Switch to 64 bit long mode.
+- [ ] Implement Ink interpreter with assembly.
+- [ ] Self hosting a more power Ink interpreter with Ink itself.
+
 # Getting Started
 
 ## Getting Bootable Image
