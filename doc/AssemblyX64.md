@@ -156,7 +156,7 @@ Following notations are used:
 * **r16**: one of the word general-purpose registers: ax, cx, dx, bx, sp, bp, si, di.
 * **r32**: one of the doubleword general-purpose registers: eax, ecx, edx, ebx, esp, ebp, esi, edi.
 * **r64**: one of the quadword general-purpose registers: rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8-r15.
-* **m8, m16, m32, m64, m128**: memory references. Specifier (`byte`, `word`, `dword`, `qword`) is needed for ambiguous cases. For example in  `(mov word [12345] 16).
+* **m8, m16, m32, m64, m128**: memory references. Specifier (`byte`, `word`, `dword`, `qword`) is needed for ambiguous cases. For example in  `(mov word (12345) 16).
 * **m16&32**, **m16&16**, **m32&32**, **m16&64**, a memory operand containing one pair whose sizes are indicated on the left and right size of the ampersand.
 * **r/m8, r/m16, r/m32, r/m64**: register or memeory choices. For example, r/m8 means that either r8 or m8 can be used as operand.
 * **sreg**: segment register.
