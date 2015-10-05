@@ -40,6 +40,10 @@ start:
         mov     word [msg], 123
         mov     es, bx
         mov     ax, cs
+        movzx   ax, byte [msg]
+        movzx   edx, cx
+        movzx   eax, byte [msg]
+        movzx   eax, word [msg]
 
         nop
         out     3, al
@@ -89,6 +93,8 @@ start:
         jb      near msg
         jecxz   msg
         jrcxz   msg
+        movzx   r10, al
+        ;;movzx   rdx, word [msg]
         syscall
         sysret
         xadd    cl, dl
