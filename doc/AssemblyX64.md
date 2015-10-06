@@ -34,7 +34,7 @@ here too.
 | Instruction                         | Description |
 | ----------------------------------- | ----------- |
 | db [_var_] [_number_ &#124; _string_]    | Declare byte values via atoms |
-| db [_var_] ([_number_ &#124; _string_]*) | Declare byte values via lists |
+| db [_var_] `([_number_ &#124; _string_]*)` | Declare byte values via lists |
 
 Note:
 
