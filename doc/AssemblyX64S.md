@@ -52,8 +52,8 @@ Please refer to [x86-64 arithmetic instructions](AssemblyX64Arith.md) for detail
 
 | Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                      |
 | ----------- | ------ | ----------- | -------------- | -------------------------------- |
-| stosb       | AA     | Valid       | Valid          | Store al at address [ds:](e/r)si |
-| stosw       | AB     | Valid       | Valid          | Store ax at address [ds:](e/r)si |
+| stosb       | AA     | Valid       | Valid          | Store al at address [es:](e/r)di |
+| stosw       | AB     | Valid       | Valid          | Store ax at address [es:](e/r)di |
 
 ### sub: Sub
 
