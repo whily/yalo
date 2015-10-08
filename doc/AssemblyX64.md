@@ -34,13 +34,13 @@ here too.
 | Instruction                         | Description |
 | ----------------------------------- | ----------- |
 | db [_var_] [_number_ &#124; _string_]    | Declare byte values via atoms |
-| db [_var_] `([_number_ &#124; _string_]*)` | Declare byte values via lists |
+| db [_var_] &#40;[_number_ &#124; _string_]*) | Declare byte values via lists |
 
 Note:
 
 * _number_ should be in range -128..+255. Expression within the same
 range can be used as well.
-* _string_ is converted byte by bytes.
+* _string_ is converted byte by byte.
 
 ## dw: Declaring initialized word value(s)
 
