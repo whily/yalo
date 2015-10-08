@@ -41,6 +41,9 @@
     ;; Real start up code.
     real-start
 
+    ;; Initialize text mode.
+    (call init-text-mode)
+
     ;; Check whether BGA is available
     ;; The following two lines are disabled for now as BGA mode is not used currently.
     ;; If not disabled, error will be thrown on VirtualBox (however osdev.org actually says that
@@ -63,26 +66,22 @@
     (jnc     no-long-mode-error)
     (clc)
 
-    (mov     cx (- end-banner banner))
-    (mov     bp banner)
+    (mov     si banner)
     (call    println)
     (jmp     short read-start)
-    (db      banner "Start your journey on yalo v0.0.0!")
-    end-banner
+    (db      banner ("Start your journey on yalo v0.0.0!" 0))
 
     ;;; REPL: read
     read-start
-    (mov     cx (- read repl))
-    (mov     bp repl)
+    (mov     si repl)
     (call    print)
     (jmp     short read)
-    (db      repl ("REPL>"))
+    (db      repl ("REPL>" 0))
     read
     (call    getchar)
     (cmp     al 13)
     (je      eval-start)
     (call    putchar)
-    (call    forward-cursor)
     (jmp     short read)
 
     ;;; REPL: eval
@@ -96,20 +95,16 @@
     (jmp     short read-start)
 
     no-bga-error
-    (mov     cx (- end-no-bga-message no-bga-message))
-    (mov     bp no-bga-message)
+    (mov     si no-bga-message)
     (call    println)
     (hlt)
-    (db      no-bga-message "ERROR: BGA not available.")
-    end-no-bga-message
+    (db      no-bga-message ("ERROR: BGA not available." 0))
 
     no-long-mode-error
-    (mov     cx (- end-no-long-mode-message no-long-mode-message))
-    (mov     bp no-long-mode-message)
+    (mov     si no-long-mode-message)
     (call    println)
     (hlt)
-    (db      no-long-mode-message "ERROR: CPU does not support long mode.")
-    end-no-long-mode-message
+    (db      no-long-mode-message ("ERROR: CPU does not support long mode." 0))
 
     ;; Function check-cpu. Use CPUID to check if the process supports long mode.
     ;; From section 14.8 of AMD64 Architecture Programmer's Manual

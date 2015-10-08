@@ -13,9 +13,24 @@
 
 (defparameter *console*
   `(
+    ;;; VGA text output code is based on http://wiki.osdev.org/Babystep4
+
+    ;;; Initialize text mode. Call it before calling any text mode functions.
+    init-text-mode
+    (xor     ax ax)
+    (mov     ds ax)
+    (mov     ax #xb800)            ; Text video memory
+    (mov     es ax)
+    (ret)
+
     ;;; Function println. Write a string and start a new line.
     ;;; It is equivalent to calling print twice: first to print the string,
     ;;; and then print CR/LF.
+    ;;; Input:
+    ;;;   DS:SI: points to the starting address of the 0 terminated string.
+    ;;; Output: None
+    ;;; Modified registers: same as putchar
+    ;;; Global variables: same as putchar
     println
     (call    print)
     (call    printcrlf)
@@ -24,28 +39,25 @@
     ;;; Function printcrlf. Print crlf only.
     ;;; Input: None
     ;;; Output: None
-    ;;; Modified reisters: AX, BX, CX, and DX.
+    ;;; Modified reisters: None
+    ;;; Global variables: text-x, text-y
     printcrlf
-    (mov     cx 2)
-    (mov     bp crlf)
-    (call    print)
+    (add     byte (text-y) 1)   ; Down one row
+    (mov     byte (text-x) 0)   ; Back to left
     (ret)
-    (db      crlf (13 10))
 
+    do-char
+    (call    putchar)
     ;;; Function print. Write string to screen.
     ;;; Input:
-    ;;;   CX: string length
-    ;;;   BP: points to starting address.
+    ;;;   DS:SI: points to the starting address of the 0 terminated string.
     ;;; Output: None
-    ;;; Modified registers: AX, BX, and DX.
+    ;;; Modified registers: same as putchar
+    ;;; Global variables: same as putchar
     print
-    (push    cx)
-    (call    get-cursor)
-    (pop     cx)
-    ;; Write the string.
-    (mov     ax #x1301)
-    (mov     bx #xf)
-    (int     #x10)
+    (lodsb)         ; Load string char to AL
+    (cmp     al 0)      ; 0 terminated string like C.
+    (jne     do-char)
     (ret)
 
     ;;; Function getchar. Get keystroke from keyboard without echo. If
@@ -63,49 +75,29 @@
     ;;; Function putchar. Writer character at cursor position.
     ;;; Input:
     ;;;   AL: character to display
-    ;;;   BH: page number
-    ;;;   CX: number of times to writer character.
     ;;; Output: None
-    ;;; Modified registers: AX, BH, CX.
+    ;;; Modified registers: AX, BX, CX, DX, DI
+    ;;; Global variables: text-x, text-y, text-cols
     putchar
-    (mov     ah #x9)
-    (xor     bh bh)                ; Page number (0)
-    (mov     cx 1)                 ; Number of times to writer character.
-    (int     #x10)
+    (mov     ah #xf)               ; Attribute: white on black
+    (mov     cx ax)                ; Save char/attribute
+    (movzx   ax (text-y))
+    (movzx   dx (text-cols))
+    (shl     dx 1)                 ; 2 bytes for one character
+    (mul     dx)
+    (movzx   bx (text-x))
+    (shl     bx 1)
+    (mov     di 0)                 ; Start of video memory
+    (add     di ax)                ; Add y offset
+    (add     di bx)                ; Add x offset
+    (mov     ax cx)                ; Restore char/attribute
+    (stosw)                        ; Write char/atribute
+    (add     byte (text-x) 1)      ; Advance to right
     (ret)
 
-    ;;; Function get-cursor. Get current cursor position, stored in CX and DX.
-    ;;; Input: None
-    ;;; Output:
-    ;;;   DH: row
-    ;;;   DL: column
-    ;;;   CH: cursor start line
-    ;;;   CL: cursor bottom line
-    get-cursor
-    (mov     ah 3)
-    (xor     bh bh)                ; Page number (0)
-    (int     #x10)
-    (ret)
-
-    ;;; Function set-curor. Set cursor position.
-    ;;; Input:
-    ;;;   DH: row
-    ;;;   DL: column
-    ;;; Output: None
-    ;;; Modified registers AH, BH.
-    set-cursor
-    (mov     ah 2)
-    (xor     bh bh)                ; Page number (0)
-    (int     #x10)
-    (ret)
-
-    ;;; Function forward-cursor. Forward cursor position to right by 1 char.
-    ;;; Note that wrap and scrolling not considered.
-    ;;; Input: None
-    ;;; Output: None
-    ;;; Modify registers: AH, BH, CX, DX
-    forward-cursor
-    (call    get-cursor)
-    (inc     dl)
-    (call    set-cursor)
-    (ret)))
+    (db text-rows 25)   ;; Number of rows in text mode.
+    (db text-cols 80)   ;; Number of columns in text mode.
+    (db text-x 0)       ;; Position x in text mode [0, text-cols)
+    (db text-y 0)       ;; Position y in text mode [0, text-rows)
+    (db hex-str "0123456789ABCDEF") ;; Hexadecimal output string
+    ))
