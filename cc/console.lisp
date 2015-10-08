@@ -21,6 +21,19 @@
     (mov     ds ax)
     (mov     ax #xb800)            ; Text video memory
     (mov     es ax)
+    (call    clear)
+    (ret)
+
+    ;;; Clear screen.
+    clear
+    (movzx   ax (text-rows))
+    (movzx   dx (text-cols))
+    (mul     dx)
+    (mov     cx ax)            ; All screen to be cleared.
+    (mov     al #x20)          ; Space char
+    (mov     ah #xf)           ; Attribute: white on black
+    (mov     di 0)
+    (rep     stosw)
     (ret)
 
     ;;; Function println. Write a string and start a new line.
