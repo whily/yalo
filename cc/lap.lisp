@@ -1,9 +1,9 @@
 ;;;; -*- Mode: Lisp -*-
-;;;; Author: 
+;;;; Author:
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
 ;;;;     Lisp Assembly Program.
-;;;; License: 
+;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
 ;;;; Copyright (C) 2009-2012 Yujian Zhang
@@ -16,7 +16,7 @@
 
 (defun asm (listing)
   "One pass assembler. listing is in the form of LAP as described in
-       http://code.google.com/p/yalo/wiki/AssemblySyntax
+       https://github.com/whily/yalo/blob/master/doc/AssemblyX64.md
    Returns opcodes as a list of bytes.
 
    To implement the assembler in one pass, for each instruction,
@@ -33,22 +33,22 @@
         (bits 64)
         label)
     (dolist (e listing)
-      (if (listp e) 
-          (let* ((e* (cons (car e) 
-                          (try-eval-values 
+      (if (listp e)
+          (let* ((e* (cons (car e)
+                          (try-eval-values
                            (normalize-local-labels (cdr e) label)
                            cursor origin symtab)))
                  (snippet (case (car e*)
                             (bits (setf bits (second e*))
                                   nil)
-                            (equ (push (cons (second e*) (eval (third e*))) 
+                            (equ (push (cons (second e*) (eval (third e*)))
                                        symtab)
                                  nil)
                             (org (setf origin (second e*)
                                        cursor origin)
                                  nil)
-                            (times 
-                             (repeat-list (eval (second e*)) 
+                            (times
+                             (repeat-list (eval (second e*))
                                           (encode (nthcdr 2 e*) cursor bits)))
                             (t (encode e* cursor bits)))))
             (when (and (= (length e) 3) (member (car e) '(db dw dd dq)))
@@ -64,7 +64,7 @@
               (when (assoc nl symtab)
                 (error "asm: duplicated label ~A." nl))
               (push (cons nl cursor) symtab)))))
-    (mapcan 
+    (mapcan
      #'(lambda (c)
          (cond
            ((numberp c) (list c))
@@ -103,8 +103,8 @@
   (pp-hex (read-image filename)))
 
 (defparameter *prefix-mapping*
-  `((lock  . #xf0) 
-    (repne . #xf2) (repnz .#xf2) 
+  `((lock  . #xf0)
+    (repne . #xf2) (repnz .#xf2)
     (rep   . #xf3) (repe  . #xf3) (repz . #xf3))
   "Prefix mapping table.")
 
@@ -117,7 +117,7 @@
     (acond
      ((assoc* (car e) *prefix-mapping*)
       (cons it (encode (cdr e) (1+ cursor) bits)))
-     ((assoc* e (x86-64-syntax bits) :test #'equal) 
+     ((assoc* e (x86-64-syntax bits) :test #'equal)
       ;; Instructions with exact match, e.g. instructions without
       ;; operands (like nop, hlt), or special instructions like int 3.
       ;; copy-list is necessary since syntax table is LITERAL.
@@ -181,7 +181,7 @@
       (match-instruction e (instruction-type e) bits)
     (encode-complex e type opcode cursor bits cc-code)))
 
-(defun encode-complex (instruction type opcode cursor bits 
+(defun encode-complex (instruction type opcode cursor bits
                        &optional (cc-code 0))
   "Encode instruction (with optional rex prefix). Other prefixes like
 lock are directly handled in encode()."
@@ -191,46 +191,46 @@ lock are directly handled in encode()."
                   (push 'w rex-set)))
          (encoded-len 0) ; Tracking for (R)IP relative encoding.
          (remaining
-          (mapcan 
-           #'(lambda (on) 
+          (mapcan
+           #'(lambda (on)
                (let ((x
                       (cond
                         ((numberp on) (list on))
-                        ((listp on)  
+                        ((listp on)
                          (ecase (car on)
                            (+ (ecase (caddr on)
                                 (r (multiple-value-bind (regi rex)
                                        (reg->int (second instruction))
                                      (when rex (push 'b rex-set))
-                                     (list (+ (cadr on) 
+                                     (list (+ (cadr on)
                                               regi))))
                                 (cc (list (+ (cadr on) cc-code)))))))
-                        (t 
+                        (t
                          (ecase on
                            ((o16 o32 a16 a32) (size-prefix on bits))
-                           ((ib iw id io) 
-                            (try-encode-bytes (instruction-value instruction type 
+                           ((ib iw id io)
+                            (try-encode-bytes (instruction-value instruction type
                                                                  (on->in on))
                                               (on-length on)))
                            ((rb rw rd ro)
-                            (try-encode-bytes 
+                            (try-encode-bytes
                              `(- ,(instruction-value instruction type (on->in on))
                                  ,(+ cursor encoded-len (on-length on)))
                              (on-length on)))
-                           ((/0 /1 /2 /3 /4 /5 /6 /7) 
+                           ((/0 /1 /2 /3 /4 /5 /6 /7)
                             (multiple-value-bind (mod-sib-disp rex-set*)
                                 (encode-r/m-sib-disp
-                                 (instruction-value instruction type 
+                                 (instruction-value instruction type
                                                     (find-r/m instruction type))
                                  on bits)
                               (setf rex-set (append rex-set rex-set*))
                               mod-sib-disp))
-                           (/r 
+                           (/r
                             (multiple-value-bind (mod-sib-disp rex-set*)
-                                (encode-r/m-sib-disp 
-                                 (instruction-value instruction type 
+                                (encode-r/m-sib-disp
+                                 (instruction-value instruction type
                                                     (find-r/m instruction type))
-                                 (instruction-value instruction type 
+                                 (instruction-value instruction type
                                                     (find-reg instruction type))
                                  bits)
                               (setf rex-set (append rex-set rex-set*))
@@ -257,7 +257,7 @@ lock are directly handled in encode()."
          (st (symb (subseq s 0 1)))
          (sbit (read-from-string (subseq s 1 3))))
     (if (or (= sbit bits) (and (eq op 'o32) (member bits '(32 64))))
-         nil 
+         nil
         (list (ecase st
                 (o #x66)
                 (a #x67))))))
@@ -280,7 +280,7 @@ lock are directly handled in encode()."
      - A list of (w r x b) if present."
   (let* (rex-set
          (r/o (case reg/opcode
-                ((/0 /1 /2 /3 /4 /5 /6 /7) 
+                ((/0 /1 /2 /3 /4 /5 /6 /7)
                  (- (char-code (elt (symbol-name reg/opcode) 1)) 48))
                 (t (case (operand-type reg/opcode)
                      (sreg (sreg->int reg/opcode))
@@ -288,10 +288,10 @@ lock are directly handled in encode()."
                                (reg->int reg/opcode)
                              (when rex (push (ecase rex
                                                (p 'p)
-                                               (e 'r)) 
+                                               (e 'r))
                                              rex-set))
                              regi)))))))
-    (multiple-value-bind (mod rm sib disp disp-length rex-set*) 
+    (multiple-value-bind (mod rm sib disp disp-length rex-set*)
         (r/m-values r/m bits)
       (values (append (list (encode-modr/m mod rm r/o))
                       (when sib (list sib))
@@ -302,15 +302,15 @@ lock are directly handled in encode()."
   "Return values: mod, r/m for encoding, sib, disp, length of disp
 in bytes, and rex-set.
 
-   Note 
+   Note
      1. If sib is not needed, return nil.
      2. If disp is not needed, return nil as disp and disp-length
         could be arbitrary."
   (ecase (operand-type r/m)
-    ((r8 r16 r32 r64) 
+    ((r8 r16 r32 r64)
      (multiple-value-bind (regi rex)
          (reg->int r/m)
-       (values #b11 regi nil nil 0 (if rex 
+       (values #b11 regi nil nil 0 (if rex
                                        (list (ecase rex
                                                (p 'p)
                                                (e 'b)))
@@ -327,7 +327,7 @@ in bytes, and rex-set.
         (if (and (= (length r/m) 1) ; Special handling of (disp16)
                  (member* '(imm8 imm16 label) type))
             (values 0 #b110 nil (car r/m) 2 nil)
-            (let* ((mod (cond 
+            (let* ((mod (cond
                           ((member 'imm8 type) 1)
                           ((member 'imm16 type) 2)
                           (t 0)))
@@ -344,7 +344,7 @@ in bytes, and rex-set.
                          ((member 'di r/m) #b101)
                          ((member 'bp r/m) #b110)
                          ((member 'bx r/m) #b111)
-                         (t (error "Incorrect memory addressing: ~A~%" 
+                         (t (error "Incorrect memory addressing: ~A~%"
                                    r/m)))))
               (values mod rm nil disp mod nil))))))
 
@@ -354,29 +354,29 @@ in bytes, and rex-set.
      (values 1 #b101 nil 0 1 nil))
     ((equal r/m '(esp))  ; Special handling of (esp)
      (values 0 #b100  (encode-sib 0 #b100 4) nil 0 nil))
-    (t 
+    (t
      (let ((type (mapcar #'operand-type r/m)))
-       (cond 
+       (cond
          ((and (= (length r/m) 1) ; Special handling of (disp32)
                (member* '(imm8 imm16 imm32 label) type))
           (values 0 #b101 nil (car r/m) 4 nil))
          ((and (= (length r/m) 2) (member 'esp r/m) (member 'imm8 type))
           ;; Special handling of (esp + disp8)
-          (values 1 #b100  (encode-sib 0 #b100 4) 
+          (values 1 #b100  (encode-sib 0 #b100 4)
                   (instruction-value r/m type 'imm8) 1 nil))
-         ((and (= (length r/m) 2) (member 'esp r/m) 
+         ((and (= (length r/m) 2) (member 'esp r/m)
                (member* '(imm16 imm32) type))
           ;; Special handling of (esp + disp32)
-          (values 2 #b100  (encode-sib 0 #b100 4) 
+          (values 2 #b100  (encode-sib 0 #b100 4)
                   (instruction-value r/m type (member* '(imm16 imm32) type)) 4
                   nil))
-         (t (let* ((mod (cond 
+         (t (let* ((mod (cond
                           ((member 'imm8 type) 1)
                           ((member* '(imm16 imm32) type) 2)
                           (t 0)))
                    (disp (ecase mod
                            (1 (instruction-value r/m type 'imm8))
-                           (2 (instruction-value r/m type 
+                           (2 (instruction-value r/m type
                                                  (member* '(imm16 imm32) type)))
                            (0 nil)))
                    (disp-length
@@ -384,10 +384,10 @@ in bytes, and rex-set.
                         4
                         mod))
                    (sib (cond
-                          ((some #'scaled-index? r/m)  
+                          ((some #'scaled-index? r/m)
                            (let* ((si (find-if #'scaled-index? r/m))
                                   (sis (str si))
-                                  (scale (floor (log (read-from-string 
+                                  (scale (floor (log (read-from-string
                                                       (subseq sis 4 5))
                                                      2)))
                                   (index (reg->int (symb (subseq sis 0 3))))
@@ -396,23 +396,23 @@ in bytes, and rex-set.
                              (unless base-reg
                                ;; Special case of (scaled-index + disp32)
                                (setf mod 0
-                                     disp (instruction-value 
-                                           r/m type 
+                                     disp (instruction-value
+                                           r/m type
                                            (member* '(imm8 imm16 imm32) type))
                                      disp-length 4))
                              (encode-sib scale index base)))
                           ((= (count-if #'r32? r/m) 2)
                            (let* ((scale 0)
-                                  (base (reg->int (find-if #'r32? r/m))) 
-                                  (index (reg->int (find-if #'r32? r/m 
+                                  (base (reg->int (find-if #'r32? r/m)))
+                                  (index (reg->int (find-if #'r32? r/m
                                                             :from-end t))))
                              (encode-sib scale index base)))
                           (t nil)))
                    (rm (if sib
                            #b100
-                           (reg->int (member* '(eax ecx edx ebx ebp esi edi) 
+                           (reg->int (member* '(eax ecx edx ebx ebp esi edi)
                                               r/m)))))
-              (values mod rm sib disp disp-length nil))))))))  
+              (values mod rm sib disp disp-length nil))))))))
 
 (defun r/m-values-64 (r/m)
   ;; TODO: overhaul (currently only something like a placeholder).
@@ -421,29 +421,29 @@ in bytes, and rex-set.
      (values 1 #b101 nil 0 1 nil))
     ((equal r/m '(rsp))  ; Special handling of (rsp)
      (values 0 #b100  (encode-sib 0 #b100 4) nil 0 nil))
-    (t 
+    (t
      (let ((type (mapcar #'operand-type r/m)))
-       (cond 
+       (cond
          ((and (= (length r/m) 1) ; Special handling of (disp32)
                (member* '(imm8 imm16 imm32 label) type))
           (values 0 #b101 nil (car r/m) 4 nil))
          ((and (= (length r/m) 2) (member 'rsp r/m) (member 'imm8 type))
           ;; Special handling of (rsp + disp8)
-          (values 1 #b100  (encode-sib 0 #b100 4) 
+          (values 1 #b100  (encode-sib 0 #b100 4)
                   (instruction-value r/m type 'imm8) 1 nil))
-         ((and (= (length r/m) 2) (member 'rsp r/m) 
+         ((and (= (length r/m) 2) (member 'rsp r/m)
                (member* '(imm16 imm32) type))
           ;; Special handling of (rsp + disp32)
-          (values 2 #b100  (encode-sib 0 #b100 4) 
+          (values 2 #b100  (encode-sib 0 #b100 4)
                   (instruction-value r/m type (member* '(imm16 imm32) type)) 4
                   nil))
-         (t (let* ((mod (cond 
+         (t (let* ((mod (cond
                           ((member 'imm8 type) 1)
                           ((member* '(imm16 imm32) type) 2)
                           (t 0)))
                    (disp (ecase mod
                            (1 (instruction-value r/m type 'imm8))
-                           (2 (instruction-value r/m type 
+                           (2 (instruction-value r/m type
                                                  (member* '(imm16 imm32) type)))
                            (0 nil)))
                    (disp-length
@@ -451,10 +451,10 @@ in bytes, and rex-set.
                         4
                         mod))
                    (sib (cond
-                          ((some #'scaled-index? r/m)  
+                          ((some #'scaled-index? r/m)
                            (let* ((si (find-if #'scaled-index? r/m))
                                   (sis (str si))
-                                  (scale (floor (log (read-from-string 
+                                  (scale (floor (log (read-from-string
                                                       (subseq sis 4 5))
                                                      2)))
                                   (index (reg->int (symb (subseq sis 0 3))))
@@ -463,24 +463,24 @@ in bytes, and rex-set.
                              (unless base-reg
                                ;; Special case of (scaled-index + disp32)
                                (setf mod 0
-                                     disp (instruction-value 
-                                           r/m type 
+                                     disp (instruction-value
+                                           r/m type
                                            (member* '(imm8 imm16 imm32) type))
                                      disp-length 4))
                              (encode-sib scale index base)))
                           ((= (count-if #'r32? r/m) 2)
                            (let* ((scale 0)
-                                  (base (reg->int (find-if #'r32? r/m))) 
-                                  (index (reg->int (find-if #'r32? r/m 
+                                  (base (reg->int (find-if #'r32? r/m)))
+                                  (index (reg->int (find-if #'r32? r/m
                                                             :from-end t))))
                              (encode-sib scale index base)))
                           (t nil)))
                    (rm (if sib
                            #b100
-                           (reg->int (member* '(rax rcx rdx rbx rbp rsi rdi) 
+                           (reg->int (member* '(rax rcx rdx rbx rbp rsi rdi)
                                               r/m)))))
-              (values mod rm sib disp disp-length nil))))))))  
-                
+              (values mod rm sib disp disp-length nil))))))))
+
 (defun try-encode-bytes (x length)
   "If x is evaluable, run encode-bytes.
    Otherwise return the placeholder list."
@@ -493,7 +493,7 @@ in bytes, and rex-set.
 little-ending. Length is the number of bytes to convert to. X is first
 converted from signed to unsigned."
   (ecase length
-    ((1 2 4 8) 
+    ((1 2 4 8)
      (do* ((e (1- length) (1- e))
            (y (signed->unsigned x length))
            (r (floor y (expt 256 e)) (floor y (expt 256 e)))
@@ -504,7 +504,7 @@ converted from signed to unsigned."
 
 (defun try-eval-values (ops cursor origin symtab)
   "Run lookup-value. For each element, evaluate it if possible."
-  (mapcar #'(lambda (v) 
+  (mapcar #'(lambda (v)
               (let ((v* (lookup-value v cursor origin symtab)))
                 (if (evaluable? v*) (eval v*) v*)))
           ops))
@@ -514,7 +514,7 @@ converted from signed to unsigned."
   (cond
     ((atom e) (numberp e))
     ((null e) t)
-    ((atom (car e)) (and (member (car e) '(+ - ceiling)) 
+    ((atom (car e)) (and (member (car e) '(+ - ceiling))
                          (every #'evaluable? (cdr e))))
     (t nil)))
 
@@ -543,7 +543,7 @@ converted from signed to unsigned."
   (cond
     ((atom ops) (operand->value ops cursor origin symtab))
     ((null ops) nil)
-    ((atom (car ops)) 
+    ((atom (car ops))
      (cons (car ops)
            (mapcar #'(lambda (co)
                        (lookup-value co cursor origin symtab))
@@ -563,7 +563,7 @@ converted from signed to unsigned."
           it
           operand))
     (t operand)))
-         
+
 (defun instruction-value (instruction type name)
   "Get the value (in instruction) corresponding to the name (in type)."
   (assoc* name (mapcar #'cons type instruction)))
@@ -583,8 +583,8 @@ converted from signed to unsigned."
 (defun assoc-x86-64-opcode (type bits)
   "Returns a associated opcode based on x86-64 syntax."
   (assoc type (x86-64-syntax bits)
-         :test #'(lambda (x y) 
-                   (every #'(lambda (a b) 
+         :test #'(lambda (x y)
+                   (every #'(lambda (a b)
                               (if (listp b)
                                   (member a b)
                                   (eq a b)))
@@ -611,14 +611,14 @@ converted from signed to unsigned."
 
 (defun instruction-type (instruction)
   "Returns the instruction type for encoding."
-  (cons (car instruction) 
+  (cons (car instruction)
         (mapcar #'operand-type (cdr instruction))))
 
 (defun operand-type (operand)
   "Returns operand type."
   (cond
     ((numberp operand)
-     (cond 
+     (cond
        ((and (<= (- (expt 2 7))  operand (1- (expt 2 8))))  'imm8)
        ((and (<= (- (expt 2 15)) operand (1- (expt 2 16)))) 'imm16)
        ((and (<= (- (expt 2 31)) operand (1- (expt 2 32)))) 'imm32)
@@ -628,15 +628,15 @@ converted from signed to unsigned."
      (case (car operand)
        ((+ -) 'imm)
        (t     'm)))
-    (t 
+    (t
      (case operand
-       ((al cl dl bl ah ch dh bh bpl spl dil sil 
+       ((al cl dl bl ah ch dh bh bpl spl dil sil
             r8l r9l r10l r11l r12l r13l r14l r15l)  'r8)
-       ((ax cx dx bx sp bp si di 
+       ((ax cx dx bx sp bp si di
             r8w r9w r10w r11w r12w r13w r14w r15w)  'r16)
        ((eax ecx edx ebx esp ebp esi edi
              r8d r9d r10d r11d r12d r13d r14d r15d) 'r32)
-       ((rax rcx rdx rbx rsp rbp rsi rdi 
+       ((rax rcx rdx rbx rsp rbp rsi rdi
              r8 r9 r10 r11 r12 r13 r14 r15)         'r64)
        ((cs ds es ss fs gs)                         'sreg)
        ((near short byte word dword qword)           operand)
@@ -667,7 +667,7 @@ converted from signed to unsigned."
     (bpl                      (values 5 'p))
     (sil                      (values 6 'p))
     (dil                      (values 7 'p))
-    ((r8l  r8w  r8d  r8)      (values 0 'e)) 
+    ((r8l  r8w  r8d  r8)      (values 0 'e))
     ((r9l  r9w  r9d  r9)      (values 1 'e))
     ((r10l r10w r10d r10)     (values 2 'e))
     ((r11l r11w r11d r11)     (values 3 'e))
@@ -723,8 +723,8 @@ cmovcc and jcc. Returns -1 if cc is not a valid value."
 (defun normalize-label (e label)
   "If e is a local label, prefix it with label. Otherwise, return as
 is."
-  (if (local-label? e) 
-      (symb label e) 
+  (if (local-label? e)
+      (symb label e)
       e))
 
 (defun normalize-local-labels (e label)
