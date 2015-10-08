@@ -47,7 +47,7 @@ range can be used as well.
 | Instruction            | Description                    |
 | ---------------------- | ------------------------------ |
 | dw [_var_] _number_    | Declare word value via numbers |
-| dw [_var_] (_number_)* | Declare word value via lists   |
+| dw [_var_] &#40;_number_)* | Declare word value via lists   |
 
 Note:
 
@@ -59,7 +59,7 @@ range can be used as well.
 | Instruction            | Description                          |
 | ---------------------- | ------------------------------------ |
 | dd [_var_] _number_    | Declare doubleword value via numbers |
-| dd [_var_] (_number_)* | Declare doubleword value via lists   |
+| dd [_var_] &#40;_number_)* | Declare doubleword value via lists   |
 
 Note:
 
@@ -71,7 +71,7 @@ Expression within the same range can be used as well.
 | Instruction            | Description                        |
 | ---------------------- | ---------------------------------- |
 | dq [_var_] _number_    | Declare quadword value via numbers |
-| dq [_var_] (_number_)* | Declare quadword value via lists   |
+| dq [_var_] &#40;_number_)* | Declare quadword value via lists   |
 
 Note:
 
