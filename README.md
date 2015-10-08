@@ -20,7 +20,7 @@ written in Common Lisp, and a 16 bit bootloader.
 - [ ] Switch to 32 bit protected mode.
 - [ ] Switch to 64 bit long mode.
 - [ ] Implement Ink interpreter with assembly.
-- [ ] Self hosting a more power Ink interpreter with Ink itself.
+- [ ] Self hosting a more powerful Ink interpreter with Ink itself.
 
 # Getting Started
 
