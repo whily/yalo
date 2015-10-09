@@ -37,6 +37,7 @@ start:
         mov     ax, cx
         mov     [msg], bx
         mov     cx, [1c7bh]
+        mov     byte [msg], 42
         mov     word [msg], 123
         mov     es, bx
         mov     ax, cs
