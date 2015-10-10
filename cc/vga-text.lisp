@@ -73,18 +73,6 @@
     (jne     do-char)
     (ret)
 
-    ;;; Function getchar. Get keystroke from keyboard without echo. If
-    ;;; keystroke is available, it is removed from keyboard buffer.
-
-    ;;; Input: None
-    ;;; Output:
-    ;;;   AH: BIOS scan code
-    ;;;   AL: ASCII character
-    getchar
-    (xor     ah ah)
-    (int     #x16)
-    (ret)
-
     ;;; Function putchar. Writer character at cursor position.
     ;;; Input:
     ;;;   AL: character to display

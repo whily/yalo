@@ -129,6 +129,9 @@
     ;; Include content from vga-text.lisp.
     ,@*vga-text*
 
+    ;; Include content from keyboard.lisp
+    ,@*keyboard*
+
     ;; Include content from bga.lisp.
     ,@*bga*
 
