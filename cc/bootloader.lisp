@@ -74,6 +74,8 @@
     (jmp     short read-start)
     (db      banner ("Start your journey on yalo v0.0.0!" 0))
 
+    (call    init-keyboard)
+
     ;;; REPL: read
     read-start
     (mov     si repl)
@@ -84,6 +86,8 @@
     (call    getchar)
     (cmp     al 13)
     (je      eval-start)
+    (cmp     al 0)
+    (jz      read)
     (call    putchar)
     (jmp     short read)
 
