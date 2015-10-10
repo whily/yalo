@@ -98,16 +98,17 @@ There are various ways to run the image.
 ### Bochs
 
 Go to the root directory of the source code, where script `run-bochs`
-is located. Run the script and select *6* to proceed emulation.
-
-On Mac OS X, it might be possible that Bochs debugger automatically
-pause the emulation. If that is the case, simply type `c` to continue
-the emulation.
+and `debug-bochs` are located. Run the scripts and select *6* to
+proceed emulation. The difference between `run-bochs` and
+`debug-bochs` is that after selecting *6*, emulation starts directly
+for `run-bochs`; while for `debug-bochs`, emulator pauses before BIOS,
+and one needs to type `c` in the debugger window to continue the
+emulation.
 
 ### QEMU
 
 Similar to Bochs, go to the root directory of the source code, where
-script `run-qemu` or `debug-qemu` is located.
+script `run-qemu` and `debug-qemu` are located.
 
 In both `run-qemu` and `debug-qemu`, QEMU monitor is redirectted to
 stdio (via argument `-monitor stdio`). Script `run-qemu` will start
@@ -126,7 +127,7 @@ and select "Add Floppy Controller". And the select the image file
 machine settings, make sure that Floppy is checked for Boot order.
 
 Assuming the VM name is `yalo`, go to the root directory of the source
-code, where script `run-virtualbox` or `debug-virtualbox` is
+code, where script `run-virtualbox` and `debug-virtualbox` are
 located. Run script `run-virtualbox` to start the emulator, or script
 `debug-virtualbox` to start the emulator with debug window.
 
