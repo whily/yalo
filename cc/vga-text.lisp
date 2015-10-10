@@ -2,7 +2,7 @@
 ;;;; Author:
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
-;;;;     Console (text output, keyboard input) functions.
+;;;;     VGA text mode functions.
 ;;;;     BIOS interruptions are not used.
 ;;;; License:
 ;;;;     GNU General Public License v2
@@ -11,7 +11,7 @@
 
 (in-package :cc)
 
-(defparameter *console*
+(defparameter *vga-text*
   `(
     ;;; VGA text output code is based on http://wiki.osdev.org/Babystep4
 

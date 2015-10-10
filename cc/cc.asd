@@ -18,7 +18,7 @@
   ((:file "package")
    (:file "util")
    (:file "bga")
-   (:file "console")
+   (:file "vga-text")
    (:file "bootloader")
    (:file "x86-64-syntax")
    (:file "lap")

@@ -126,8 +126,8 @@
     (clc)
     (ret)
 
-    ;; Include content from console.lisp.
-    ,@*console*
+    ;; Include content from vga-text.lisp.
+    ,@*vga-text*
 
     ;; Include content from bga.lisp.
     ,@*bga*
