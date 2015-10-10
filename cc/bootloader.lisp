@@ -22,6 +22,9 @@
     (mov     gs ax)
     (mov     ss ax)
 
+    ;; Setup stack, allocating 8k bytes (relative to 7c00)
+    ;(mov     sp #xfc00)
+
     ;; Load other sectors from floppy disk.
     ;; AL: # of sectors
     (mov     ax (+ #x200 (ceiling (- kernel-end real-start) 512)))
