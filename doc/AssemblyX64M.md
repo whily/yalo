@@ -31,6 +31,13 @@ x86-64 Instruction Set M
 | mov sreg r/m16  | 8E /r        | Valid       | Valid          | Move r/m16 to segment register |
 | mov r/m16 sreg  | 8C /r        | Valid       | Valid          | Move segment register to r/m16 |
 
+### mov: Move to/from Control Registers
+
+| Instruction     | Opcode       | 64-Bit Mode | 16/32-Bit Mode | Description                    |
+| --------------- | ------------ | ----------- | -------------- | ------------------------------ |
+| mov r32 cr0-cr7 | 0F 20 /r     | ~~N.E.~~    | Valid          | Move control register to r32   |
+| mov cr0-cr7 r32 | 0F 22 /r     | ~~N.E.~~    | Valid          | Move r32 to control register   |
+
 ### movsb/movsw: Move Data from String to String
 
 | Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                    |

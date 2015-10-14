@@ -41,6 +41,8 @@ start:
         mov     word [msg], 123
         mov     es, bx
         mov     ax, cs
+        mov     cr0, eax
+        mov     eax, cr0
         movzx   ax, byte [msg]
         movzx   edx, cx
         movzx   eax, byte [msg]

@@ -270,7 +270,7 @@ lock are directly handled in encode()."
 
 (defun find-reg (instruction type)
   "Return the reg contained in type."
-  (aif (member* '(sreg r8 r16 r32 r64) type)
+  (aif (member* '(sreg cr0-cr7 r8 r16 r32 r64) type)
        it
        (error "No (s)reg operand in ~A~%" instruction)))
 
@@ -284,6 +284,7 @@ lock are directly handled in encode()."
                  (- (char-code (elt (symbol-name reg/opcode) 1)) 48))
                 (t (case (operand-type reg/opcode)
                      (sreg (sreg->int reg/opcode))
+                     (cr0-cr7 (cr0-cr7->int reg/opcode))
                      (t    (multiple-value-bind (regi rex)
                                (reg->int reg/opcode)
                              (when rex (push (ecase rex
@@ -639,6 +640,7 @@ converted from signed to unsigned."
        ((rax rcx rdx rbx rsp rbp rsi rdi
              r8 r9 r10 r11 r12 r13 r14 r15)         'r64)
        ((cs ds es ss fs gs)                         'sreg)
+       ((cr0 cr2 cr3 cr4)                           'cr0-cr7)
        ((near short byte word dword qword)           operand)
        (t                                           'label)))))
 
@@ -686,6 +688,15 @@ encoding ModR/M byte."
     (ds 3)
     (fs 4)
     (gs 5)))
+
+(defun cr0-cr7->int (cr0-cr7)
+  "Returns the integer representation for control registers when
+encoding ModR/M byte."
+  (ecase cr0-cr7
+    (cr0 0)
+    (cr2 2)
+    (cr3 3)
+    (cr4 4)))
 
 (defun cc->int (cc)
   "Returns the integer representing conditional codes (cc) used by

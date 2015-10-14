@@ -231,6 +231,8 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((jcxz   (imm8 label imm16 imm32 imm64)) . (a16 #xe3 rb))
     ((lgdt   m)                              . (#x0f #x01 /2))
     ((lidt   m)                              . (#x0f #x01 /3))
+    ((mov    r32 cr0-cr7)                    . (#x0f #x20 /r))
+    ((mov    cr0-cr7 r32)                    . (#x0f #x22 /r))
     ((pop    ss)                             . (#x17))
     ((pop    ds)                             . (#x1f))
     ((pop    es)                             . (#x07))
@@ -257,6 +259,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((inc    (r/m64 r64))                    . (#xff /0))
     ((inc    qword m)                        . (#xff /0))
     ((jrcxz  (imm8 label imm16 imm32 imm64)) . (#xe3 rb))
+    ;; TODO: test the following mov instructions.
     ((mov    r64 (imm64 imm32 imm16 imm8 imm label)) . ((+ #xb8 r) io))
     ((mov    (r/m64 r64 m) r64)              . (#x89 /r))
     ((mov    r64 (r/m64 r64 m))              . (#x8b /r))
