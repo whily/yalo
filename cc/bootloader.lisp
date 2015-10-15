@@ -14,35 +14,38 @@
   `((bits    16)
     (org     #x7c00)
 
-    ;; Just in case any segment registers are touched.
+    ;; Setup segments and stack.
+    (cli)
     (xor     ax ax)
     (mov     ds ax)
     (mov     es ax)
     (mov     fs ax)
     (mov     gs ax)
+    ;; Skip setting fs and gs since we will jump from protected mode
+    ;; directly to long mode. Skip setting es as it will be handled in
+    ;; vga-text.lisp.
+    (mov     ax #x9000)
     (mov     ss ax)
-
-    ;; Setup stack, allocating 8k bytes (relative to 7c00)
-    ;(mov     sp #xfc00)
+    (mov     sp #xff00)
+    (sti)
 
     ;; Load other sectors from floppy disk.
     ;; AL: # of sectors
-    (mov     ax (+ #x200 (ceiling (- kernel-end real-start) 512)))
-    (mov     bx real-start)   ; ES:BX is destination
+    (mov     ax (+ #x200 (ceiling (- kernel-end stage-2) 512)))
+    (mov     bx stage-2)   ; ES:BX is destination
     (mov     cx 2)            ; CH: cylinder; CL: sector
     (xor     dx dx)           ; DH: head; DL: drive
     (int     #x13)
 
-    (times   480 nop)         ; To be removed once near jmp is available
-    (jmp     short real-start)
+    (jmp     near stage-2)
 
     ;; Fill up to 510 bytes.
     (times   (- 510 (- $ $$)) db 0)
 
     (dw      #xaa55)           ; Boot sector signature
 
-    ;; Real start up code.
-    real-start
+    ;; Stage 2.
+    stage-2
 
     ;; Initialize text mode.
     (call init-text-mode)
@@ -68,6 +71,68 @@
     (call    check-cpu)
     (jnc     no-long-mode-error)
     (clc)
+
+    (jmp     short switch-to-protected-mode)
+
+    ;;; 32 bit Global Descriptor Table (GDT), according to
+    ;;;   http://www.brokenthorn.com/Resources/OSDev8.html
+    gdt32
+    ;; Null descriptor
+    (dd 0)
+    (dd 0)
+    ;; Code descriptor
+    (dw #xffff)              ; Limit low
+    (dw 0)                   ; Base low
+    (db 0)                   ; Base middle
+    (db #b10011010)          ; Access
+    (db #b11001111)          ; Granularity
+    (db 0)                   ; Base high
+    ;; Data descriptor
+    (dw #xffff)              ; Limit low
+    (dw 0)                   ; Base low
+    (db 0)                   ; Base middle
+    (db #b10010010)          ; Access
+    (db #b11001111)          ; Granularity
+    (db 0)                   ; Base high
+    end-gdt32
+    pgdt32
+    (dw (- end-gdt32 gdt32 1)) ; Limit (size of GDT)
+    (dd gdt32)               ; Base of GDT
+
+    switch-to-protected-mode
+    (cli)
+    (lgdt (pgdt32))          ; Load 32 bit GDT
+    ;; Enter protected mode by setting CR0.PE = 1.
+    (mov     eax #b11)
+    (mov     cr0 eax)
+    ;; Far jump to turn on protected mode. The following code is equivalent to
+    ;; (jmp far #x8:protected-mode)
+    (db      #xea)           ; Far jump
+    (dw      protected-mode)
+    (dw      8)              ; Code selector (8 is the offset relative to the beginning of gdt32)
+
+    protected-mode
+    (bits    32)
+    ;; Setup registers.
+    (mov     ax #x10)       ; Data selector (#x10 is the offset relative to the begining of gdt32)
+    (mov     ss ax)
+    (mov     esp #x90000)
+    ;; TODO: skip ds/es setting after jumping to long mode
+    (mov     ds ax)
+    (mov     es ax)
+
+    ;; Clear screen. This is just to test whether protected mode works or not. Will be removed later.
+    (movzx   ax (text-rows))
+    (movzx   dx (text-cols))
+    (mul     dx)
+    (movzx   ecx ax)           ; All screen to be cleared.
+    (mov     al #x30)          ; Space char
+    (mov     ah #xf)           ; Attribute: white on black
+    (mov     edi #xb8000)
+    (rep     stosw)
+
+    (hlt)
+    ;; Ignore the following code, as we will write 64 bit version of vga-text.lisp.
 
     (mov     si banner)
     (call    println)
@@ -100,6 +165,8 @@
 
     ;;; REPL: loop
     (jmp     short read-start)
+
+    (bits    16)
 
     no-bga-error
     (mov     si no-bga-message)
