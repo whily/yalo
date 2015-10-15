@@ -28,15 +28,25 @@
     (equ kbd-ctrl-status-mask-timeout  #x40)
     (equ kbd-ctrl-status-mask-parity   #x80)
     (equ kbd-encoder-cmd-set-scan-code #xf0)
+    (equ kbd-encoder-cmd-set-scan-code-1 #x1)
+    (equ kbd-encoder-cmd-enable-scanning #xf4)
+    (equ kbd-encoder-cmd-disable-scanning #xf5)
+    (equ kbd-encoder-cmd-reset         #xff)
 
     ;;; Initialize keyboard by set scan code set 1.
     ;;; Input: None
     ;;; Output: None
     init-keyboard
+    (mov     al kbd-encoder-cmd-reset)
+    (call    kbd-encoder-send-cmd)
+    (mov     al kbd-encoder-cmd-disable-scanning)
+    (call    kbd-encoder-send-cmd)
     (mov     al kbd-encoder-cmd-set-scan-code)
-    (call kbd-encoder-send-cmd)
-    (mov     al #x2)    ; Set to scan code set 1
-    (call kbd-encoder-send-cmd)
+    (call    kbd-encoder-send-cmd)
+    (mov     al kbd-encoder-cmd-set-scan-code-1)
+    (call    kbd-encoder-send-cmd)
+    (mov     al kbd-encoder-cmd-enable-scanning)
+    (call    kbd-encoder-send-cmd)
     (ret)
 
     ;;; Send command byte to keyboard controller.
