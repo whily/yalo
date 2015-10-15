@@ -229,6 +229,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((inc    r16)                            . (o16 (+ #x40 r)))
     ((inc    r32)                            . (o32 (+ #x40 r)))
     ((jcxz   (imm8 label imm16 imm32 imm64)) . (a16 #xe3 rb))
+    ((jmp    near (imm16 label imm8 imm32 imm64)) . (#xe9 rw))
     ((lgdt   m)                              . (#x0f #x01 /2))
     ((lidt   m)                              . (#x0f #x01 /3))
     ((mov    r32 cr0-cr7)                    . (#x0f #x20 /r))

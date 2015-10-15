@@ -25,6 +25,7 @@ start:
         jcxz    .loop
         je      .loop
         jmp     short .loop
+        jmp     near meta_msg
         lgdt    [msg]
         lidt    [msg]
         lldt    dx

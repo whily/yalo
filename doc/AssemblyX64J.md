@@ -27,3 +27,4 @@ Please refer to [conditional codes](AssemblyX64.md) for details.
 | Instruction    | Opcode   | 64-Bit Mode | 16/32-Bit Mode | Description        |
 | -------------- | -------- | ----------- | -------------- | ------------------ |
 | jmp short imm  | EB rb    | Valid       | Valid          | Jump short         |
+| jmp near imm   | E9 rw    | ~~N.S.~~    | Valid          | Jump near          |
