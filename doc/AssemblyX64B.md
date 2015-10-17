@@ -19,11 +19,16 @@ x86-64 Instruction Set B
 
 ### bt: Bit Test
 
-| Instruction   | Opcode      | 64-Bit Mode | 16/32-Bit Mode | Description                   |
-| ------------- | ----------- | ----------- | -------------- | ----------------------------- |
-| bt r/m16 r16  | 0F A3 /r    | Valid       | Valid          | Store selected bit in CF flag |
-| bt r/m32 r32  | 0F A3 /r    | Valid       | Valid          | Store selected bit in CF flag |
-| bt r/m32 r32  | 0F A3 /r    | Valid       | ~~N.E.~~       | Store selected bit in CF flag |
-| bt r/m16 imm8 | 0F BA /4 ib | Valid       | Valid          | Store selected bit in CF flag |
-| bt r/m32 imm8 | 0F BA /4 ib | Valid       | Valid          | Store selected bit in CF flag |
-| bt r/m64 imm8 | 0F BA /4 ib | Valid       | ~~N.E.~~       | Store selected bit in CF flag |
+Please refer to [x86-64 bit instructions](AssemblyX64Bit.md) for details.
+
+### btc: Bit Test and Complement
+
+Please refer to [x86-64 bit instructions](AssemblyX64Bit.md) for details.
+
+### btr: Bit Test and Reset
+
+Please refer to [x86-64 bit instructions](AssemblyX64Bit.md) for details.
+
+### bts: Bit Test and Set
+
+Please refer to [x86-64 bit instructions](AssemblyX64Bit.md) for details.

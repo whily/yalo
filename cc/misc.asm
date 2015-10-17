@@ -9,6 +9,9 @@
 
 start:
         bt      edx, 29
+        btc     eax, 28
+        btr     ebx, 27
+        bts     ecx, 26
         call    msg
         clc
         cld
@@ -85,6 +88,9 @@ start:
         bt      edx, ecx
         bt      rdx, 30
         bt      rax, rbx
+        btc     rax, 29
+        btr     rbx, 28
+        bts     rcx, 27
         cmova   ax, bx
         cmovc   eax, edx
         cmove   rdx, r10

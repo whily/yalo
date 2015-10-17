@@ -88,6 +88,22 @@ adc/add/and/cmp/or/sbb/sub/xor."
       ((,mnemonic r32 imm8)                  . (#xc1 ,opcode ib))
       ((,mnemonic dword m imm8)              . (#xc1 ,opcode ib)))))
 
+(defun bit-syntax (mnemonic 64bit-only?)
+  "Return syntax table for arithmetic operations: bt/btc/btr/bts."
+  (let ((base   ; Base opcode for operation on r/m16, r16, r/m32, r32, r/m64, r64.
+         (ecase mnemonic
+           (bt #x0) (btc #x18) (btr #x10) (bts #x8)))
+        (opcode ; Opcode used when one operand is immediate.
+         (ecase mnemonic
+           (bt '/4) (btc '/7) (btr '/6) (bts '/5))))
+    (if 64bit-only?
+        `(((,mnemonic (r/m64 r64 m) r64)  . (#x0f ,(+ base #xa3) /r))
+          ((,mnemonic (r/m64 r64 m) imm8) . (#x0f #xba ,opcode ib)))
+        `(((,mnemonic (r/m16 r16 m) r16)  . (o16 #x0f ,(+ base #xa3) /r))
+          ((,mnemonic (r/m32 r32 m) r32)  . (o32 #x0f ,(+ base #xa3) /r))
+          ((,mnemonic (r/m16 r16 m) imm8) . (o16 #x0f #xba ,opcode ib))
+          ((,mnemonic (r/m32 r32 m) imm8) . (o32 #x0f #xba ,opcode ib))))))
+
 ;;; Following are syntax tables for x86-64. For each entry, 1st part
 ;;; is the instruction type, 2nd part is the corresponding opcode.
 ;;; Note that for the 1st part, list may be used for the operand to
@@ -103,10 +119,10 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ,@(arith-syntax-1 'add nil)
     ,@(arith-syntax-1 'and nil)
     ((bswap r32)                             . (#x0f (+ #xc8 r)))
-    ((bt (r/m16 r16 m) r16)                  . (o16 #x0f #xa3 /r))
-    ((bt (r/m32 r32 m) r32)                  . (o32 #x0f #xa3 /r))
-    ((bt (r/m16 r16 m) imm8)                 . (o16 #x0f #xba /4 ib))
-    ((bt (r/m32 r32 m) imm8)                 . (o32 #x0f #xba /4 ib))
+    ,@(bit-syntax 'bt nil)
+    ,@(bit-syntax 'btc nil)
+    ,@(bit-syntax 'btr nil)
+    ,@(bit-syntax 'bts nil)
     ((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))
@@ -248,8 +264,10 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ,@(arith-syntax-1 'add t)
     ,@(arith-syntax-1 'and t)
     ((bswap r64)                             . (#x0f (+ #xc8 r)))
-    ((bt (r/m64 r64 m) r64)                  . (#x0f #xa3 /r))
-    ((bt (r/m64 r64 m) imm8)                 . (#x0f #xba /4 ib))
+    ,@(bit-syntax 'bt t)
+    ,@(bit-syntax 'btc t)
+    ,@(bit-syntax 'btr t)
+    ,@(bit-syntax 'bts t)
     ((cmovcc r64 (r/m64 r64 m))              . (#x0f (+ #x40 cc) /r))
     ((cmpxchg (r/m64 r64 m) r64)             . (#x0f #xb1 /r))
     ((cmpxchg16b m)                          . (#x0f #xc7 /1))
