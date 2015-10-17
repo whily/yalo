@@ -233,7 +233,7 @@
     (stosb)
     (stosw)
     (stosd)
-    (wdmsr)
+    (wrmsr)
 
     (bits 64)
     (bswap   ebx)

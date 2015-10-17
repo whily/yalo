@@ -223,7 +223,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((test    (r/m8 r8 m) r8)                . (#x84 /r))
     ((test    (r/m16 r16 m) r16)             . (#x85 /r))
     ((test    (r/m32 r32 m) r32)             . (#x85 /r))
-    ((wdmsr)                                 . (#x0f #x30))
+    ((wrmsr)                                 . (#x0f #x30))
     ((xadd    (r/m8 r8 m) r8)                . (#x0f #xc0 /r))
     ((xadd    (r/m16 r16 m) r16)             . (o16 #x0f #xc1 /r))
     ((xadd    (r/m32 r32 m) r32)             . (o32 #x0f #xc1 /r))
