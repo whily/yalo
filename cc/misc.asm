@@ -78,6 +78,7 @@ start:
         sti
         stosb
         stosw
+        stosd
         wrmsr
 
         bits 64
