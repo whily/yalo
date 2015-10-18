@@ -3,6 +3,11 @@
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
 ;;;;     Bootloader.
+;;;;
+;;;;     Switch to 32 bit protected mode and 64 bit long mode is mainly based on
+;;;;     Section 14.8 of
+;;;;     [1] AMD64 Architecture Programmer's Manual Volume 2: System Programming.
+;;;;         Publication No. 24593; Revision: 3.25
 ;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
@@ -74,34 +79,46 @@
 
     (jmp     short switch-to-protected-mode)
 
-    ;;; 32 bit Global Descriptor Table (GDT), according to
+    ;;; Global Descriptor Table (GDT).
+    ;;; 32 bit GDT entries are according to
     ;;;   http://www.brokenthorn.com/Resources/OSDev8.html
-    gdt32
+    ;;; 64 bit GDT entries are according to
+    ;;;   http://wiki.osdev.org/Entering_Long_Mode_Directly
+    gdt
     ;; Null descriptor
     (dd 0)
     (dd 0)
-    ;; Code descriptor
+    ;; 32 bit code descriptor
     (dw #xffff)              ; Limit low
     (dw 0)                   ; Base low
     (db 0)                   ; Base middle
     (db #b10011010)          ; Access
     (db #b11001111)          ; Granularity
     (db 0)                   ; Base high
-    ;; Data descriptor
+    ;; 32 bit data descriptor
     (dw #xffff)              ; Limit low
     (dw 0)                   ; Base low
     (db 0)                   ; Base middle
     (db #b10010010)          ; Access
     (db #b11001111)          ; Granularity
     (db 0)                   ; Base high
-    end-gdt32
-    pgdt32
-    (dw (- end-gdt32 gdt32 1)) ; Limit (size of GDT)
-    (dd gdt32)               ; Base of GDT
+    ;; 64 bit code descriptor (exec/read): TODO: further check
+    (dq #x00209a0000000000)
+    ;; 64 bit data descriptor (read/write): TODO: further check
+    (dq #x0000920000000000)
+    end-gdt
+    pgdt
+    (dw (- end-gdt gdt 1)) ; Limit (size of GDT)
+    (dd gdt)               ; Base of GDT
+
+    (align  4)
+    idt
+    .length (dw 0)
+    .base   (dd 0)
 
     switch-to-protected-mode
     (cli)
-    (lgdt (pgdt32))          ; Load 32 bit GDT
+    (lgdt (pgdt))          ; Load GDT
     ;; Enter protected mode by setting CR0.PE = 1.
     (mov     eax #b11)
     (mov     cr0 eax)
@@ -109,27 +126,106 @@
     ;; (jmp far #x8:protected-mode)
     (db      #xea)           ; Far jump
     (dw      protected-mode)
-    (dw      8)              ; Code selector (8 is the offset relative to the beginning of gdt32)
+    (dw      8)              ; Code selector (8 is the offset relative to the beginning of gdt)
 
     protected-mode
     (bits    32)
     ;; Setup registers.
-    (mov     ax #x10)       ; Data selector (#x10 is the offset relative to the begining of gdt32)
+    (mov     ax #x10)       ; Data selector (#x10 is the offset relative to the begining of gdt)
     (mov     ss ax)
     (mov     esp #x90000)
-    ;; TODO: skip ds/es setting after jumping to long mode
     (mov     ds ax)
     (mov     es ax)
 
+    switch-to-long-mode
+    ;; Paging setup is based on http://wiki.osdev.org/Entering_Long_Mode_Directly
+    ;; TODO: use 2 MB page instead of 4 kB. Use additional memory.
+
+    ;; Zero out the 16 kB buffer.
+    (equ     pml4-base #x9000)
+    (equ     page-present-writable #x3)   ; Flags indicate the page is present and writable.
+    (mov     edi pml4-base)
+    (mov     ecx #x1000)
+    (xor     eax eax)
+    (cld)
+    (rep     stosd)
+    (mov     edi pml4-base)
+
+    ;; Build the Page Map Level 4.
+    (mov     eax edi)
+    (add     eax #x1000)              ; Address of the Page Directory Pointer Table.
+    (or      eax page-present-writable)
+    (mov     (edi) eax)
+
+    ;; Build the Page Directory Pointer Table.
+    (mov     eax edi)
+    (add     eax #x2000)              ; Address of the Page Directory.
+    (or      eax page-present-writable)
+    (mov     (edi #x1000) eax)
+
+    ;; Build the Page Directory.
+    (mov     eax edi)
+    (add     eax #x3000)              ; Address of the Page Table.
+    (or      eax page-present-writable)
+    (mov     (edi #x2000) eax)
+
+    (add     edi #x3000)
+    (mov     eax page-present-writable) ; Effectively point EAX to address #x0.
+
+    ;; Build the Page Table.
+    loop-page-table
+    (mov     (edi) eax)
+    (add     eax #x1000)
+    (add     edi 8)
+    (cmp     eax #x200000)        ; Is 2 MB done? (TODO: based on actual memory size)
+    (jb      loop-page-table)
+
+    ;; Enable 64 bit page-translation-table entries by setting
+    ;; CR4.PAE=1. Paging is not enabled until after long mode is
+    ;; enabled.
+    (mov     eax cr4)
+    (bts     eax 5)
+    (mov     cr4 eax)
+
+    ;; Initialize 64-bit CR3 to point to the base of PML4 page table.
+    ;; Note that PML4 table must be below 4 GB.
+    (mov     eax pml4-base)
+    (mov     cr3 eax)
+
+    ;; Enable long mode (set EFER.LME = 1).
+    (mov     ecx #xc0000080)      ; EFER MSR number.
+    (rdmsr)                       ; Read EFER.
+    (bts     eax 8)               ; Set LME = 1.
+    (wrmsr)                       ; Write EFER.
+
+    ;; Enable paging to activate long mode (set CR0.PG = 1).
+    (mov     eax cr0)             ; Read CR0.
+    (bts     eax 31)              ; Set PE = 1.
+    (mov     cr0 eax)             ; Write CR0.
+
+    ;; Jump from 16 bit compatibility mode to 64 bit code segment.
+    ;; Far jump to turn on long mode. The following code is equivalent to
+    ;; (jmp far #x18:protected-mode)
+    (db      #x66)
+    (db      #xea)           ; Far jump
+    (dw      long-mode)      ; In [1], dd is used instead of dw.
+    (dw      #x18)           ; Code selector (#x18 is the offset relative to the beginning of gdt)
+
+    long-mode
+    ;; Setup stack's linear address.
+    ;(mov     rsp #x90000)    ; TODO: select appropriate stack address. Should be aligned on 16 byte boundary.
+
+    ;; Reuse previous 32 bit GDT (as we don't consume more than 4 GB memory. So skip loading 64 bit GDT.
+    ;; (lgdt (pgdt))
+
+    ;; Load 64 bit IDT. So far IDT has zero length, therefore any NMI causes a triple fault.
+    (lidt    (idt))
+
     ;; Clear screen. This is just to test whether protected mode works or not. Will be removed later.
-    (movzx   ax (text-rows))
-    (movzx   dx (text-cols))
-    (mul     dx)
-    (movzx   ecx ax)           ; All screen to be cleared.
-    (mov     al #x30)          ; Space char
-    (mov     ah #xf)           ; Attribute: white on black
+    (mov     ecx #x1000)
+    (mov     eax #x1f201f20)   ; Blue background, white foreground, space char.
     (mov     edi #xb8000)
-    (rep     stosw)
+    (rep     stosd)
 
     (hlt)
     ;; Ignore the following code, as we will write 64 bit version of vga-text.lisp.
