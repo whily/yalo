@@ -8,7 +8,9 @@
         bits    16
 
 start:
+        align   4
         bt      edx, 29
+        align   4
         btc     eax, 28
         btr     ebx, 27
         bts     ecx, 26

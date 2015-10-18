@@ -22,6 +22,15 @@ value of `*bootloader*` defined in https://github.com/whily/yalo/blob/master/cc/
 Directives (e.g. bits, origin) are categorized as pseudo instructions
 here too.
 
+## align: boundary align
+
+The next instruction will be aligned at the boundary specified. NOP
+(#x90) will be inserted if necessary.
+
+| Instruction                | Description   |
+| -------------------------- | ------------- |
+| align 4 &#124; 8 &#124; 16 |               |
+
 ## bits: Bit Mode
 
 | Instruction | Description           |

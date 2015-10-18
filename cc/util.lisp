@@ -1,9 +1,9 @@
 ;;;; -*- Mode: Lisp -*-
-;;;; Author: 
+;;;; Author:
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
 ;;;;     Utilities.
-;;;; License: 
+;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
 ;;;; Copyright (C) 2009-2012 Yujian Zhang
@@ -15,15 +15,15 @@
   `(let ((it ,test-form))
      (if it ,then-form ,else-form)))
 
-(defmacro acond (&rest clauses)		
+(defmacro acond (&rest clauses)
   "Anaphoric variant of cond. From ON LISP."
-  (if (null clauses)		
-      nil		
-      (let ((cl1 (car clauses))		
-            (sym (gensym)))		
-        `(let ((,sym ,(car cl1)))		
-           (if ,sym		
-               (let ((it ,sym)) ,@(cdr cl1))		
+  (if (null clauses)
+      nil
+      (let ((cl1 (car clauses))
+            (sym (gensym)))
+        `(let ((,sym ,(car cl1)))
+           (if ,sym
+               (let ((it ,sym)) ,@(cdr cl1))
                (acond ,@(cdr clauses)))))))
 
 (defun str (&rest args)
@@ -48,8 +48,9 @@ is their concatenation. From ON LISP."
 
 (defun repeat-list (n list)
   (case n
+    (0 nil)
     (1 list)
-    (t (if (<= n 0)
+    (t (if (< n 0)
            (error "repeat-list: invalid n=~A" n)
            (append list (repeat-list (1- n) list))))))
 
@@ -75,13 +76,10 @@ is their concatenation. From ON LISP."
 (defun pp-hex (s)
   "Pretty print S (stream of bytes) in hexadecimal manner. Output is
 same as Emacs hexl-mode."
-  (format 
+  (format
    t "87654321  0011 2233 4455 6677 8899 aabb ccdd eeff  0123456789abcdef~%")
   (let ((ss (segment s 16)))
     (loop for i from 0 below (length ss)
-       do (format t "~8,'0X: ~{~{~2,'0X~} ~}~51T~{~c~}~%" 
-                  (* i 16) (segment (nth i ss) 2) 
+       do (format t "~8,'0X: ~{~{~2,'0X~} ~}~51T~{~c~}~%"
+                  (* i 16) (segment (nth i ss) 2)
                   (mapcar #'pp-char (nth i ss))))))
-
-  
-
