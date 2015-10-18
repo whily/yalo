@@ -29,4 +29,4 @@ L [M](AssemblyX64M.md) [N](AssemblyX64N.md)
 
 | Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                               |
 | ----------- | ------ | ----------- | -------------- | ----------------------------------------- |
-| loop imm16  | E2 rb  | Valid       | Valid          | Decrement count; jump short if count <> 0 |
+| loop imm16  | E2 cb  | Valid       | Valid          | Decrement count; jump short if count <> 0 |

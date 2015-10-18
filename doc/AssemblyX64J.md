@@ -14,11 +14,11 @@ x86-64 Instruction Set J
 
 | Instruction    | Opcode          | 64-Bit Mode | 16/32-Bit Mode | Description            |
 | -------------- | --------------- | ----------- | -------------- | ---------------------- |
-| jcc imm        | (+ 70 cc) rb    | Valid       | Valid          | Short conditional jump |
-| jcc near imm   | 0F (+ 80 cc) rd | Valid       | Valid          | Near conditional jump  |
-| jcxz imm       | a16 E3 rb       | ~~N.E.~~    | Valid          | Jump short if cx=0     |
-| jecxz imm      | a32 E3 rb       | Valid       | Valid          | Jump short if ecx=0    |
-| jrcxz imm      | E3 rb           | Valid       | ~~N.E.~~       | Jump short if rcx=0    |
+| jcc imm        | (+ 70 cc) cb    | Valid       | Valid          | Short conditional jump |
+| jcc near imm   | 0F (+ 80 cc) cd | Valid       | Valid          | Near conditional jump  |
+| jcxz imm       | a16 E3 cb       | ~~N.E.~~    | Valid          | Jump short if cx=0     |
+| jecxz imm      | a32 E3 cb       | Valid       | Valid          | Jump short if ecx=0    |
+| jrcxz imm      | E3 cb           | Valid       | ~~N.E.~~       | Jump short if rcx=0    |
 
 Please refer to [conditional codes](AssemblyX64.md) for details.
 
@@ -26,5 +26,5 @@ Please refer to [conditional codes](AssemblyX64.md) for details.
 
 | Instruction    | Opcode   | 64-Bit Mode | 16/32-Bit Mode | Description        |
 | -------------- | -------- | ----------- | -------------- | ------------------ |
-| jmp short imm  | EB rb    | Valid       | Valid          | Jump short         |
-| jmp near imm   | E9 rw    | ~~N.S.~~    | Valid          | Jump near          |
+| jmp short imm  | EB cb    | Valid       | Valid          | Jump short         |
+| jmp near imm   | E9 cw    | ~~N.S.~~    | Valid          | Jump near          |

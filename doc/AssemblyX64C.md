@@ -14,7 +14,7 @@ x86-64 Instruction Set C
 
 | Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description |
 | ----------- | ------ | ----------- | -------------- | ----------- |
-| call imm16  | E8 rw  | ~~N.S.~~    | Valid          | Call near   |
+| call imm16  | E8 cw  | ~~N.S.~~    | Valid          | Call near   |
 
 ### clc: Clear Carry Flag
 

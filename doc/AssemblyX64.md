@@ -193,8 +193,8 @@ Following notations are used:
 * A hex number followed by **+r**, like **B0+r**, indicates that one of the operands is a register, and correspondign register value should be added to the opcode.
 * **/n** (where n is 0 to 7): indictes that one of the operand is r/m, and the field Reg/Opcode should be encoded with n.
 * **/r**: ModR/M byte of the instruction contains a register operand (encoded in field Reg/Opcode) and an r/m operand (encoded in field R/M).
-* **rb, rw, rd, ro**: one of the operands is an immediate value, and the _difference_ between this value and the end address of the instruction is to be encoded as byte (rb), little-endian word (rw), little-endian doubleword (rd), and little-endian quadword (ro) respectively.
-* **ib, iw, id, io**: one of the operands is an immediate value, and it is to be encoded as byte (rb), little-endian word (rw), little-endian doubleword (rd), and little-endian quadword (ro) respectively.
+* **cb, cw, cd, co**: one of the operands is an immediate value, and the _difference_ between this value and the end address of the instruction is to be encoded as byte (cb), little-endian word (cw), little-endian doubleword (cd), and little-endian quadword (co) respectively.
+* **ib, iw, id, io**: one of the operands is an immediate value, and it is to be encoded as byte (ib), little-endian word (iw), little-endian doubleword (id), and little-endian quadword (io) respectively.
 * **o16, o32**: operand-size override prefix. o16 generates no code in 16-bit mode, but indicates a 66h prefix in 32/64-bit mode; similarly, o32 generates no code in 32/64-bit mode, but indicates a 66h prefix in 16-bit mode.
 * **a16, a32**: address-size override prefix. a16 generates no code in 16-bit mode, but indicates a 67h prefix in 32/64-bit mode; similarly, a32 generates no code in 32-bit mode, but indicates a 67h prefix in 16/64-bit mode.
 

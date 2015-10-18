@@ -216,7 +216,7 @@ lock are directly handled in encode()."
                             (try-encode-bytes (instruction-value instruction type
                                                                  (on->in on))
                                               (on-length on)))
-                           ((rb rw rd ro)
+                           ((cb cw cd co)
                             (try-encode-bytes
                              `(- ,(instruction-value instruction type (on->in on))
                                  ,(+ cursor encoded-len (on-length on)))
@@ -530,18 +530,18 @@ converted from signed to unsigned."
 (defun on->in (on)
   "Maps opcode notation (e.g. ib, iw) to instruction notation (e.g. imm8)."
   (ecase on
-    ((ib rb) 'imm8)
-    ((iw rw) 'imm16)
-    ((id rd) 'imm32)
-    ((io ro) 'imm64)))
+    ((ib cb) 'imm8)
+    ((iw cw) 'imm16)
+    ((id cd) 'imm32)
+    ((io co) 'imm64)))
 
 (defun on-length (on)
   "Return lengths (in terms of bytes) for opcode notation (e.g. ib, iw)."
   (ecase on
-    ((ib rb) 1)
-    ((iw rw) 2)
-    ((id rd) 4)
-    ((io ro) 8)))
+    ((ib cb) 1)
+    ((iw cw) 2)
+    ((id cd) 4)
+    ((io co) 8)))
 
 (defun lookup-value (ops cursor origin symtab)
   "Replace special variables and labels with values if possible."
