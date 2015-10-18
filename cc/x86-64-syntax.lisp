@@ -123,6 +123,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ,@(bit-syntax 'btc nil)
     ,@(bit-syntax 'btr nil)
     ,@(bit-syntax 'bts nil)
+    ((call   (imm32 imm16 imm8 label))       . (o32 #xe8 cd))
     ((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))
@@ -239,7 +240,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
   "Valid for both 16-bit and 64-bit modes.")
 
 (defparameter *x86-64-syntax-16/32-bit-only*
-  `(((call   (imm16 imm8 label))             . (#xe8 cw))
+  `(((call   (imm16 imm8 label))             . (o16 #xe8 cw))
     ((dec    r16)                            . (o16 (+ #x48 r)))
     ((dec    r32)                            . (o32 (+ #x48 r)))
     ((inc    r16)                            . (o16 (+ #x40 r)))

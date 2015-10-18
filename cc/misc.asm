@@ -94,6 +94,7 @@ start:
         btc     rax, 29
         btr     rbx, 28
         bts     rcx, 27
+        call    msg
         cmova   ax, bx
         cmovc   eax, edx
         cmove   rdx, r10

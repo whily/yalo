@@ -12,9 +12,10 @@ x86-64 Instruction Set C
 
 ### call: Call Procedure
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description |
-| ----------- | ------ | ----------- | -------------- | ----------- |
-| call imm16  | E8 cw  | ~~N.S.~~    | Valid          | Call near   |
+| Instruction | Opcode     | 64-Bit Mode | 16/32-Bit Mode | Description |
+| ----------- | ---------- | ----------- | -------------- | ----------- |
+| call imm16  | o16 E8 cw  | ~~N.S.~~    | Valid          | Call near   |
+| call imm32  | o32 E8 cd  | Valid       | Valid          | Call near, 32 bit displacement sign extended to 64 bit in 64 bit mode |
 
 ### clc: Clear Carry Flag
 
