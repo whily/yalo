@@ -16,7 +16,8 @@
 (in-package :cc)
 
 (defparameter *bootloader*
-  `((bits    16)
+  `(;;;==================== 16 bit real mode ====================
+    (bits    16)
     (org     #x7c00)
 
     ;; Setup segments and stack.
@@ -53,7 +54,7 @@
     stage-2
 
     ;; Initialize text mode.
-    (call init-text-mode)
+    (call init-text-mode-16)
 
     ;; Check whether BGA is available
     ;; The following two lines are disabled for now as BGA mode is not used currently.
@@ -74,10 +75,39 @@
 
     ;; Check whether CPU supports Long Mode or not.
     (call    check-cpu)
-    (jnc     no-long-mode-error)
-    (clc)
+    (jc      no-long-mode-error)
 
-    (jmp     short switch-to-protected-mode)
+    (jmp     near switch-to-protected-mode)
+
+    ;; Function check-cpu. Use CPUID to check if the process supports long mode.
+    ;; From section 14.8 of [1].
+    ;; If long mode is supported, CF is cleared; otherwise CF is set.
+
+ check-cpu
+    (mov     eax #x80000000)
+    (cpuid)
+    (cmp     eax #x80000000)  ; Whether any extended function > 0x800000000 is available?
+    (jbe     no-long-mode)
+    (mov     eax #x80000001)
+    (cpuid)
+    (bt      edx 29)          ; Test if long mode is supported.
+    (jnc     no-long-mode)
+    (clc)
+    (ret)
+    no-long-mode
+    (stc)
+    (ret)
+
+    no-long-mode-error
+    (mov     si no-long-mode-message)
+    (call    println-16)
+    .panic
+    (hlt)
+    (jmp     short .panic)
+    (db      no-long-mode-message ("ERROR: CPU does not support long mode." 0))
+
+    ;; Include content from vga-text.lisp.
+    ,@*vga-text-code-16*
 
     ;;; Global Descriptor Table (GDT).
     ;;; 32 bit GDT entries are according to
@@ -127,6 +157,8 @@
     (db      #xea)           ; Far jump
     (dw      protected-mode)
     (dw      8)              ; Code selector (8 is the offset relative to the beginning of gdt)
+
+    ;;;==================== 32 bit protected mode ====================
 
     protected-mode
     (bits    32)
@@ -211,7 +243,10 @@
     (dw      long-mode)      ; In [1], dd is used instead of dw.
     (dw      #x18)           ; Code selector (#x18 is the offset relative to the beginning of gdt)
 
+    ;;;==================== 64 bit long mode ====================
+
     long-mode
+    (bits    64)
     ;; Setup stack's linear address.
     ;(mov     rsp #x90000)    ; TODO: select appropriate stack address. Should be aligned on 16 byte boundary.
 
@@ -219,19 +254,21 @@
     ;; (lgdt (pgdt))
 
     ;; Load 64 bit IDT. So far IDT has zero length, therefore any NMI causes a triple fault.
-    (lidt    (idt))
+    ;;(lidt    (idt))
 
-    ;; Clear screen. This is just to test whether protected mode works or not. Will be removed later.
     (mov     ecx #x1000)
-    (mov     eax #x1f201f20)   ; Blue background, white foreground, space char.
+    (mov     eax #x1f201f20)   ; Black background, white foreground, space char.
     (mov     edi #xb8000)
     (rep     stosd)
+    ;(call    clear)
 
+    .panic
     (hlt)
+    (jmp     short .panic)
     ;; Ignore the following code, as we will write 64 bit version of vga-text.lisp.
 
     (mov     si banner)
-    (call    println)
+    ;;(call    println)
     (jmp     short read-start)
     (db      banner ("Start your journey on yalo v0.0.0!" 0))
 
@@ -240,7 +277,7 @@
     ;;; REPL: read
     read-start
     (mov     si repl)
-    (call    print)
+    ;(call    print)
     (jmp     short read)
     (db      repl ("REPL>" 0))
     read
@@ -249,61 +286,40 @@
     (je      eval-start)
     (cmp     al 0)
     (jz      read)
-    (call    putchar)
+    ;(call    putchar)
     (jmp     short read)
 
     ;;; REPL: eval
     eval-start
 
     ;;; REPL: print
-    (call    printcrlf)
-    (call    printcrlf)
+    ;(call    printcrlf)
+    ;(call    printcrlf)
 
     ;;; REPL: loop
     (jmp     short read-start)
 
-    (bits    16)
+    (bits 16)
 
     no-bga-error
     (mov     si no-bga-message)
-    (call    println)
+    (call    println-16)
+    .panic
     (hlt)
+    (jmp     short .panic)
     (db      no-bga-message ("ERROR: BGA not available." 0))
 
-    no-long-mode-error
-    (mov     si no-long-mode-message)
-    (call    println)
-    (hlt)
-    (db      no-long-mode-message ("ERROR: CPU does not support long mode." 0))
-
-    ;; Function check-cpu. Use CPUID to check if the process supports long mode.
-    ;; From section 14.8 of AMD64 Architecture Programmer's Manual
-    ;;     Volume 2: System Programming.
-    ;;     Publication No. 24593; Revision: 3.25
-    ;; If long mode is supported, CF is set; otherwise CF is cleared.
-
-    check-cpu
-    (mov     eax #x80000000)
-    (cpuid)
-    (cmp     eax #x80000000)  ; Whether any extended function > 0x800000000 is available?
-    (jbe     no-long-mode)
-    (mov     eax #x80000001)
-    (cpuid)
-    (bt      edx 29)          ; Test if long mode is supported.
-    (jnc     no-long-mode)
-    (ret)
-    no-long-mode
-    (clc)
-    (ret)
-
-    ;; Include content from vga-text.lisp.
-    ,@*vga-text*
-
-    ;; Include content from keyboard.lisp
-    ,@*keyboard*
+    (bits 64)
 
     ;; Include content from bga.lisp.
     ,@*bga*
+
+    ;; Include content from vga-text.lisp.
+    ,@*vga-text-code*
+    ,@*vga-text-data*
+
+    ;; Include content from keyboard.lisp
+    ,@*keyboard*
 
     ;; Fill up to multiple of sectors, otherwise VirtualBox complains.
     (times   (- 8192 (- $ $$)) db 0)
