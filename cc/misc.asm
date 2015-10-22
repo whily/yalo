@@ -107,6 +107,7 @@ start:
         jb      near msg
         jecxz   msg
         jrcxz   msg
+        mov     rax, 1122334455667788h
         movzx   r10, al
         ;;movzx   rdx, word [msg]
         syscall
