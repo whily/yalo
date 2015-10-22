@@ -112,13 +112,12 @@
     ;;; Global Descriptor Table (GDT).
     ;;; 32 bit GDT entries are according to
     ;;;   http://www.brokenthorn.com/Resources/OSDev8.html
-    ;;; 64 bit GDT entries are according to
-    ;;;   http://wiki.osdev.org/Entering_Long_Mode_Directly
+    ;;; 64 bit GDT entries are according to section 4.8 of [1].
     gdt
     ;; Null descriptor
     (dd 0)
     (dd 0)
-    ;; 32 bit code descriptor
+    ;; 32 bit code descriptor.
     (equ code-selector-32 (- $ gdt))
     (dw #xffff)              ; Limit low
     (dw 0)                   ; Base low
@@ -126,7 +125,7 @@
     (db #b10011010)          ; Access
     (db #b11001111)          ; Granularity
     (db 0)                   ; Base high
-    ;; 32 bit data descriptor
+    ;; 32 bit data descriptor.
     (equ data-selector-32 (- $ gdt))
     (dw #xffff)              ; Limit low
     (dw 0)                   ; Base low
@@ -134,12 +133,22 @@
     (db #b10010010)          ; Access
     (db #b11001111)          ; Granularity
     (db 0)                   ; Base high
-    ;; 64 bit code descriptor (exec/read): TODO: further check
+    ;; 64 bit code descriptor.
     (equ code-selector-64 (- $ gdt))
-    (dq #x00209a0000000000)
-    ;; 64 bit data descriptor (read/write): TODO: further check
+    (dw 0)                   ; Limit low (ingored)
+    (dw 0)                   ; Base low (ingored)
+    (db 0)                   ; Base middle (ingored)
+    (db #b10011000)          ; Access
+    (db #b00100000)          ; Granularity
+    (db 0)                   ; Base high (ingored)
+    ;; 64 bit data descriptor (read/write).
     (equ data-selector-64 (- $ gdt))
-    (dq #x0000920000000000)
+    (dw 0)                   ; Limit low (ingored)
+    (dw 0)                   ; Base low (ingored)
+    (db 0)                   ; Base middle (ingored)
+    (db #b10010000)          ; Access
+    (db #b00000000)          ; Granularity
+    (db 0)                   ; Base high (ingored)
     end-gdt
     pgdt
     (dw (- end-gdt gdt 1)) ; Limit (size of GDT)
