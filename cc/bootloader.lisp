@@ -119,6 +119,7 @@
     (dd 0)
     (dd 0)
     ;; 32 bit code descriptor
+    (equ code-selector-32 (- $ gdt))
     (dw #xffff)              ; Limit low
     (dw 0)                   ; Base low
     (db 0)                   ; Base middle
@@ -126,6 +127,7 @@
     (db #b11001111)          ; Granularity
     (db 0)                   ; Base high
     ;; 32 bit data descriptor
+    (equ data-selector-32 (- $ gdt))
     (dw #xffff)              ; Limit low
     (dw 0)                   ; Base low
     (db 0)                   ; Base middle
@@ -133,8 +135,10 @@
     (db #b11001111)          ; Granularity
     (db 0)                   ; Base high
     ;; 64 bit code descriptor (exec/read): TODO: further check
+    (equ code-selector-64 (- $ gdt))
     (dq #x00209a0000000000)
     ;; 64 bit data descriptor (read/write): TODO: further check
+    (equ data-selector-64 (- $ gdt))
     (dq #x0000920000000000)
     end-gdt
     pgdt
@@ -153,17 +157,17 @@
     (mov     eax #b11)
     (mov     cr0 eax)
     ;; Far jump to turn on protected mode. The following code is equivalent to
-    ;; (jmp far #x8:protected-mode)
+    ;; (jmp far code-selector-32:protected-mode)
     (db      #xea)           ; Far jump
     (dw      protected-mode)
-    (dw      8)              ; Code selector (8 is the offset relative to the beginning of gdt)
+    (dw      code-selector-32)
 
     ;;;==================== 32 bit protected mode ====================
 
     protected-mode
     (bits    32)
     ;; Setup registers.
-    (mov     ax #x10)       ; Data selector (#x10 is the offset relative to the begining of gdt)
+    (mov     ax data-selector-32)
     (mov     ss ax)
     (mov     esp #x90000)
     (mov     ds ax)
@@ -237,11 +241,11 @@
 
     ;; Jump from 16 bit compatibility mode to 64 bit code segment.
     ;; Far jump to turn on long mode. The following code is equivalent to
-    ;; (jmp far #x18:protected-mode)
+    ;; (jmp far code-selector-64:protected-mode)
     (db      #x66)
     (db      #xea)           ; Far jump
     (dw      long-mode)      ; In [1], dd is used instead of dw.
-    (dw      #x18)           ; Code selector (#x18 is the offset relative to the beginning of gdt)
+    (dw      code-selector-64)
 
     ;;;==================== 64 bit long mode ====================
 
