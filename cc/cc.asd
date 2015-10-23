@@ -20,6 +20,7 @@
    (:file "bga")
    (:file "vga-text")
    (:file "keyboard")
+   (:file "paging")
    (:file "bootloader")
    (:file "x86-64-syntax")
    (:file "lap")
