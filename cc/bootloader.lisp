@@ -231,28 +231,19 @@
     ;; Load 64 bit IDT. So far IDT has zero length, therefore any NMI causes a triple fault.
     ;;(lidt    (idt))
 
-    (mov     ecx #x1000)
-    (mov     eax #x1f201f20)   ; Black background, white foreground, space char.
-    (mov     edi #xb8000)
-    (rep     stosd)
-    ;(call    clear)
+    (call    clear)
 
-    .panic
-    (hlt)
-    (jmp     short .panic)
-    ;; Ignore the following code, as we will write 64 bit version of vga-text.lisp.
-
-    (mov     si banner)
-    ;;(call    println)
+    (mov     esi banner)
+    (call    println)
     (jmp     short read-start)
-    (db      banner ("Start your journey on yalo v0.0.0!" 0))
+    (db      banner ("Start your journey on yalo v0.0.1!" 0))
 
     (call    init-keyboard)
 
     ;;; REPL: read
     read-start
-    (mov     si repl)
-    ;(call    print)
+    (mov     esi repl)
+    (call    print)
     (jmp     short read)
     (db      repl ("REPL>" 0))
     read
@@ -261,15 +252,15 @@
     (je      eval-start)
     (cmp     al 0)
     (jz      read)
-    ;(call    putchar)
+    (call    putchar)
     (jmp     short read)
 
     ;;; REPL: eval
     eval-start
 
     ;;; REPL: print
-    ;(call    printcrlf)
-    ;(call    printcrlf)
+    (call    printcrlf)
+    (call    printcrlf)
 
     ;;; REPL: loop
     (jmp     short read-start)

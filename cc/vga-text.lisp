@@ -102,13 +102,13 @@
 
     ;;; Clear screen.
     clear
-    (movzx   ax (text-rows))
-    (movzx   dx (text-cols))
-    (mul     dx)
-    (shr     ax 1)
-    (movzx   ecx ax)           ; All screen to be cleared.
-    (mov     eax #x0f200f20)   ; Black background, white foreground, space char.
-    (mov     edi #xb8000)
+    (movzx   eax byte (text-rows))
+    (movzx   edx byte (text-cols))
+    (mul     edx)
+    (shr     eax 1)
+    (mov     ecx eax)           ; All screen to be cleared.
+    (mov     eax #x1f201f20)    ; Blue background, white foreground, space char.
+    (mov     edi vga-video-memory)
     (rep     stosd)
     (ret)
 
@@ -116,7 +116,7 @@
     ;;; It is equivalent to calling print twice: first to print the string,
     ;;; and then print CR/LF.
     ;;; Input:
-    ;;;   DS:SI: points to the starting address of the 0 terminated string.
+    ;;;   RSI: points to the starting address of the 0 terminated string.
     ;;; Output: None
     ;;; Modified registers: same as putchar
     ;;; Global variables: same as putchar
@@ -146,27 +146,27 @@
     print
     (lodsb)         ; Load string char to AL
     (cmp     al 0)      ; 0 terminated string like C.
-    ;;(jne     do-char)
+    (jne     do-char)
     (ret)
 
     ;;; Function putchar. Writer character at cursor position.
     ;;; Input:
     ;;;   AL: character to display
     ;;; Output: None
-    ;;; Modified registers: AX, BX, CX, DX, DI
+    ;;; Modified registers: RAX, RBX, RCX, RDX, RDI
     ;;; Global variables: text-x, text-y, text-cols
     putchar
-    (mov     ah #xf)               ; Attribute: white on black
+    (mov     ah #x1f)              ; Attribute: white on blue
     (mov     cx ax)                ; Save char/attribute
-    (movzx   ax (text-y))
-    (movzx   dx (text-cols))
-    (shl     dx 1)                 ; 2 bytes for one character
-    (mul     dx)
-    (movzx   bx (text-x))
-    (shl     bx 1)
-    (mov     di 0)                 ; Start of video memory
-    (add     di ax)                ; Add y offset
-    (add     di bx)                ; Add x offset
+    (movzx   eax byte (text-y))
+    (movzx   edx byte (text-cols))
+    (shl     edx 1)                ; 2 bytes for one character
+    (mul     edx)
+    (movzx   ebx byte (text-x))
+    (shl     ebx 1)
+    (mov     edi vga-video-memory) ; Start of video memory
+    (add     edi eax)              ; Add y offset
+    (add     edi ebx)              ; Add x offset
     (mov     ax cx)                ; Restore char/attribute
     (stosw)                        ; Write char/atribute
     (add     byte (text-x) 1)      ; Advance to right

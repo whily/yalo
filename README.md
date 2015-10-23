@@ -12,7 +12,7 @@ is: <https://github.com/whily/yalo>
 
 The project is only at very very initial stage, with an
 [assembler](https://github.com/whily/yalo/blob/master/doc/AssemblyX64.md)
-written in Common Lisp, and a 16 bit bootloader.
+written in Common Lisp, and a 64 bit bootloader.
 
 "Short term" plan:
 
