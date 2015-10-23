@@ -13,6 +13,8 @@
 
 (defparameter *vga-text-code-16*
   ;;; VGA text output code in 16 bit mode, based on http://wiki.osdev.org/Babystep4
+  ;;; We only implement minimal set of features in 16 bit mode as the main intention
+  ;;; is only to print error messages.
   `(
     ;;; Initialize text mode. Call it before calling any text mode functions.
     init-text-mode-16
@@ -44,15 +46,15 @@
     ;;; Global variables: same as putchar
     println-16
     (call    print-16)
-    (call    printcrlf-16)
+    (call    printlf-16)
     (ret)
 
-    ;;; Function printcrlf-16. Print crlf only.
+    ;;; Function printlf-16. Print crlf only.
     ;;; Input: None
     ;;; Output: None
     ;;; Modified reisters: None
     ;;; Global variables: text-x, text-y
-    printcrlf-16
+    printlf-16
     (add     byte (text-y) 1)   ; Down one row
     (mov     byte (text-x) 0)   ; Back to left
     (ret)
@@ -125,16 +127,16 @@
     ;;; Global variables: same as putchar
     println
     (call    print)
-    (call    printcrlf)
+    (call    printlf)
     (ret)
 
-    ;;; Function printcrlf. Print crlf only.
+    ;;; Function printlf. Print crlf only.
     ;;; Input: None
     ;;; Output: None
     ;;; Modified reisters: None
     ;;; Global variables: text-x, text-y
-    printcrlf
-    (add     byte (text-y) 1)   ; Down one row
+    printlf
+    (inc     byte (text-y))     ; Down one row
     (mov     byte (text-x) 0)   ; Back to left
     (ret)
 
@@ -159,6 +161,8 @@
     ;;; Modified registers: RAX, RBX, RCX, RDX, RDI
     ;;; Global variables: text-x, text-y, text-cols
     putchar
+    (cmp     al 10)
+    (je      .next-line)
     (mov     ah #x1f)              ; Attribute: white on blue
     (mov     cx ax)                ; Save char/attribute
     (movzx   eax byte (text-y))
@@ -172,7 +176,14 @@
     (add     edi ebx)              ; Add x offset
     (mov     ax cx)                ; Restore char/attribute
     (stosw)                        ; Write char/atribute
-    (add     byte (text-x) 1)      ; Advance to right
+    (inc     byte (text-x) 1)      ; Advance to right
+    (mov     al (text-x))
+    (cmp     al (text-cols))
+    (je      .next-line)
+    (jmp     short .done)
+    .next-line
+    (call    printlf)
+    .done
     (call    set-cursor)
     (ret)
 

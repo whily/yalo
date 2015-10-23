@@ -248,7 +248,7 @@
     (db      repl ("REPL>" 0))
     read
     (call    getchar)
-    (cmp     al 13)
+    (cmp     al 10)
     (je      eval-start)
     (cmp     al 0)
     (jz      read)
