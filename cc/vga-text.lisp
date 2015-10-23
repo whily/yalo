@@ -110,6 +110,9 @@
     (mov     eax #x1f201f20)    ; Blue background, white foreground, space char.
     (mov     edi vga-video-memory)
     (rep     stosd)
+    (mov     byte (text-x) 0)
+    (mov     byte (text-y) 0)
+    (call    set-cursor)
     (ret)
 
     ;;; Function println. Write a string and start a new line.
@@ -170,6 +173,42 @@
     (mov     ax cx)                ; Restore char/attribute
     (stosw)                        ; Write char/atribute
     (add     byte (text-x) 1)      ; Advance to right
+    (call    set-cursor)
+    (ret)
+
+    ;;; Function set-cursor. Set VGA hardware cursor.
+    ;;; Input: based on text-xy, text-y
+    ;;; Output: None
+    ;;; Modified registers: RAX, RBX, RCX, RDX, RDI
+    ;;; Global variables: text-x, text-y, text-cols
+    ;;; Based on http://www.brokenthorn.com/Resources/OSDev10.html
+    (equ     crt-index-reg #x3d4)
+    (equ     crt-data-reg  #x3d5)
+    (equ     cursor-location-high #xe)
+    (equ     cursor-location-low  #xf)
+    set-cursor
+    ;; Get current cursor position. Note that we only care about the
+    ;; location, not the memory (as in putchar). So following equation
+    ;; is used: location = text-x + text-y * text-cols
+    (movzx   eax byte (text-y))
+    (movzx   edx byte (text-cols))
+    (mul     edx)
+    (movzx   ebx byte (text-x))
+    (add     ebx eax)
+    ;; Set low byte index to vga register.
+    (mov     al cursor-location-low)
+    (mov     dx crt-index-reg)
+    (out     dx al)
+    (mov     al bl)
+    (mov     dx crt-data-reg)
+    (out     dx al)
+    ;; Set high byte index to vga register.
+    (mov     al cursor-location-high)
+    (mov     dx crt-index-reg)
+    (out     dx al)
+    (mov     al bh)
+    (mov     dx crt-data-reg)
+    (out     dx al)
     (ret)
     ))
 
