@@ -13,14 +13,16 @@
 (defparameter *paging*
   `(
     ;; Paging setup is based on http://wiki.osdev.org/Entering_Long_Mode_Directly
-    ;; TODO: use 2 MB page instead of 4 kB. Use additional memory.
-
+    ;; TODO: based on actual memory detection.
     setup-paging
-    ;; Zero out the 16 kB buffer.
     (equ     pml4-base #x9000)
-    (equ     page-present-writable #x3)   ; Flags indicate the page is present and writable.
+    (equ     memory-size (* 32 1024 1024)) ; Memory size in mega bytes
+    (equ     page-present-writable (+ 2 1))   ; Flags indicate the page is present and writable.
+    (equ     page-present-writable-pde.ps (+ 128 2 1)) ; In addition to above flags, set PDE.PS for 2 MB page.
+
+    ;; Zero out the 12 kB buffer.
     (mov     edi pml4-base)
-    (mov     ecx #x1000)
+    (mov     ecx #xc00)
     (xor     eax eax)
     (cld)
     (rep     stosd)
@@ -38,21 +40,14 @@
     (or      eax page-present-writable)
     (mov     (edi #x1000) eax)
 
-    ;; Build the Page Directory.
-    (mov     eax edi)
-    (add     eax #x3000)              ; Address of the Page Table.
-    (or      eax page-present-writable)
-    (mov     (edi #x2000) eax)
-
-    (add     edi #x3000)
-    (mov     eax page-present-writable) ; Effectively point EAX to address #x0.
-
-    ;; Build the Page Table.
-    .loop-page-table
+    ;; Build the Page Directory Table.
+    (add     edi #x2000)
+    (mov     eax page-present-writable-pde.ps) ; Effectively point EAX to address #x0.
+    .loop-page-directory-table
     (mov     (edi) eax)
-    (add     eax #x1000)
+    (add     eax #x200000)
     (add     edi 8)
-    (cmp     eax #x200000)        ; Is 2 MB done? (TODO: based on actual memory size)
-    (jb      .loop-page-table)
+    (cmp     eax memory-size)        ; Has all memory been mapped?
+    (jb      .loop-page-directory-table)
 
     (ret)))
