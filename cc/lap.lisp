@@ -3,10 +3,14 @@
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
 ;;;;     Lisp Assembly Program.
+;;;; References:
+;;;;     [1] AMD64 Architecture Programmer's Manual Volume 3:
+;;;;         General-Purpose and System Instructions
+;;;;         Publication No. 24594; Revision: 3.22
 ;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
-;;;; Copyright (C) 2009-2012 Yujian Zhang
+;;;; Copyright (C) 2009-2015 Yujian Zhang
 
 (in-package :cc)
 
@@ -429,9 +433,13 @@ in bytes, and rex-set.
     (t
      (let ((type (mapcar #'operand-type r/m)))
        (cond
-         ((and (= (length r/m) 1) ; Special handling of (disp32)
+         ((and (= (length r/m) 1)
                (member* '(imm8 imm16 imm32 label) type))
-          (values 0 #b101 nil (car r/m) 4 nil))
+          ;; Special handling of (disp32).  In 64 bit mode,
+          ;; RIP-Relative Addressing is used when mod=00 and r/m=101
+          ;; (Table 1-16 of [1]). Therefore we need the other encoding
+          ;; (mod=00, r/m=100, with SIB byte).
+          (values 0 #b100 (encode-sib 0 #b100 #b101) (car r/m) 4 nil))
          ((and (= (length r/m) 2) (member 'rsp r/m) (member 'imm8 type))
           ;; Special handling of (rsp + disp8)
           (values 1 #b100  (encode-sib 0 #b100 4)
