@@ -119,7 +119,7 @@
     (not      qword (rbx))
     (sbb      rbx rdx)
 
-    (db      msg "Hello World! ")
+    msg       (db "Hello World! ")
     endmsg)
   "Arithmetic instructions are tested separately.")
 
@@ -294,12 +294,12 @@
     (xchg    r10 r15)
 
     (equ     hi 4)
-    (dw      meta-msg msg)
-    (db      msg "Hello World! ")
+    meta-msg (dw msg)
+    msg      (db "Hello World! ")
     endmsg
     (times   3 db 0)
     (dw      #xaa55)
-    (dd      (123456 7891011))
+    (dd      123456 7891011)
     (dq      3372036854775808))
   "Miscellaneous instructions.")
 
@@ -380,7 +380,7 @@
     (mov     (edx*8 ebp 123456) ebx)
     (mov     (edi*8 ecx 8) edx)
 
-    (db      msg "Hello World! ")
+    msg      (db "Hello World! ")
     endmsg)
   "Test addressing modes.")
 

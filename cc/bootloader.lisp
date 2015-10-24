@@ -236,7 +236,7 @@
     (mov     esi banner)
     (call    println)
     (jmp     short read-start)
-    (db      banner ("Start your journey on yalo v0.0.1!" 0))
+    banner   (db "Start your journey on yalo v0.0.1!" 0)
 
     (call    init-keyboard)
 
@@ -245,7 +245,7 @@
     (mov     esi repl)
     (call    print)
     (jmp     short read)
-    (db      repl ("REPL> " 0))
+    repl     (db "REPL> " 0)
     read
     (call    getchar)
     (cmp     al 10)
@@ -273,7 +273,7 @@
     .panic
     (hlt)
     (jmp     short .panic)
-    (db      no-bga-message ("ERROR: BGA not available." 0))
+    no-bga-message (db "ERROR: BGA not available." 0)
 
     (bits 64)
 

@@ -261,8 +261,8 @@
 
 (defparameter *vga-text-data*
   `(
-    (db text-rows 25)   ;; Number of rows in text mode.
-    (db text-cols 80)   ;; Number of columns in text mode.
-    (db text-x 0)       ;; Position x in text mode [0, text-cols)
-    (db text-y 0)       ;; Position y in text mode [0, text-rows)
+    text-rows (db 25)   ;; Number of rows in text mode.
+    text-cols (db 80)   ;; Number of columns in text mode.
+    text-x (db 0)       ;; Position x in text mode [0, text-cols)
+    text-y (db 0)       ;; Position y in text mode [0, text-rows)
     ))

@@ -40,10 +40,9 @@ The next instruction will be aligned at the boundary specified. NOP
 
 ## db: Declaring initialized byte value(s)
 
-| Instruction                         | Description |
-| ----------------------------------- | ----------- |
-| db [_var_] [_number_ &#124; _string_]    | Declare byte values via atoms |
-| db [_var_] &#40;[_number_ &#124; _string_]*) | Declare byte values via lists |
+| Instruction                            | Description                   |
+| -------------------------------------- | ----------------------------- |
+| db (_number_ &#124; _string_)* | Declare byte values via lists |
 
 Note:
 
@@ -55,8 +54,7 @@ range can be used as well.
 
 | Instruction            | Description                    |
 | ---------------------- | ------------------------------ |
-| dw [_var_] _number_    | Declare word value via numbers |
-| dw [_var_] &#40;_number_)* | Declare word value via lists   |
+| dw (_number_)* | Declare word value via lists   |
 
 Note:
 
@@ -67,8 +65,7 @@ range can be used as well.
 
 | Instruction            | Description                          |
 | ---------------------- | ------------------------------------ |
-| dd [_var_] _number_    | Declare doubleword value via numbers |
-| dd [_var_] &#40;_number_)* | Declare doubleword value via lists   |
+| dd (_number_)*         | Declare doubleword value via lists   |
 
 Note:
 
@@ -79,8 +76,7 @@ Expression within the same range can be used as well.
 
 | Instruction            | Description                        |
 | ---------------------- | ---------------------------------- |
-| dq [_var_] _number_    | Declare quadword value via numbers |
-| dq [_var_] &#40;_number_)* | Declare quadword value via lists   |
+| dq (_number_)*         | Declare quadword value via lists   |
 
 Note:
 
