@@ -245,12 +245,12 @@
     (mov     esi repl)
     (call    print)
     (jmp     short read)
-    (db      repl ("REPL>" 0))
+    (db      repl ("REPL> " 0))
     read
     (call    getchar)
     (cmp     al 10)
     (je      eval-start)
-    (cmp     al 0)
+    (cmp     al 0)         ; Non-printable character.
     (jz      read)
     (call    putchar)
     (jmp     short read)

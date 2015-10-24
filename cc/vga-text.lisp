@@ -101,6 +101,8 @@
     ;;; VGA text output in 64 bit mode.
   `(
     (equ     vga-video-memory  #xb8000)
+    ;; Blue background, white foreground, space char.
+    (equ     background-filling #x1f201f20)
 
     ;;; Clear screen.
     clear
@@ -109,7 +111,7 @@
     (mul     edx)
     (shr     eax 1)
     (mov     ecx eax)           ; All screen to be cleared.
-    (mov     eax #x1f201f20)    ; Blue background, white foreground, space char.
+    (mov     eax background-filling)
     (mov     edi vga-video-memory)
     (rep     stosd)
     (mov     byte (text-x) 0)
@@ -133,11 +135,17 @@
     ;;; Function printlf. Print crlf only.
     ;;; Input: None
     ;;; Output: None
-    ;;; Modified reisters: None
+    ;;; Modified registers: EAX
     ;;; Global variables: text-x, text-y
     printlf
     (inc     byte (text-y))     ; Down one row
     (mov     byte (text-x) 0)   ; Back to left
+    (mov     al (text-y))
+    (cmp     al (text-rows))
+    (jb      .done)
+    (call    scroll-up)
+    .done
+    (call    set-cursor)
     (ret)
 
     do-char
@@ -185,6 +193,34 @@
     (call    printlf)
     .done
     (call    set-cursor)
+    (ret)
+
+    ;;; Function scroll-up. Scroll the screen up one line.
+    ;;; Input: None
+    ;;; Output: None
+    ;;; Global variables: text-x, text-y, text-rows, text-cols
+    scroll-up
+    ;; Copy rows from (1 to text-rows - 1) to (0 to text-fows - 2)
+    (movzx   ebx byte (text-cols))
+    (movzx   eax byte (text-rows))
+    (dec     eax)           ; Only copy text-rows - 1 lines.
+    (mul     ebx)
+    (shr     eax 1)         ; 2 bytes per character, write 4 bytes with movsd
+    (shl     ebx 1)         ; Number of bytes per line.
+    (mov     edi vga-video-memory)
+    (mov     esi edi)
+    (add     esi ebx)
+    (mov     ecx eax)
+    (cld)
+    ;; TODO: change to movsq
+    (rep     movsd)
+    ;; Clear the last line.
+    (mov     eax background-filling)
+    (shr     ebx 2)         ; As we're using stosd, divide by 4.
+    (mov     ecx ebx)
+    (rep     stosd)
+    ;; Reset the y position to the last line.
+    (dec     byte (text-y))
     (ret)
 
     ;;; Function set-cursor. Set VGA hardware cursor.
