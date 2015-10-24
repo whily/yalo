@@ -107,7 +107,12 @@ start:
         jb      near msg
         jecxz   msg
         jrcxz   msg
+        mov     eax, 1234h
+        mov     rsp, 90000h
         mov     rax, 1122334455667788h
+        mov     rcx, [msg]
+        mov     rbx, rcx
+        ;mov     qword [msg], 1019
         movzx   r10, al
         movzx   eax, byte [msg]
         movzx   rdx, word [msg]

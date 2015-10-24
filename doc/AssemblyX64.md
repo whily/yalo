@@ -177,6 +177,16 @@ capcity of 8/16/32/64 bits. The range might be too broad for jmp like
 instructions which require *true* signed integers, however the impact
 is minimal.
 
+In 64 bit mode, the default operand size is 32 bit. REX.W is used for
+64 bit operand size. When 32 bit register is used as target, the
+result is automatically sign extended to 64 bit. To reduce the
+generated machine code size, the assembler automatically use the 32
+bit operand size if immediate value can be represented as 32 bits. For
+example, `(mov eax 1)` and `(mov rax 1)` generates same machine
+code. Note that such optimization is mainly meaningful for *mov*
+instructions, as sign extension to 64 bit is generally not applicable
+for other instructions unless the upper 32 bits are always 0.
+
 ## Memory Address Operands
 
 Memory address operands are supported, e.g. `(bp)`, `(var)`, `(bp si

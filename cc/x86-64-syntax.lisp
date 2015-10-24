@@ -280,7 +280,8 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((inc    qword m)                        . (rex.w #xff /0))
     ((jrcxz  (imm8 label imm16 imm32 imm64)) . (#xe3 cb))
     ;; TODO: test the following mov instructions.
-    ((mov    r64 (imm64 imm32 imm16 imm8 imm label)) . (rex.w (+ #xb8 r) io))
+    ((mov    r64 (imm32 imm16 imm8 imm label)) . ((+ #xb8 r) id))
+    ((mov    r64 imm64)                      . (rex.w (+ #xb8 r) io))
     ((mov    (r/m64 r64 m) r64)              . (rex.w #x89 /r))
     ((mov    r64 (r/m64 r64 m))              . (rex.w #x8b /r))
     ((mov    qword m (imm32 imm16 imm8 imm label)) . (rex.w #xc7 /0 io))
