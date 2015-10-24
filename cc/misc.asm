@@ -39,6 +39,8 @@ start:
         lodsw
         loop    .loop
         mov     ah, 9
+        mov     bl, [msg]
+        mov     [msg], bh
         mov     bx, endmsg - msg
         mov     ax, cx
         mov     [msg], bx

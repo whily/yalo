@@ -169,6 +169,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((mov    (r/m8 r8 m) r8)                 . (#x88 /r))
     ((mov    (r/m16 r16 m) r16)              . (o16 #x89 /r))
     ((mov    (r/m32 r32 m) r32)              . (o32 #x89 /r))
+    ((mov    r8 (r/m8 r8 m))                 . (#x8a /r))
     ((mov    r16 (r/m16 r16 m))              . (o16 #x8b /r))
     ((mov    r32 (r/m32 r32 m))              . (o32 #x8b /r))
     ((mov    byte m (imm8 imm label))        . (#xc6 /0 ib))
