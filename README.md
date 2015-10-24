@@ -17,7 +17,7 @@ written in Common Lisp, and a 64 bit bootloader.
 "Short term" plan:
 
 - [x] VGA text mode without using BIOS.
-- [ ] Keyboard handling without using BIOS.
+- [x] Keyboard handling without using BIOS.
 - [x] Switch to 32 bit protected mode.
 - [x] Switch to 64 bit long mode.
 - [ ] Implement Ink interpreter with assembly.
