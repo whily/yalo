@@ -194,9 +194,11 @@
   "Encode instruction (with optional rex prefix). Other prefixes like
 lock are directly handled in encode()."
   (let* (rex-set ; Possibly containing a subset of {w r x b}.
-         (dummy (when (or (member* '(r/m64 r64 rax qword) type)
-                          (eq (car instruction) 'cmpxchg16b))
+         (dummy (when (eq (car opcode) 'rex.w)
                   (push 'w rex-set)))
+         (opcode* (if (eq (car opcode) 'rex.w)
+                      (cdr opcode)
+                      opcode))
          (encoded-len 0) ; Tracking for (R)IP relative encoding.
          (remaining
           (mapcan
@@ -245,7 +247,7 @@ lock are directly handled in encode()."
                               mod-sib-disp)))))))
                  (incf encoded-len (length x))
                  x))
-           opcode)))
+           opcode*)))
     (declare (ignore dummy))
     (when (and rex-set (/= bits 64))
       (error "Instruction ~A only supported in 64-bit mode." instruction))

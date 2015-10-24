@@ -21,14 +21,14 @@ x86-64 Instruction Set I
 
 ### inc: Increment by 1
 
-| Instruction | Opcode     | 64-Bit Mode | 16/32-Bit Mode | Description          |
-| ----------- | ---------- | ----------- | -------------- | -------------------- |
-| inc r/m8    | FE /0      | Valid       | Valid          | Increment r/m8 by 1  |
-| inc r/m16   | o16 FF /0  | Valid       | Valid          | Increment r/m16 by 1 |
-| inc r/m32   | o32 FF /0  | Valid       | Valid          | Increment r/m32 by 1 |
-| inc r/m64   | FF /0      | Valid       | ~~N.E.~~       | Increment r/m64 by 1 |
-| inc r16     | o16 40+r   | ~~N.E.~~    | Valid          | Increment r/16 by 1  |
-| inc r32     | o32 40+r   | ~~N.E.~~    | Valid          | Increment r/32 by 1  |
+| Instruction | Opcode      | 64-Bit Mode | 16/32-Bit Mode | Description          |
+| ----------- | ----------- | ----------- | -------------- | -------------------- |
+| inc r/m8    | FE /0       | Valid       | Valid          | Increment r/m8 by 1  |
+| inc r/m16   | o16 FF /0   | Valid       | Valid          | Increment r/m16 by 1 |
+| inc r/m32   | o32 FF /0   | Valid       | Valid          | Increment r/m32 by 1 |
+| inc r/m64   | REX.W FF /0 | Valid       | ~~N.E.~~       | Increment r/m64 by 1 |
+| inc r16     | o16 40+r    | ~~N.E.~~    | Valid          | Increment r/16 by 1  |
+| inc r32     | o32 40+r    | ~~N.E.~~    | Valid          | Increment r/32 by 1  |
 
 ### int: Call Interrupt Procedure
 
