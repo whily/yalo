@@ -259,8 +259,8 @@
     eval-start
 
     ;;; REPL: print
-    (call    printcrlf)
-    (call    printcrlf)
+    (call    printlf)
+    (call    printlf)
 
     ;;; REPL: loop
     (jmp     short read-start)
