@@ -112,7 +112,7 @@ start:
         mov     rax, 1122334455667788h
         mov     rcx, [msg]
         mov     rbx, rcx
-        ;mov     qword [msg], 1019
+        mov     qword [msg], 1019
         movzx   r10, al
         movzx   eax, byte [msg]
         movzx   rdx, word [msg]
