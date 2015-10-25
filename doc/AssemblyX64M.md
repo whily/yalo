@@ -42,11 +42,12 @@ x86-64 Instruction Set M
 
 ### movsb/movsw: Move Data from String to String
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                    |
-| ----------- | ------ | ----------- | -------------- | ------------------------------ |
-| movsb       | A4     | Valid       | Valid          | Move byte from DS:SI to ES:DI  |
-| movsw       | o16 A5 | Valid       | Valid          | Move word from DS:SI to ES:DI  |
-| movsd       | o32 A5 | Valid       | Valid          | Move dword from DS:SI to ES:DI |
+| Instruction | Opcode   | 64-Bit Mode | 16/32-Bit Mode | Description                      |
+| ----------- | -------- | ----------- | -------------- | -------------------------------- |
+| movsb       | A4       | Valid       | Valid          | Move byte from DS:SI to ES:DI    |
+| movsw       | o16 A5   | Valid       | Valid          | Move word from DS:SI to ES:DI    |
+| movsd       | o32 A5   | Valid       | Valid          | Move dword from DS:ESI to ES:EDI |
+| movsq       | REX.W A5 | Valid       | ~~N.E.~~       | Move qword from RSI to RDI       |
 
 ### movzx: Move with Zero-Extend
 

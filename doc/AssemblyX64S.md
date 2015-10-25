@@ -50,11 +50,12 @@ Please refer to [x86-64 arithmetic instructions](AssemblyX64Arith.md) for detail
 
 ### stosb/stosw/stosd: Store String
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                       |
-| ----------- | ------ | ----------- | -------------- | --------------------------------- |
-| stosb       | AA     | Valid       | Valid          | Store al at address [es:](e/r)di  |
-| stosw       | o16 AB | Valid       | Valid          | Store ax at address [es:](e/r)di  |
-| stosd       | o32 AB | Valid       | Valid          | Store eax at address [es:](e/r)di |
+| Instruction | Opcode   | 64-Bit Mode | 16/32-Bit Mode | Description                       |
+| ----------- | -------- | ----------- | -------------- | --------------------------------- |
+| stosb       | AA       | Valid       | Valid          | Store al at address [es:](e/r)di  |
+| stosw       | o16 AB   | Valid       | Valid          | Store ax at address [es:](e/r)di  |
+| stosd       | o32 AB   | Valid       | Valid          | Store eax at address [es:](e/r)di |
+| stosq       | REX.W AB | Valid       | ~~N.E.~~       | Store rax at address rdi          |
 
 ### sub: Sub
 

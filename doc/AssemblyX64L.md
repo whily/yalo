@@ -20,10 +20,12 @@ L [M](AssemblyX64M.md) [N](AssemblyX64N.md)
 
 ### lodsb/lodsw: Load String
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                               |
-| ----------- | ------ | ----------- | -------------- | ----------------------------------------- |
-| lodsb       | AC     | Valid       | Valid          | Load byte at address [ds:](e/r)si into al |
-| lodsw       | AD     | Valid       | Valid          | Load word at address [ds:](e/r)si into ax |
+| Instruction | Opcode   | 64-Bit Mode | 16/32-Bit Mode | Description                                 |
+| ----------- | -------- | ----------- | -------------- | ------------------------------------------- |
+| lodsb       | AC       | Valid       | Valid          | Load byte at address [ds:](e/r)si into al   |
+| lodsw       | o16 AD   | Valid       | Valid          | Load word at address [ds:](e/r)si into ax   |
+| lodsd       | o32 AD   | Valid       | Valid          | Load dword at address [ds:](e/r)si into eax |
+| lodsq       | REX.W AD | Valid       | ~~N.E.~~       | Load qword at address rsi into rax          |
 
 ### loop: Loop According to (E)CX Counter
 

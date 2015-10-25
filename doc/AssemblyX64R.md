@@ -18,6 +18,8 @@ x86-64 Instruction Set R
 
 ### rep: Repeat String Operation Prefix
 
+Following are examples.
+
 | Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                       |
 | ----------- | ------ | ----------- | -------------- | --------------------------------- |
 | rep movsb   | F3 A4  | Valid       | Valid          | Move CX bytes from DS:SI to ES:DI |

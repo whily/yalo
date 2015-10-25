@@ -127,9 +127,12 @@
       ;; Instructions with exact match, e.g. instructions without
       ;; operands (like nop, hlt), or special instructions like int 3.
       ;; copy-list is necessary since syntax table is LITERAL.
-      (if (member (car it) '(o16 o32 a16 a32))
-          (append (size-prefix (car it) bits) (copy-list (cdr it)))
-          (copy-list it)))
+      (cond
+        ((member (car it) '(o16 o32 a16 a32))
+         (append (size-prefix (car it) bits) (copy-list (cdr it))))
+        ((eq (car it) 'rex.w)
+         (append (list (encode-rex 1 0 0 0)) (copy-list (cdr it))))
+        (t (copy-list it))))
      ((assoc e (x86-64-syntax bits)
              :test #'(lambda (x y)
                        (and (> (length y) 1)

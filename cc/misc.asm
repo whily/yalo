@@ -37,6 +37,7 @@ start:
         lldt    [msg]
         lodsb
         lodsw
+        lodsd
         loop    .loop
         mov     ah, 9
         mov     bl, [msg]
@@ -109,15 +110,18 @@ start:
         jb      near msg
         jecxz   msg
         jrcxz   msg
+        lodsq
         mov     eax, 1234h
         mov     rsp, 90000h
         mov     rax, 1122334455667788h
         mov     rcx, [msg]
         mov     rbx, rcx
         mov     qword [msg], 1019
+        movsq
         movzx   r10, al
         movzx   eax, byte [msg]
         movzx   rdx, word [msg]
+        rep     stosq
         syscall
         sysret
         xadd    cl, dl

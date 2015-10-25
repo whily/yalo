@@ -104,7 +104,7 @@
     .panic
     (hlt)
     (jmp     short .panic)
-    (db      no-long-mode-message ("ERROR: CPU does not support long mode." 0))
+    no-long-mode-message (db "ERROR: CPU does not support long mode." 0)
 
     ;; Include content from vga-text.lisp.
     ,@*vga-text-code-16*

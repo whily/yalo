@@ -161,7 +161,8 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((jmp    short (imm8 label imm16 imm32 imm64)) . (#xeb cb))
     ((lldt   (r/m16 r16 m))                  . (#x0f #x00 /2))
     ((lodsb)                                 . (#xac))
-    ((lodsw)                                 . (#xad))
+    ((lodsw)                                 . (o16 #xad))
+    ((lodsd)                                 . (o32 #xad))
     ((loop   (imm8 label imm16))             . (#xe2 cb))
     ((mov    r8 imm8)                        . ((+ #xb0 r) ib))
     ((mov    r16 (imm16 imm8 imm label))     . (o16 (+ #xb8 r) iw))
@@ -280,7 +281,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((inc    (r/m64 r64))                    . (rex.w #xff /0))
     ((inc    qword m)                        . (rex.w #xff /0))
     ((jrcxz  (imm8 label imm16 imm32 imm64)) . (#xe3 cb))
-    ;; TODO: test the following mov instructions.
+    ((lodsq)                                 . (rex.w #xad))
     ((mov    r64 (imm32 imm16 imm8 imm label)) . ((+ #xb8 r) id))
     ((mov    r64 imm64)                      . (rex.w (+ #xb8 r) io))
     ((mov    (r/m64 r64 m) r64)              . (rex.w #x89 /r))
@@ -288,6 +289,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ;; For the following instruction, we use id instead of io (as in
     ;; instruction manual) for imm32. NASM generates same results.
     ((mov    qword m (imm32 imm16 imm8 imm label)) . (rex.w #xc7 /0 id))
+    ((movsq)                                 . (rex.w #xa5))
     ((movzx  r64 (r/m8 r8))                  . (rex.w #x0f #xb6 /r))
     ((movzx  r64 byte m)                     . (rex.w #x0f #xb6 /r))
     ((movzx  r64 (r/m16 r16))                . (rex.w #x0f #xb7 /r))
@@ -297,6 +299,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ,@(arith-syntax-2 'not t)
     ,@(arith-syntax-1 'or  t)
     ,@(arith-syntax-1 'sbb t)
+    ((stosq)                                 . (rex.w #xab))
     ,@(arith-syntax-1 'sub t)
     ((syscall)                               . (#x0f #x05))
     ((sysret)                                . (#x0f #x07))
