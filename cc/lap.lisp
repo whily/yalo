@@ -115,7 +115,7 @@
   "Prefix mapping table.")
 
 (defun encode (e* cursor bits)
-  "Opcode encoding, including pseudo instructions like db/dw."
+  "Opcode encoding, including pseudo instructions like db/dw..., resb/resw..."
   (let ((e (if (and (eq (car e*) 'xchg)
                     (member (second e*) '(ax eax rax)))
                (list (car e*) (third e*) (second e*))
@@ -177,6 +177,14 @@
                        (dd (try-encode-bytes v 4))
                        (dq (try-encode-bytes v 8))))
                  (cdr e)))
+        ((resb resw resd resq)
+         (let ((n-bytes (ecase (car e)
+                          (resb 1)
+                          (resw 2)
+                          (resd 4)
+                          (resq 8))))
+           ;; Use 0 as unitialized data, as in NASM.
+           (repeat-list (* (second  e) n-bytes) (list 0))))
         ;; Normal instructions.
         (t (match-n-encode e cursor bits)))))))
 

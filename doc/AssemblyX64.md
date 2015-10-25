@@ -105,6 +105,15 @@ Note:
 
 * *org* should precede any (pseudo) instructions that actually generating code.
 
+## resb/resw/resd/resq: Declare unitialized data
+
+| Instruction | Description             |
+| ----------- | ----------------------- |
+| resb _n_    | Reserve _n_ bytes       |
+| resw _n_    | Reserve _n_ words       |
+| resd _n_    | Reserve _n_ doublewords |
+| resq _n_    | Reserve _n_ quadwords   |
+
 ## times: Repeat instruction =
 
 | Instruction                 | Description                             |

@@ -138,11 +138,14 @@ start:
         hi equ 4
 meta_msg:
         dw      msg
+        resb    4
 msg:
         db      "Hello World! "
 endmsg:
-
         times   3 db 0
         dw      0AA55h
+        resw    3
         dd      123456,7891011
+        resd    2
         dq      3372036854775808
+        resq    1
