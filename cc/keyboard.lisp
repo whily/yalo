@@ -11,7 +11,7 @@
 
 (in-package :cc)
 
-(defparameter *keyboard*
+(defparameter *keyboard-constants*
   `(
     ;;; Keyboard related constants. Note that input and output are
     ;;; from keyboard's perspective, not from user/cpu's persepctive.
@@ -27,12 +27,76 @@
     (equ kbd-ctrl-status-mask-aux-buf  #x20)
     (equ kbd-ctrl-status-mask-timeout  #x40)
     (equ kbd-ctrl-status-mask-parity   #x80)
+    (equ kbd-ctrl-cmd-disable-keyboard #xad)
+    (equ kbd-ctrl-cmd-enable-keyboard  #xae)
+    (equ kbd-ctrl-cmd-read-output-port #xd0)
+    (equ kbd-ctrl-cmd-write-output-port #xd1)
+    (equ kbd-ctrl-cmd-enable-a20       #xdd)
+    (equ kbd-ctrl-cmd-system-reset     #xfe)
     (equ kbd-encoder-cmd-set-scan-code #xf0)
     (equ kbd-encoder-cmd-set-scan-code-1 #x1)
     (equ kbd-encoder-cmd-enable-scanning #xf4)
     (equ kbd-encoder-cmd-disable-scanning #xf5)
-    (equ kbd-encoder-cmd-reset         #xff)
+    (equ kbd-encoder-cmd-reset         #xff)))
 
+(defparameter *enable-a20*
+  ;;; 16-bit keyboard code to enable A20.
+  `(;;; The following 4 functions are exactly same (except the label
+    ;;; names) as those functions without -16 suffix, defined in
+    ;;; *keyboard*. Function descriptions are not shown here.
+
+    kbd-ctrl-send-cmd-16
+    (mov     bl al)                  ; Save AL
+    (call    wait-kbd-in-buf-16)
+    (mov     al bl)
+    (out     kbd-ctrl-cmd-reg al)
+    (ret)
+
+    kbd-encoder-send-cmd-16
+    (mov     bl al)                  ; Save AL
+    (call    wait-kbd-in-buf-16)
+    (mov     al bl)
+    (out     kbd-encoder-cmd-reg al)
+    (ret)
+
+    wait-kbd-in-buf-16
+    (in      al kbd-ctrl-status-reg) ; Get status
+    (test    al kbd-ctrl-status-mask-in-buf)
+    (jnz     wait-kbd-in-buf-16)
+    (ret)
+
+    wait-kbd-out-buf-16
+    (in      al kbd-ctrl-status-reg) ; Get status
+    (test    al kbd-ctrl-status-mask-out-buf)
+    (jz      wait-kbd-out-buf-16)
+    (ret)
+
+    ;;; Enable A20 address line using keyboard controller method.
+    ;;;   http://wiki.osdev.org/A20_Line#Keyboard_Controller
+    ;;; Input: None
+    ;;; Output: None
+    ;;; Modified registers: AL, BL, CL
+    enable-a20
+    (mov     al kbd-ctrl-cmd-disable-keyboard)
+    (call    kbd-ctrl-send-cmd-16)
+    (mov     al kbd-ctrl-cmd-read-output-port)
+    (call    kbd-ctrl-send-cmd-16)
+    (call    wait-kbd-out-buf-16)
+    (in      al kbd-encoder-buf)
+    (mov     cl al)          ; Save AL
+    (mov     al kbd-ctrl-cmd-write-output-port)
+    (call    kbd-ctrl-send-cmd-16)
+    (mov     al cl)          ; Restore AL
+    (or      al 2)           ; Enable A20 by set bit 1 to 1.
+    (call    kbd-encoder-send-cmd-16)
+    (mov     al kbd-ctrl-cmd-enable-keyboard)
+    (call    kbd-ctrl-send-cmd-16)
+    (call    wait-kbd-in-buf-16)
+    (ret)
+    ))
+
+(defparameter *keyboard*
+  `(
     ;;; Initialize keyboard by set scan code set 1.
     ;;; Input: None
     ;;; Output: None
@@ -84,6 +148,17 @@
     (jnz     wait-kbd-in-buf)
     (ret)
 
+    ;;; Wait until the keyboard controller output buffer ready for
+    ;;; reading.
+    ;;; Input: None
+    ;;; Output: None
+    ;;; Modified registers: AL
+    wait-kbd-out-buf
+    (in      al kbd-ctrl-status-reg) ; Get status
+    (test    al kbd-ctrl-status-mask-out-buf)
+    (jz      wait-kbd-out-buf)
+    (ret)
+
     ;;; Function getchar. Get keystroke from keyboard without echo. If
     ;;; keystroke is available, it is removed from keyboard buffer.
     ;;; Use polling method. TODO: use interrupt.
@@ -92,10 +167,7 @@
     ;;; Output:
     ;;;   AL: ASCII character (0 indicats a key is released or not handled)
     getchar
-    wait-output
-    (in      al kbd-ctrl-status-reg) ; Get status
-    (test    al kbd-ctrl-status-mask-out-buf)
-    (jz      wait-output)
+    (call    wait-kbd-out-buf)
     (in      al kbd-encoder-buf)     ; Get key data
     (mov     si scan-code-set-1)
     (xor     ah ah)

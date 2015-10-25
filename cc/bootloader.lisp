@@ -77,7 +77,14 @@
     (call    check-cpu)
     (jc      no-long-mode-error)
 
+    ;; Enable A20 line. The function is not called as it does not work on VirtualBox.
+    ;(call    enable-a20)
+
     (jmp     near switch-to-protected-mode)
+
+    ;; A20 and keyboard related include from keyboard.lisp.
+    ,@*keyboard-constants*
+    ,@*enable-a20*
 
     ;; Function check-cpu. Use CPUID to check if the process supports long mode.
     ;; From section 14.8 of [1].
