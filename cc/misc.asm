@@ -63,6 +63,7 @@ start:
         out     dx, al
         out     dx, ax
         push    cx
+        push    edx
         push    cs
         push    ss
         push    ds
@@ -70,6 +71,7 @@ start:
         pushf
         pushfd
         pop     dx
+        pop     ecx
         pop     ss
         pop     ds
         pop     es
@@ -123,7 +125,9 @@ start:
         movzx   r10, al
         movzx   eax, byte [msg]
         movzx   rdx, word [msg]
+        push    r10
         pushfq
+        pop     rax
         popfq
         rep     stosq
         syscall

@@ -198,13 +198,11 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((out    imm8 r16)                       . (#xe7 ib))   ; (out imm8 ax)
     ((out    dx al)                          . (#xee))
     ((out    dx ax)                          . (#xef))
-    ((pop    r16)                            . ((+ #x58 r)))
-    ((pop    r32)                            . ((+ #x58 r)))
+    ((pop    r16)                            . (o16 (+ #x58 r)))
     ;; Note that for 64 bit mode, prefix #x66 should be used according
     ;; to section 4.2 of [1]. This is different from NASM.
     ((popf)                                  . (o16 #x9d))
-    ((push   r16)                            . ((+ #x50 r)))
-    ((push   r32)                            . ((+ #x50 r)))
+    ((push   r16)                            . (o16 (+ #x50 r)))
     ;; Note that for 64 bit mode, prefix #x66 should be used according
     ;; to section 4.2 of [1]. This is different from NASM.
     ((pushf)                                 . (o16 #x9c))
@@ -258,10 +256,12 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((lidt   m)                              . (#x0f #x01 /3))
     ((mov    r32 cr0-cr7)                    . (#x0f #x20 /r))
     ((mov    cr0-cr7 r32)                    . (#x0f #x22 /r))
+    ((pop    r32)                            . (o32 (+ #x58 r)))
     ((pop    ss)                             . (#x17))
     ((pop    ds)                             . (#x1f))
     ((pop    es)                             . (#x07))
     ((popfd)                                 . (o32 #x9d))
+    ((push   r32)                            . (o32 (+ #x50 r)))
     ((push   cs)                             . (#x0e))
     ((push   ss)                             . (#x16))
     ((push   ds)                             . (#x1e))
@@ -305,7 +305,9 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ,@(arith-syntax-2 'neg t)
     ,@(arith-syntax-2 'not t)
     ,@(arith-syntax-1 'or  t)
+    ((pop    r64)                            . ((+ #x58 r)))
     ((popfq)                                 . (#x9d))
+    ((push   r64)                            . ((+ #x50 r)))
     ((pushfq)                                . (#x9c))
     ,@(arith-syntax-1 'sbb t)
     ((stosq)                                 . (rex.w #xab))
