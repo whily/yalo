@@ -39,8 +39,8 @@
     (equ kbd-encoder-cmd-disable-scanning #xf5)
     (equ kbd-encoder-cmd-reset         #xff)))
 
-(defparameter *enable-a20*
-  ;;; 16-bit keyboard code to enable A20.
+(defparameter *keyboard-16*
+  ;;; 16-bit keyboard code related to A20 enabling.
   `(;;; The following 4 functions are exactly same (except the label
     ;;; names) as those functions without -16 suffix, defined in
     ;;; *keyboard*. Function descriptions are not shown here.
@@ -69,29 +69,6 @@
     (in      al kbd-ctrl-status-reg) ; Get status
     (test    al kbd-ctrl-status-mask-out-buf)
     (jz      wait-kbd-out-buf-16)
-    (ret)
-
-    ;;; Enable A20 address line using keyboard controller method.
-    ;;;   http://wiki.osdev.org/A20_Line#Keyboard_Controller
-    ;;; Input: None
-    ;;; Output: None
-    ;;; Modified registers: AL, BL, CL
-    enable-a20
-    (mov     al kbd-ctrl-cmd-disable-keyboard)
-    (call    kbd-ctrl-send-cmd-16)
-    (mov     al kbd-ctrl-cmd-read-output-port)
-    (call    kbd-ctrl-send-cmd-16)
-    (call    wait-kbd-out-buf-16)
-    (in      al kbd-encoder-buf)
-    (mov     cl al)          ; Save AL
-    (mov     al kbd-ctrl-cmd-write-output-port)
-    (call    kbd-ctrl-send-cmd-16)
-    (mov     al cl)          ; Restore AL
-    (or      al 2)           ; Enable A20 by set bit 1 to 1.
-    (call    kbd-encoder-send-cmd-16)
-    (mov     al kbd-ctrl-cmd-enable-keyboard)
-    (call    kbd-ctrl-send-cmd-16)
-    (call    wait-kbd-in-buf-16)
     (ret)
     ))
 
