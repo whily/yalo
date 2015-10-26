@@ -77,8 +77,8 @@
     (call    check-cpu)
     (jc      no-long-mode-error)
 
-    ;; Enable A20 line. The function is not called as it does not work on VirtualBox.
-    ;(call    enable-a20)
+    ;; Enable A20 line.
+    (call    enable-a20)
 
     (jmp     near switch-to-protected-mode)
 
