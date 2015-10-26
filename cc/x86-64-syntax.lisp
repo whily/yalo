@@ -4,8 +4,8 @@
 ;;;; Description:
 ;;;;     Syntax tables for x86-64.
 ;;;; References:
-;;;;   [1] Intel 64 and IA-32 Architectures Software Developer's Manual
-;;;;       Volume 2, Instruction Set Reference, A-Z. June 2015
+;;;;     [1] Intel 64 and IA-32 Architectures Software Developer's Manual
+;;;;         Volume 2, Instruction Set Reference, A-Z. June 2015
 ;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html

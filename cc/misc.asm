@@ -39,6 +39,8 @@ start:
         lodsw
         lodsd
         loop    .loop
+        mov     bl, byte [es:di]
+        mov     byte [ds:si], 0ffh
         mov     ah, 9
         mov     bl, [msg]
         mov     [msg], bh

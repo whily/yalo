@@ -201,6 +201,11 @@ equivalent to `(si 3 bp)`.
 For scaled index of 32-bit addressing modes, one has to use the form
 of register*scale, e.g. eax*8.
 
+Segment override prefix is used purely as a prefix, e.g. `(es mov al
+(di))`, which is different from traditional syntax. The motiviation is
+to use a simple method to handle this case as such override is not
+used in 64 bit mode.
+
 ## Notations for Opcodes
 
 Following notations are used:

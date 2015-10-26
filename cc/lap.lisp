@@ -7,6 +7,8 @@
 ;;;;     [1] AMD64 Architecture Programmer's Manual Volume 3:
 ;;;;         General-Purpose and System Instructions
 ;;;;         Publication No. 24594; Revision: 3.22
+;;;;     [2] Intel 64 and IA-32 Architectures Software Developer's Manual
+;;;;         Volume 2, Instruction Set Reference, A-Z. June 2015
 ;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
@@ -109,9 +111,13 @@
   (pp-hex (read-image filename)))
 
 (defparameter *prefix-mapping*
+  ;; As in section 2.1.1 of [2].
   `((lock  . #xf0)
     (repne . #xf2) (repnz .#xf2)
-    (rep   . #xf3) (repe  . #xf3) (repz . #xf3))
+    (rep   . #xf3) (repe  . #xf3) (repz . #xf3)
+    ;; Handle segment override prefix here for simplicity.
+    (cs . #x2e) (ss . #x36) (ds . #x3e) (es . #x26) (fs . #x64) (gs . #x65)
+    )
   "Prefix mapping table.")
 
 (defun encode (e* cursor bits)
