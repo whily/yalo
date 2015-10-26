@@ -3,6 +3,9 @@
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
 ;;;;     Syntax tables for x86-64.
+;;;; References:
+;;;;   [1] Intel 64 and IA-32 Architectures Software Developer's Manual
+;;;;       Volume 2, Instruction Set Reference, A-Z. June 2015
 ;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
@@ -197,12 +200,14 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((out    dx ax)                          . (#xef))
     ((pop    r16)                            . ((+ #x58 r)))
     ((pop    r32)                            . ((+ #x58 r)))
-    ;; Seems NASM generates prefix #x66.
-    ((popfd)                                 . (#x66 #x9d))
+    ;; Note that for 64 bit mode, prefix #x66 should be used according
+    ;; to section 4.2 of [1]. This is different from NASM.
+    ((popf)                                  . (o16 #x9d))
     ((push   r16)                            . ((+ #x50 r)))
     ((push   r32)                            . ((+ #x50 r)))
-    ;; Seems NASM generates prefix #x66.
-    ((pushfd)                                . (#x66 #x9c))
+    ;; Note that for 64 bit mode, prefix #x66 should be used according
+    ;; to section 4.2 of [1]. This is different from NASM.
+    ((pushf)                                 . (o16 #x9c))
     ((ret)                                   . (#xc3))
     ((rdmsr)                                 . (#x0f #x32))
     ,@(shift-syntax 'shl)
@@ -256,10 +261,12 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((pop    ss)                             . (#x17))
     ((pop    ds)                             . (#x1f))
     ((pop    es)                             . (#x07))
+    ((popfd)                                 . (o32 #x9d))
     ((push   cs)                             . (#x0e))
     ((push   ss)                             . (#x16))
     ((push   ds)                             . (#x1e))
-    ((push   es)                             . (#x06)))
+    ((push   es)                             . (#x06))
+    ((pushfd)                                . (o32 #x9c)))
   "Valid for 16-bit mode only.")
 
 (defparameter *x86-64-syntax-64-bit-only*
@@ -298,6 +305,8 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ,@(arith-syntax-2 'neg t)
     ,@(arith-syntax-2 'not t)
     ,@(arith-syntax-1 'or  t)
+    ((popfq)                                 . (#x9d))
+    ((pushfq)                                . (#x9c))
     ,@(arith-syntax-1 'sbb t)
     ((stosq)                                 . (rex.w #xab))
     ,@(arith-syntax-1 'sub t)

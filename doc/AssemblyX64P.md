@@ -18,15 +18,19 @@ x86-64 Instruction Set P
 | pop ss      | 17     | ~~Invalid~~ | Valid          | Pop top of stack into SS; increment stack pointer.  |
 | pop ds      | 1F     | ~~Invalid~~ | Valid          | Pop top of stack into DS; increment stack pointer.  |
 | pop es      | 07     | ~~Invalid~~ | Valid          | Pop top of stack into ES; increment stack pointer.  |
-| popfd       | 9D     | ~~N.E.~~    | Valid          | Pop EFLAGS.                                         |
+| popf        | o16 9D | Valid       | Valid          | Pop lower 16 bits of EFLAGS.                        |
+| popfd       | o32 9D | ~~N.E.~~    | Valid          | Pop EFLAGS.                                         |
+| popfq       | 9D     | Valid       | ~~N.E.~~       | Pop RFLAGS.                                         |
 
 ### push: Push a Value Onto the Stack
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description |
-| ----------- | ------ | ----------- | -------------- | ----------- |
-| push r16    | 50+r   | Valid       | Valid          | Push r16    |
-| push cs     | 0E     | ~~Invalid~~ | Valid          | Push CS     |
-| push ss     | 16     | ~~Invalid~~ | Valid          | Push SS     |
-| push ds     | 1E     | ~~Invalid~~ | Valid          | Push DS     |
-| push es     | 06     | ~~Invalid~~ | Valid          | Push ES     |
-| pushfd      | 9C     | ~~N.E.~~    | Valid          | Push EFLAGS.|
+| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                  |
+| ----------- | ------ | ----------- | -------------- | ---------------------------- |
+| push r16    | 50+r   | Valid       | Valid          | Push r16                     |
+| push cs     | 0E     | ~~Invalid~~ | Valid          | Push CS                      |
+| push ss     | 16     | ~~Invalid~~ | Valid          | Push SS                      |
+| push ds     | 1E     | ~~Invalid~~ | Valid          | Push DS                      |
+| push es     | 06     | ~~Invalid~~ | Valid          | Push ES                      |
+| pushf       | o16 9C | Valid       | Valid          | Push lower 16 bits of EFLAGS.|
+| pushfd      | o32 9C | ~~N.E.~~    | Valid          | Push EFLAGS.                 |
+| pushfq      | 9C     | Valid       | ~~N.E.~~       | Push RFLAGS.                 |

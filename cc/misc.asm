@@ -67,11 +67,13 @@ start:
         push    ss
         push    ds
         push    es
+        pushf
         pushfd
         pop     dx
         pop     ss
         pop     ds
         pop     es
+        popf
         popfd
         rdmsr
         rep     movsb
@@ -121,6 +123,8 @@ start:
         movzx   r10, al
         movzx   eax, byte [msg]
         movzx   rdx, word [msg]
+        pushfq
+        popfq
         rep     stosq
         syscall
         sysret
