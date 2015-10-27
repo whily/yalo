@@ -16,46 +16,46 @@ Please refer to [x86-64 arithmetic instructions](AssemblyX64Arith.md) for detail
 
 ### shl/shr: Shift
 
-| Instruction    | Opcode   | 64-Bit Mode | 16/32-Bit Mode | Description                           |
-| -------------- | -------- | ----------- | -------------- | ------------------------------------- |
-| shl r/m8, 1    | D0 /4    | Valid       | Valid          | Multiply r/m8 by 2, once              |
-| shl r/m8, cl   | D2 /4    | Valid       | Valid          | Multiply r/m8 by 2, cl times          |
-| shl r/m8, imm8 | C0 /4 ib | Valid       | Valid          | Multiply r/m8 by 2, imm8 times        |
-| shl r/m16 1    | D1 /4    | Valid       | Valid          | Multiply r/m16by 2, once              |
-| shl r/m16 cl   | D3 /4    | Valid       | Valid          | Multiply r/m16by 2, cl times          |
-| shl r/m16 imm8 | C1 /4 ib | Valid       | Valid          | Multiply r/m16by 2, imm8 times        |
-| shr r/m8, 1    | D0 /5    | Valid       | Valid          | Unsigned divide r/m8 by 2, once       |
-| shr r/m8, cl   | D2 /5    | Valid       | Valid          | Unsigned divide r/m8 by 2, cl times   |
-| shr r/m8, imm8 | C0 /5 ib | Valid       | Valid          | Unsigned divide r/m8 by 2, imm8 times |
-| shr r/m16 1    | D1 /5    | Valid       | Valid          | Unsigned divide r/m16by 2, once       |
-| shr r/m16 cl   | D3 /5    | Valid       | Valid          | Unsigned divide r/m16by 2, cl times   |
-| shr r/m16 imm8 | C1 /5 ib | Valid       | Valid          | Unsigned divide r/m16by 2, imm8 times |
+| Instruction    | Opcode   |
+| -------------- | -------- |
+| shl r/m8, 1    | D0 /4    |
+| shl r/m8, cl   | D2 /4    |
+| shl r/m8, imm8 | C0 /4 ib |
+| shl r/m16 1    | D1 /4    |
+| shl r/m16 cl   | D3 /4    |
+| shl r/m16 imm8 | C1 /4 ib |
+| shr r/m8, 1    | D0 /5    |
+| shr r/m8, cl   | D2 /5    |
+| shr r/m8, imm8 | C0 /5 ib |
+| shr r/m16 1    | D1 /5    |
+| shr r/m16 cl   | D3 /5    |
+| shr r/m16 imm8 | C1 /5 ib |
 
 ### stc: Set Carry Flag
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description  |
-| ----------- | ------ | ----------- | -------------- | ------------ |
-| stc         | F9     | Valid       | Valid          | Set CF flag  |
+| Instruction | Opcode |
+| ----------- | ------ |
+| stc         | F9     |
 
 ### std: Set Direction Flag
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                                 |
-| ----------- | ------ | ----------- | -------------- | ------------------------------------------- |
-| std         | FD     | Valid       | Valid          | String operations decrement index registers |
+| Instruction | Opcode |
+| ----------- | ------ |
+| std         | FD     |
 
 ### sti: Set Interrupt Flag
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                          |
-| ----------- | ------ | ----------- | -------------- | ------------------------------------ |
-| sti         | FB     | Valid       | Valid          | Enable external, maskable interrupts |
+| Instruction | Opcode |
+| ----------- | ------ |
+| sti         | FB     |
 
 ### stosb/stosw/stosd: Store String
 
-| Instruction | Opcode   | 64-Bit Mode | 16/32-Bit Mode | Description                       |
-| ----------- | -------- | ----------- | -------------- | --------------------------------- |
-| stosb       | AA       | Valid       | Valid          | Store al at address [es:](e/r)di  |
-| stosw       | o16 AB   | Valid       | Valid          | Store ax at address [es:](e/r)di  |
-| stosd       | o32 AB   | Valid       | Valid          | Store eax at address [es:](e/r)di |
-| stosq       | REX.W AB | Valid       | ~~N.E.~~       | Store rax at address rdi          |
+| Instruction | Opcode   |
+| ----------- | -------- |
+| stosb       | AA       |
+| stosw       | o16 AB   |
+| stosd       | o32 AB   |
+| stosq       | REX.W AB |
 
 ### sub: Sub
 
@@ -63,7 +63,7 @@ Please refer to [x86-64 arithmetic instructions](AssemblyX64Arith.md) for detail
 
 ### syscall/sysret: (Return from) Fast System Call
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                  |
-| ----------- | ------ | ----------- | -------------- | ---------------------------- |
-| syscall     | 0F 05  | Valid       | ~~Invalid~~    | Fast system call             |
-| sysret      | 0F 07  | Valid       | ~~Invalid~~    | Return from fast system call |
+| Instruction | Opcode |
+| ----------- | ------ |
+| syscall     | 0F 05  |
+| sysret      | 0F 07  |

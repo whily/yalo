@@ -12,6 +12,6 @@ x86-64 Instruction Set W
 
 ### wrmsr: Write to Model Specific Register
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                                        |
-| ----------- | ------ | ----------- | -------------- | -------------------------------------------------- |
-| wrmsr       | 0F 30  | Valid       | Valid          | Write the value in EDX:EAX to MSR specified by ECS |
+| Instruction | Opcode |
+| ----------- | ------ |
+| wrmsr       | 0F 30  |

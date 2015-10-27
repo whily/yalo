@@ -142,22 +142,9 @@ the short description of the functions for each instruction. One
 should refer to Intel or AMD manuals for complete reference.
 
 For each mnemonic, one table is provided to list the supported
-instructions. There are 5 columns in the table:
+instructions. There are 2 columns in the table:
 * **Instruction**: documents mnemonic and operands.
 * **Opcode**: documents the translated opcode.
-* **64-bit Mode**: whether the instruction is supported in 64-bit mode.
-* **16/32-bit Mode**: whether the instruction is supported in 16/32-bit mode.
-* **Description**: short description about the instruction.
-
-**16-bit Mode** is used for bootloaders only.
-
-**32-bit Mode** is provided for completeness only.
-
-For columns **64-bit Mode** and **16/32-bit Mode**, following notations are used:
-* **Valid**: supported.
-* **Invalid**: not supported.
-* **N.E.**: not encodable. The opcode may be part of a sequence of other valid instructions.
-* **N.S.**: not supported. The instruction requires an address override prefix.
 
 ## Notations for Instructions
 

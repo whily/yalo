@@ -12,18 +12,18 @@ x86-64 Instruction Set R
 
 ### rdmsr: Read From Model Specific Register
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                            |
-| ----------- | ------ | ----------- | -------------- | -------------------------------------- |
-| rdmsr       | 0F 32  | Valid       | Valid          | Read MSR specified by ECS into EDX:EAX |
+| Instruction | Opcode |
+| ----------- | ------ |
+| rdmsr       | 0F 32  |
 
 ### rep: Repeat String Operation Prefix
 
 Following are examples.
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                       |
-| ----------- | ------ | ----------- | -------------- | --------------------------------- |
-| rep movsb   | F3 A4  | Valid       | Valid          | Move CX bytes from DS:SI to ES:DI |
-| rep movsw   | F3 A5  | Valid       | Valid          | Move CX words from DS:SI to ES:DI |
+| Instruction | Opcode |
+| ----------- | ------ |
+| rep movsb   | F3 A4  |
+| rep movsw   | F3 A5  |
 
 Note
 
@@ -31,6 +31,6 @@ Note
 
 ### ret: Return From Procedure
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                      |
-| ----------- | ------ | ----------- | -------------- | -------------------------------- |
-| ret         | C3     | Valid       | Valid          | Near return to calling procedure |
+| Instruction | Opcode |
+| ----------- | ------ |
+| ret         | C3     |

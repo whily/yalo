@@ -21,14 +21,14 @@ The instructions are:
 
 The format of the instructions are given below.
 
-| Instruction    | Opcode                  | 64-Bit Mode | 16/32-Bit Mode |
-| -------------- | ----------------------- | ----------- | -------------- |
-| ins r/m16 r16  | 0F (+ base A3) /r       | Valid       | Valid          |
-| ins r/m32 r32  | 0F (+ base A3) /r       | Valid       | Valid          |
-| ins r/m32 r32  | 0F (+ base A3) /r       | Valid       | ~~N.E.~~       |
-| ins r/m16 imm8 | 0F BA opcode ib         | Valid       | Valid          |
-| ins r/m32 imm8 | 0F BA opcode ib         | Valid       | Valid          |
-| ins r/m64 imm8 | REX.W 0F BA opcode ib   | Valid       | ~~N.E.~~       |
+| Instruction    | Opcode                  |
+| -------------- | ----------------------- |
+| ins r/m16 r16  | 0F (+ base A3) /r       |
+| ins r/m32 r32  | 0F (+ base A3) /r       |
+| ins r/m32 r32  | 0F (+ base A3) /r       |
+| ins r/m16 imm8 | 0F BA opcode ib         |
+| ins r/m32 imm8 | 0F BA opcode ib         |
+| ins r/m64 imm8 | REX.W 0F BA opcode ib   |
 
 Base and opcode in above table are given below for each instruction.
 

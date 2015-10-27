@@ -25,27 +25,27 @@ The instructions are:
 
 The format of the instructions are given below.
 
-| Instruction     | Opcode                   | 64-Bit Mode | 16/32-Bit Mode |
-| --------------- | ------------------------ | ----------- | -------------- |
-| ins al imm8     | (+ base 04) ib           | Valid       | Valid          |
-| ins ax imm16    | o16 (+ base 05) iw       | Valid       | Valid          |
-| ins eax imm32   | o32 (+ base 05) id       | Valid       | Valid          |
-| ins rax imm32   | REX.W (+ base 05) id     | Valid       | ~~N.E.~~       |
-| ins r/m8 imm8   | 80 opcode ib             | Valid       | Valid          |
-| ins r/m16 imm16 | o16 81 opcode iw         | Valid       | Valid          |
-| ins r/m32 imm32 | o32 81 opcode id         | Valid       | Valid          |
-| ins r/m64 imm32 | REX.W 81 opcode id       | Valide      | ~~N.E.~~       |
-| ins r/m16 imm8  | o16 83 opcode ib         | Valid       | Valid          |
-| ins r/m32 imm8  | o32 83 opcode ib         | Valid       | Valid          |
-| ins r/m64 imm8  | REX.W 83 opcode ib       | Valid       | ~~N.E.~~       |
-| ins r/m8 r8     | base /r                  | Valid       | Valid          |
-| ins r/m16 r16   | o16 (+ base 01) /r       | Valid       | Valid          |
-| ins r/m32 r32   | o32 (+ base 01) /r       | Valid       | Valid          |
-| ins r/m64 r64   | REX.W (+ base 01) /r     | Valid       | ~~N.E.~~       |
-| ins r8 r/m8     | (+ base 02) /r           | Valid       | Valid          |
-| ins r16 r/m16   | o16 (+ base 03) /r       | Valid       | Valid          |
-| ins r32 r/m32   | o32 (+ base 03) /r       | Valid       | Valid          |
-| ins r64 r/m64   | REX.W (+ base 03) /r     | Valid       | ~~N.E.~~       |
+| Instruction     | Opcode                   |
+| --------------- | ------------------------ |
+| ins al imm8     | (+ base 04) ib           |
+| ins ax imm16    | o16 (+ base 05) iw       |
+| ins eax imm32   | o32 (+ base 05) id       |
+| ins rax imm32   | REX.W (+ base 05) id     |
+| ins r/m8 imm8   | 80 opcode ib             |
+| ins r/m16 imm16 | o16 81 opcode iw         |
+| ins r/m32 imm32 | o32 81 opcode id         |
+| ins r/m64 imm32 | REX.W 81 opcode id       |
+| ins r/m16 imm8  | o16 83 opcode ib         |
+| ins r/m32 imm8  | o32 83 opcode ib         |
+| ins r/m64 imm8  | REX.W 83 opcode ib       |
+| ins r/m8 r8     | base /r                  |
+| ins r/m16 r16   | o16 (+ base 01) /r       |
+| ins r/m32 r32   | o32 (+ base 01) /r       |
+| ins r/m64 r64   | REX.W (+ base 01) /r     |
+| ins r8 r/m8     | (+ base 02) /r           |
+| ins r16 r/m16   | o16 (+ base 03) /r       |
+| ins r32 r/m32   | o32 (+ base 03) /r       |
+| ins r64 r/m64   | REX.W (+ base 03) /r     |
 
 Base and opcode in above table are given below for each instruction.
 

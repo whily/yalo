@@ -12,35 +12,35 @@ x86-64 Instruction Set C
 
 ### call: Call Procedure
 
-| Instruction | Opcode     | 64-Bit Mode | 16/32-Bit Mode | Description |
-| ----------- | ---------- | ----------- | -------------- | ----------- |
-| call imm16  | o16 E8 cw  | ~~N.S.~~    | Valid          | Call near   |
-| call imm32  | o32 E8 cd  | Valid       | Valid          | Call near, 32 bit displacement sign extended to 64 bit in 64 bit mode |
+| Instruction | Opcode     |
+| ----------- | ---------- |
+| call imm16  | o16 E8 cw  |
+| call imm32  | o32 E8 cd  |
 
 ### clc: Clear Carry Flag
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description   |
-| ----------- | ------ | ----------- | -------------- | ------------- |
-| clc         | F8     | Valid       | Valid          | Clear CF flag |
+| Instruction | Opcode |
+| ----------- | ------ |
+| clc         | F8     |
 
 ### cld: Clear Direction Flag
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                                 |
-| ----------- | ------ | ----------- | -------------- | ------------------------------------------- |
-| cld         | FC     | Valid       | Valid          | String operations increment index registers |
+| Instruction | Opcode |
+| ----------- | ------ |
+| cld         | FC     |
 
 ### cli: Clear Interrupt Flag
 
-| Instruction | Opcode | 64-Bit Mode | 16/32-Bit Mode | Description                           |
-| ----------- | ------ | ----------- | -------------- | ------------------------------------- |
-| cli         | FA     | Valid       | Valid          | Disable external, maskable interrupts |
+| Instruction | Opcode |
+| ----------- | ------ |
+| cli         | FA     |
 
 ### cmovcc: Conditional Move
 
-| Instruction       | Opcode                    | 64-Bit Mode | 16/32-Bit Mode | Description |
-| ----------------- | ------------------------- | ----------- | -------------- | ----------- |
-| cmovcc r16 r/m16  | o16 0F (+ 40 cc) /r       | Valid       | Valid          |             |
-| cmovcc r32 r/m32  | o32 0F (+ 40 cc) /r       | Valid       | Valid          |             |
-| cmovcc r64 r/m64  | REX.W 0F (+ 40 cc) /r     | Valid       | ~~N.E.~~       |             |
+| Instruction       | Opcode                |
+| ----------------- | --------------------- |
+| cmovcc r16 r/m16  | o16 0F (+ 40 cc) /r   |
+| cmovcc r32 r/m32  | o32 0F (+ 40 cc) /r   |
+| cmovcc r64 r/m64  | REX.W 0F (+ 40 cc) /r |
 
 Please refer [x86-64 conditional codes](AssemblyX64.md#conditional-codes) for details.
 
@@ -50,16 +50,16 @@ Please refer to [x86-64 arithmetic instructions](AssemblyX64Arith.md) for detail
 
 ### cmpxchg: Compare and Exchange
 
-| Instruction       | Opcode             | 64-Bit Mode | 16/32-Bit Mode | Description |
-| ----------------- | ------------------ | ----------- | -------------- | ----------- |
-| cmpxchg r/m8 r8   | 0F B0 /r           | Valid       | Valid          |             |
-| cmpxchg r/m16 r16 | o16 0F B1 /r       | Valid       | Valid          |             |
-| cmpxchg r/m32 r32 | o32 0F B1 /r       | Valid       | Valid          |             |
-| cmpxchg r/m64 r64 | REX.W 0F B1 /r     | Valid       | ~~N.E.~~       |             |
+| Instruction       | Opcode             |
+| ----------------- | ------------------ |
+| cmpxchg r/m8 r8   | 0F B0 /r           |
+| cmpxchg r/m16 r16 | o16 0F B1 /r       |
+| cmpxchg r/m32 r32 | o32 0F B1 /r       |
+| cmpxchg r/m64 r64 | REX.W 0F B1 /r     |
 
 ### cmpxchg8b/cmpxchg16b: Compare and Exchange Bytes
 
-| Instruction     | Opcode         | 64-Bit Mode | 16/32-Bit Mode | Description |
-| --------------- | -------------- | ----------- | -------------- | ----------- |
-| cmpxchg8b m64   | 0F C7 /1       | Valid       | Valid          |             |
-| cmpxchg16b m128 | REX.W 0F C7 /1 | Valid       | ~~N.E.~~       |             |
+| Instruction     | Opcode         |
+| --------------- | -------------- |
+| cmpxchg8b m64   | 0F C7 /1       |
+| cmpxchg16b m128 | REX.W 0F C7 /1 |
