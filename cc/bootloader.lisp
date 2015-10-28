@@ -30,7 +30,10 @@
     ;; Skip setting fs and gs since we will jump from protected mode
     ;; directly to long mode. Skip setting es as it will be handled in
     ;; vga-text.lisp.
-    (mov     ax #x9000)
+    ;; From http://wiki.osdev.org/Memory_Map_(x86),
+    ;; #x7e00 ~ #x7ffff is guaranteed to be available for use, therefore set
+    ;; ss:sp = 7000:ff00
+    (mov     ax #x7000)
     (mov     ss ax)
     (mov     sp #xff00)
     (sti)
@@ -80,12 +83,18 @@
     ;; Enable A20 line.
     (call    enable-a20)
 
+    ;; Get memory map.
+    (call    get-memory-map)
+
     (jmp     near switch-to-protected-mode)
 
     ;; A20 and keyboard related include from keyboard.lisp.
     ,@*keyboard-constants*
     ,@*keyboard-16*
     ,@*a20*
+
+    ;; Memory map include from memory.lisp.
+    ,@*memory*
 
     ;; Function check-cpu. Use CPUID to check if the process supports long mode.
     ;; From section 14.8 of [1].
@@ -230,8 +239,8 @@
 
     long-mode
     (bits    64)
-    ;; Setup stack's linear address.
-    ;(mov     rsp #x90000)    ; TODO: select appropriate stack address. Should be aligned on 16 byte boundary.
+    ;; Setup stack's linear address. See the related 16 bit code for reason.
+    (mov     rsp #x7ff00)
 
     ;; Reuse previous 32 bit GDT (as we don't consume more than 4 GB memory. So skip loading 64 bit GDT.
     ;; (lgdt (pgdt))

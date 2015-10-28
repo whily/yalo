@@ -21,6 +21,7 @@
    (:file "vga-text")
    (:file "keyboard")
    (:file "a20")
+   (:file "memory")
    (:file "paging")
    (:file "bootloader")
    (:file "x86-64-syntax")
