@@ -11,6 +11,15 @@
 
 (in-package :cc)
 
+(defparameter *vga-text-constants*
+  `(
+    ;;; VGA text mode related constants.
+
+    ;;; ASCII characters.
+    (equ     ascii-backspace #x08)
+    (equ     ascii-space     #x20)
+    ))
+
 (defparameter *vga-text-code-16*
   ;;; VGA text output code in 16 bit mode, based on http://wiki.osdev.org/Babystep4
   ;;; We only implement minimal set of features in 16 bit mode as the main intention
@@ -221,6 +230,23 @@
     (rep     stosd)
     ;; Reset the y position to the last line.
     (dec     byte (text-y))
+    (ret)
+
+    ;;; Function backspace-char. Remove one character before cursor,
+    ;;; and move cursor one character back.
+    backspace-char
+    ;; If the cursor just follows prompt (e.g. REPL> ), then backspace
+    ;; does nothing.
+    (cmp     byte (text-x) prompt-length)
+    (jbe     .done)
+    ;; First go back one character and write a space.
+    (dec     byte (text-x))
+    (mov     al ascii-space)
+    (call    putchar)
+    ;; Go back once more and set cursor.
+    (dec     byte (text-x))
+    (call    set-cursor)
+    .done
     (ret)
 
     ;;; Function set-cursor. Set VGA hardware cursor.

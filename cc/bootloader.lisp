@@ -239,6 +239,10 @@
 
     long-mode
     (bits    64)
+
+    ;; Load constant definitions
+    ,@*vga-text-constants*
+
     ;; Setup stack's linear address. See the related 16 bit code for reason.
     (mov     rsp #x7ff00)
 
@@ -263,12 +267,18 @@
     (call    print)
     (jmp     short read)
     repl     (db "REPL> " 0)
+    (equ     prompt-length (- $ repl 1))
     read
     (call    getchar)
     (cmp     al 10)
     (je      eval-start)
     (cmp     al 0)         ; Non-printable character.
     (jz      read)
+    (cmp     al ascii-backspace)
+    (jnz     .show)
+    (call    backspace-char)
+    (jmp     short read)
+    .show
     (call    putchar)
     (jmp     short read)
 
