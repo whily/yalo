@@ -77,64 +77,57 @@
     ;;; Initialize keyboard by set scan code set 1.
     ;;; Input: None
     ;;; Output: None
-    init-keyboard
-    (mov     al kbd-encoder-cmd-reset)
-    (call    kbd-encoder-send-cmd)
-    (mov     al kbd-encoder-cmd-disable-scanning)
-    (call    kbd-encoder-send-cmd)
-    (mov     al kbd-encoder-cmd-set-scan-code)
-    (call    kbd-encoder-send-cmd)
-    (mov     al kbd-encoder-cmd-set-scan-code-1)
-    (call    kbd-encoder-send-cmd)
-    (mov     al kbd-encoder-cmd-enable-scanning)
-    (call    kbd-encoder-send-cmd)
-    (ret)
+    ,@(def-fun 'init-keyboard nil `(
+    (mov     dil kbd-encoder-cmd-reset)
+    ,@(call-function 'kbd-encoder-send-cmd nil)
+    (mov     dil kbd-encoder-cmd-disable-scanning)
+    ,@(call-function 'kbd-encoder-send-cmd nil)
+    (mov     dil kbd-encoder-cmd-set-scan-code)
+    ,@(call-function 'kbd-encoder-send-cmd nil)
+    (mov     dil kbd-encoder-cmd-set-scan-code-1)
+    ,@(call-function 'kbd-encoder-send-cmd nil)
+    (mov     dil kbd-encoder-cmd-enable-scanning)
+    ,@(call-function 'kbd-encoder-send-cmd nil)))
 
     ;;; Send command byte to keyboard controller.
     ;;; Input:
     ;;;   AL: command byte
     ;;; Output: None
     ;;; Modified registers: BL
-    kbd-ctrl-send-cmd
-    (mov     bl al)                  ; Save AL
-    (call    wait-kbd-in-buf)
-    (mov     al bl)
-    (out     kbd-ctrl-cmd-reg al)
-    (ret)
+    ,@(def-fun 'kbd-ctrl-send-cmd nil `(
+    ,@(call-function 'wait-kbd-in-buf nil)
+    (mov     al dil)
+    (out     kbd-ctrl-cmd-reg al)))
 
     ;;; Send command byte to keyboard encoder.
     ;;; Input:
-    ;;;   AL: command byte
+    ;;;   DIL: command byte
     ;;; Output: None
-    ;;; Modified registers: BL
-    kbd-encoder-send-cmd
-    (mov     bl al)                  ; Save AL
-    (call    wait-kbd-in-buf)
-    (mov     al bl)
-    (out     kbd-encoder-cmd-reg al)
-    (ret)
+    ;;; Modified registers: AL
+    ,@(def-fun 'kbd-encoder-send-cmd nil `(
+    ,@(call-function 'wait-kbd-in-buf nil)
+    (mov     al dil)
+    (out     kbd-encoder-cmd-reg al)))
 
     ;;; Wait until the keyboard controller input buffer empty,
     ;;; therefore command can be written
     ;;; Input: None
     ;;; Output: None
     ;;; Modified registers: AL
-    wait-kbd-in-buf
+    ,@(def-fun 'wait-kbd-in-buf nil `(
     (in      al kbd-ctrl-status-reg) ; Get status
     (test    al kbd-ctrl-status-mask-in-buf)
-    (jnz     wait-kbd-in-buf)
-    (ret)
+    (jnz     wait-kbd-in-buf)))
 
     ;;; Wait until the keyboard controller output buffer ready for
     ;;; reading.
     ;;; Input: None
     ;;; Output: None
     ;;; Modified registers: AL
-    wait-kbd-out-buf
+    ,@(def-fun 'wait-kbd-out-buf nil `(
     (in      al kbd-ctrl-status-reg) ; Get status
     (test    al kbd-ctrl-status-mask-out-buf)
-    (jz      wait-kbd-out-buf)
-    (ret)
+    (jz      wait-kbd-out-buf)))
 
     ;;; Function getchar. Get keystroke from keyboard without echo. If
     ;;; keystroke is available, it is removed from keyboard buffer.
@@ -143,14 +136,14 @@
     ;;; Input: None
     ;;; Output:
     ;;;   AL: ASCII character (0 indicats a key is released or not handled)
-    getchar
-    (call    wait-kbd-out-buf)
+    ;;; Modified registers: ESI
+    ,@(def-fun 'getchar nil `(
+    ,@(call-function 'wait-kbd-out-buf nil)
+    (xor     eax eax)
     (in      al kbd-encoder-buf)     ; Get key data
-    (mov     si scan-code-set-1)
-    (xor     ah ah)
-    (add     si ax)
-    (lodsb)
-    (ret)
+    (mov     esi scan-code-set-1)
+    (add     esi eax)
+    (lodsb)))
 
     ;;; Table for Scan code set 1: http://wiki.osdev.org/Keyboard#Scan_Code_Set_1
     scan-code-set-1
