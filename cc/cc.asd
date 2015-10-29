@@ -17,6 +17,8 @@
   :components
   ((:file "package")
    (:file "util")
+   (:file "unit-test")
+   (:file "abi")
    (:file "bga")
    (:file "vga-text")
    (:file "keyboard")
@@ -26,6 +28,5 @@
    (:file "bootloader")
    (:file "x86-64-syntax")
    (:file "lap")
-   (:file "unit-test")
    (:file "nasm")
    (:file "test-cc")))
