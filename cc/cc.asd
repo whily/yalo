@@ -29,4 +29,5 @@
    (:file "x86-64-syntax")
    (:file "lap")
    (:file "nasm")
-   (:file "test-cc")))
+   (:file "test-cc")
+   (:file "test")))
