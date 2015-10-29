@@ -10,6 +10,13 @@ L [M](AssemblyX64M.md) [N](AssemblyX64N.md)
 [S](AssemblyX64S.md) [T](AssemblyX64T.md) [U](AssemblyX64U.md)
 [V](AssemblyX64V.md) [W](AssemblyX64W.md) [X](AssemblyX64X.md)
 
+### leave: High Level Procedure Exit
+
+| Instruction | Opcode   |
+| ----------- | -------- |
+| leave       | C9       |
+
+
 ### lgdt/lidt/lldt: Load Descriptor Tables
 
 | Instruction | Opcode   |

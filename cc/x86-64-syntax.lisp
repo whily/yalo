@@ -288,6 +288,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((inc    (r/m64 r64))                    . (rex.w #xff /0))
     ((inc    qword m)                        . (rex.w #xff /0))
     ((jrcxz  (imm8 label imm16 imm32 imm64)) . (#xe3 cb))
+    ((leave)                                 . (#xc9))
     ((lodsq)                                 . (rex.w #xad))
     ((mov    r64 (imm32 imm16 imm8 imm label)) . ((+ #xb8 r) id))
     ((mov    r64 imm64)                      . (rex.w (+ #xb8 r) io))

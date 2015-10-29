@@ -116,6 +116,7 @@ start:
         jb      near msg
         jecxz   msg
         jrcxz   msg
+        leave
         lodsq
         mov     eax, 1234h
         mov     rsp, 90000h
