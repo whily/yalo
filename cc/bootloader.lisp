@@ -252,9 +252,11 @@
     ;; Load 64 bit IDT. So far IDT has zero length, therefore any NMI causes a triple fault.
     ;;(lidt    (idt))
 
+    ;; Higher half kernel: http://forum.osdev.org/viewtopic.php?f=1&t=21748
+
     (call    clear)
 
-    (mov     esi banner)
+    (mov     rdi banner)
     (call    println)
     (jmp     short read-start)
     banner   (db "Start your journey on yalo v0.0.1!" 0)
@@ -263,7 +265,7 @@
 
     ;;; REPL: read
     read-start
-    (mov     esi repl)
+    (mov     rdi repl)
     (call    print)
     (jmp     short read)
     repl     (db "REPL> " 0)
@@ -279,7 +281,8 @@
     (call    backspace-char)
     (jmp     short read)
     .show
-    (call    putchar)
+    (mov     dil al)
+    ,@(call-function 'putchar nil)
     (jmp     short read)
 
     ;;; REPL: eval

@@ -17,6 +17,7 @@
 
     ;;; ASCII characters.
     (equ     ascii-backspace #x08)
+    (equ     ascii-linefeed  #x0a)
     (equ     ascii-space     #x20)
     ))
 
@@ -114,19 +115,18 @@
     (equ     background-filling #x1f201f20)
 
     ;;; Clear screen.
-    clear
+    ,@(def-fun 'clear nil `(
     (movzx   eax byte (text-rows))
     (movzx   edx byte (text-cols))
     (mul     edx)
     (shr     eax 1)
     (mov     ecx eax)           ; All screen to be cleared.
     (mov     eax background-filling)
-    (mov     edi vga-video-memory)
+    (mov     rdi vga-video-memory)
     (rep     stosd)
     (mov     byte (text-x) 0)
     (mov     byte (text-y) 0)
-    (call    set-cursor)
-    (ret)
+    ,@(call-function 'set-cursor nil)))
 
     ;;; Function println. Write a string and start a new line.
     ;;; It is equivalent to calling print twice: first to print the string,
@@ -136,62 +136,64 @@
     ;;; Output: None
     ;;; Modified registers: same as putchar
     ;;; Global variables: same as putchar
-    println
-    (call    print)
-    (call    printlf)
-    (ret)
+    ,@(def-fun 'println nil `(
+    ,@(call-function 'print nil)
+    ,@(call-function 'printlf nil)))
 
     ;;; Function printlf. Print crlf only.
     ;;; Input: None
     ;;; Output: None
     ;;; Modified registers: EAX
     ;;; Global variables: text-x, text-y
-    printlf
+    ,@(def-fun 'printlf nil `(
     (inc     byte (text-y))     ; Down one row
     (mov     byte (text-x) 0)   ; Back to left
     (mov     al (text-y))
     (cmp     al (text-rows))
     (jb      .done)
-    (call    scroll-up)
+    ,@(call-function 'scroll-up nil)
     .done
-    (call    set-cursor)
-    (ret)
+    ,@(call-function 'set-cursor nil)))
 
-    do-char
-    (call    putchar)
     ;;; Function print. Write string to screen.
     ;;; Input:
-    ;;;   DS:SI: points to the starting address of the 0 terminated string.
+    ;;;   RDI: points to the starting address of the 0 terminated string.
     ;;; Output: None
     ;;; Modified registers: same as putchar
     ;;; Global variables: same as putchar
-    print
+    ,@(def-fun 'print nil `(
+    (mov     rsi rdi)
+    .start
     (lodsb)         ; Load string char to AL
-    (cmp     al 0)      ; 0 terminated string like C.
-    (jne     do-char)
-    (ret)
+    (cmp     al 0)  ; 0 terminated string like C.
+    (je      .done)
+    (mov     dil al)
+    ,@(call-function 'putchar nil)
+    (jmp     short .start)
+    .done
+    ))
 
     ;;; Function putchar. Writer character at cursor position.
     ;;; Input:
-    ;;;   AL: character to display
+    ;;;   DIL: character to display
     ;;; Output: None
-    ;;; Modified registers: RAX, RBX, RCX, RDX, RDI
+    ;;; Modified registers: RAX, RCX, RDX, RDI, R8, R9
     ;;; Global variables: text-x, text-y, text-cols
-    putchar
-    (cmp     al 10)
+    ,@(def-fun 'putchar nil `(
+    (cmp     dil ascii-linefeed)
     (je      .next-line)
-    (mov     ah #x1f)              ; Attribute: white on blue
-    (mov     cx ax)                ; Save char/attribute
+    (mov     r8d #x1f00)           ; Attribute: white on blue
+    (mov     r8l dil)              ; Save char/attribute
     (movzx   eax byte (text-y))
     (movzx   edx byte (text-cols))
     (shl     edx 1)                ; 2 bytes for one character
     (mul     edx)
-    (movzx   ebx byte (text-x))
-    (shl     ebx 1)
-    (mov     edi vga-video-memory) ; Start of video memory
-    (add     edi eax)              ; Add y offset
-    (add     edi ebx)              ; Add x offset
-    (mov     ax cx)                ; Restore char/attribute
+    (movzx   r9d byte (text-x))
+    (shl     r9d 1)
+    (mov     rdi vga-video-memory) ; Start of video memory
+    (add     rdi rax)              ; Add y offset
+    (add     rdi r9)              ; Add x offset
+    (mov     ax r8w)               ; Restore char/attribute
     (stosw)                        ; Write char/atribute
     (inc     byte (text-x) 1)      ; Advance to right
     (mov     al (text-x))
@@ -199,16 +201,16 @@
     (je      .next-line)
     (jmp     short .done)
     .next-line
-    (call    printlf)
+    ,@(call-function 'printlf nil)
     .done
-    (call    set-cursor)
-    (ret)
+    ,@(call-function 'set-cursor nil)))
 
     ;;; Function scroll-up. Scroll the screen up one line.
     ;;; Input: None
     ;;; Output: None
+    ;;; Modified registers: RAX, RCX, RDX, RDI, RSI
     ;;; Global variables: text-x, text-y, text-rows, text-cols
-    scroll-up
+    ,@(def-fun 'scroll-up '(rbx) '(
     ;; Copy rows from (1 to text-rows - 1) to (0 to text-fows - 2)
     (movzx   ebx byte (text-cols))
     (movzx   eax byte (text-rows))
@@ -229,60 +231,59 @@
     (mov     ecx ebx)
     (rep     stosd)
     ;; Reset the y position to the last line.
-    (dec     byte (text-y))
-    (ret)
+    (dec     byte (text-y))))
 
     ;;; Function backspace-char. Remove one character before cursor,
     ;;; and move cursor one character back.
-    backspace-char
+    ,@(def-fun 'backspace-char nil `(
     ;; If the cursor just follows prompt (e.g. REPL> ), then backspace
     ;; does nothing.
+    (xchg bx bx)
     (cmp     byte (text-x) prompt-length)
     (jbe     .done)
     ;; First go back one character and write a space.
     (dec     byte (text-x))
-    (mov     al ascii-space)
-    (call    putchar)
+    (mov     dil ascii-space)
+    ,@(call-function 'putchar nil)
     ;; Go back once more and set cursor.
     (dec     byte (text-x))
-    (call    set-cursor)
+    ,@(call-function 'set-cursor nil)
     .done
-    (ret)
+    ))
 
     ;;; Function set-cursor. Set VGA hardware cursor.
     ;;; Input: based on text-xy, text-y
     ;;; Output: None
-    ;;; Modified registers: RAX, RBX, RCX, RDX, RDI
+    ;;; Modified registers: RAX, RCX, RDX, RDI
     ;;; Global variables: text-x, text-y, text-cols
     ;;; Based on http://www.brokenthorn.com/Resources/OSDev10.html
     (equ     crt-index-reg #x3d4)
     (equ     crt-data-reg  #x3d5)
     (equ     cursor-location-high #xe)
     (equ     cursor-location-low  #xf)
-    set-cursor
+    ,@(def-fun 'set-cursor nil `(
     ;; Get current cursor position. Note that we only care about the
     ;; location, not the memory (as in putchar). So following equation
     ;; is used: location = text-x + text-y * text-cols
     (movzx   eax byte (text-y))
     (movzx   edx byte (text-cols))
     (mul     edx)
-    (movzx   ebx byte (text-x))
-    (add     ebx eax)
+    (movzx   ecx byte (text-x))
+    (add     ecx eax)
     ;; Set low byte index to vga register.
     (mov     al cursor-location-low)
     (mov     dx crt-index-reg)
     (out     dx al)
-    (mov     al bl)
+    (mov     al cl)
     (mov     dx crt-data-reg)
     (out     dx al)
     ;; Set high byte index to vga register.
     (mov     al cursor-location-high)
     (mov     dx crt-index-reg)
     (out     dx al)
-    (mov     al bh)
+    (mov     al ch)
     (mov     dx crt-data-reg)
-    (out     dx al)
-    (ret)
+    (out     dx al)))
     ))
 
 (defparameter *vga-text-data*
