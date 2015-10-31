@@ -227,7 +227,10 @@ lock are directly handled in encode()."
                            (+ (ecase (caddr on)
                                 (r (multiple-value-bind (regi rex)
                                        (reg->int (second instruction))
-                                     (when rex (push 'b rex-set))
+                                     (when rex
+                                       (if (eq rex 'p)
+                                           (push 'p rex-set)
+                                           (push 'b rex-set)))
                                      (list (+ (cadr on)
                                               regi))))
                                 (cc (list (+ (cadr on) cc-code)))))))
@@ -687,6 +690,7 @@ converted from signed to unsigned."
      - whether extension (e.g. rex.b) is needed:
        * nil: no REX extension
        * p: REX extension is present but no field (e.g. rex.b or rex.r) is used.
+            Can be used to encode SIL, DIL, SPL, BPL.
        * e: REX extension is used and one field will be set."
   (ecase reg
     ((al ax eax rax mm0 xmm0) (values 0 nil))

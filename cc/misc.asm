@@ -124,6 +124,7 @@ start:
         mov     qword [msg], 1019
         mov     ax, r8w
         mov     r9w, word [fs:0]
+        mov     dil, 19
         movsq
         movzx   r10, al
         movzx   eax, byte [msg]
