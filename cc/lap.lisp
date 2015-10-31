@@ -210,10 +210,12 @@ lock are directly handled in encode()."
   (let* (rex-set ; Possibly containing a subset of {w r x b}.
          (dummy (when (eq (car opcode) 'rex.w)
                   (push 'w rex-set)))
-         (opcode* (if (eq (car opcode) 'rex.w)
+         (prefix (when (member (car opcode) '(o16 o32 a16 a32))
+                   (size-prefix (car opcode) bits)))
+         (opcode* (if (member (car opcode) '(rex.w o16 o32 a16 a32))
                       (cdr opcode)
                       opcode))
-         (encoded-len 0) ; Tracking for (R)IP relative encoding.
+         (encoded-len (length prefix)) ; Tracking for (R)IP relative encoding.
          (remaining
           (mapcan
            #'(lambda (on)
@@ -231,7 +233,6 @@ lock are directly handled in encode()."
                                 (cc (list (+ (cadr on) cc-code)))))))
                         (t
                          (ecase on
-                           ((o16 o32 a16 a32) (size-prefix on bits))
                            ((ib iw id io)
                             (try-encode-bytes (instruction-value instruction type
                                                                  (on->in on))
@@ -265,7 +266,10 @@ lock are directly handled in encode()."
     (declare (ignore dummy))
     (when (and rex-set (/= bits 64))
       (error "Instruction ~A only supported in 64-bit mode." instruction))
-    (append (if (null rex-set)
+    ;; REX prefix should precede immdiately the opcode, i.e. other
+    ;; prefix should precede REX prefix (see section 2.2.1 of [2]).
+    (append prefix
+            (if (null rex-set)
                 nil
                 (list (encode-rex (if (member 'w rex-set) 1 0)
                                   (if (member 'r rex-set) 1 0)

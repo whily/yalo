@@ -114,8 +114,6 @@ start:
         cmpxchg8b [rbx]
         cmpxchg16b [rbx]
         jb      near msg
-        jecxz   msg
-        jrcxz   msg
         leave
         lodsq
         mov     eax, 1234h
@@ -124,6 +122,8 @@ start:
         mov     rcx, [msg]
         mov     rbx, rcx
         mov     qword [msg], 1019
+        mov     ax, r8w
+        mov     r9w, word [fs:0]
         movsq
         movzx   r10, al
         movzx   eax, byte [msg]
@@ -149,6 +149,9 @@ start:
         xchg    bx, cx
         xchg    ebx, edx
         xchg    r15, r10
+
+        jecxz   msg
+        jrcxz   msg
 
         hi equ 4
 meta_msg:
