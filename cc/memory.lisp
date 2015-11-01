@@ -58,8 +58,18 @@
     (es mov  ecx (di 8))        ; Get lower 32 bit of memory region length.
     (es or   ecx (di 12))       ; "Or" it with upper 32 bit to test for zero.
     (jz      .skip-entry)
-    (inc     bp)                ; Got a good entry: increase entry count
-    (add     di 24)             ;                   and move to next entry.
+    ;; Got a good entry. Modify 64 bit length field into end address.
+    (xchg    bx bx)
+    ;; Subtract 1 from length.
+    (es dec  dword (di 8))
+    (es sbb  dword (di 12) 0)
+    ;; Then add base.
+    (es mov  eax (di))
+    (es add  (di 8) eax)
+    (es mov  eax (di 4))
+    (es adc  (di 12) eax)
+    (inc     bp)                ; Increase entry count
+    (add     di 24)             ; Move to next entry.
     .skip-entry
     (test    ebx ebx)           ; If EBX is reset to 0, the list is complete.
     (jne     .loop)
