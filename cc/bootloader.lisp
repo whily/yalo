@@ -94,7 +94,7 @@
     ,@*a20*
 
     ;; Memory map include from memory.lisp.
-    ,@*memory*
+    ,@*memory-16*
 
     ;; Function check-cpu. Use CPUID to check if the process supports long mode.
     ;; From section 14.8 of [1].
@@ -200,7 +200,7 @@
     (mov     es ax)
 
     switch-to-long-mode
-    (call    setup-paging)
+    (call32    setup-paging)
 
     ;; Enable 64 bit page-translation-table entries by setting
     ;; CR4.PAE=1. Paging is not enabled until after long mode is
@@ -234,6 +234,7 @@
     (dw      code-selector-64)
 
     ,@*paging*
+    ,@*memory-32*
 
     ;;;==================== 64 bit long mode ====================
 

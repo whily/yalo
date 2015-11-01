@@ -127,6 +127,18 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ,@(bit-syntax 'btr nil)
     ,@(bit-syntax 'bts nil)
     ((call   (imm32 imm64 imm16 imm8 label)) . (o32 #xe8 cd))
+    ;; Below is just an hack so that we can always use 32 bit operand
+    ;; when operating in 32 bit mode.  TODO.
+    ;; As current assembler did not differentiate too much between 16
+    ;; bit and 32 bit mode, as we need 32 bit operand size for near
+    ;; relative call in 32 bit, one SHOULD always use call32 below to
+    ;; call function when working in 32 bit mode (so far in our
+    ;; bootloader, 32 bit mode is transient as we just setup paging
+    ;; and goes to 64 bit mode.
+    ;; Warning: simply using `call` might result in stack corruption
+    ;; (as 16 bit IP is pushed to stack instead of 32 bit), and memory exception
+    ;; might occur when return using wrong EIP.
+    ((call32 (imm32 imm64 imm16 imm8 label)) . (o32 #xe8 cd))
     ((clc)                                   . (#xf8))
     ((cld)                                   . (#xfc))
     ((cli)                                   . (#xfa))

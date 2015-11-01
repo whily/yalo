@@ -10,7 +10,7 @@
 
 (in-package :cc)
 
-(defparameter *memory*
+(defparameter *memory-16*
   `(
     ;;; http://wiki.osdev.org/Detecting_Memory_(x86)
     ;;; http://www.brokenthorn.com/Resources/OSDev17.html
@@ -59,7 +59,6 @@
     (es or   ecx (di 12))       ; "Or" it with upper 32 bit to test for zero.
     (jz      .skip-entry)
     ;; Got a good entry. Modify 64 bit length field into end address.
-    (xchg    bx bx)
     ;; Subtract 1 from length.
     (es dec  dword (di 8))
     (es sbb  dword (di 12) 0)
@@ -85,4 +84,50 @@
     (hlt)
     (jmp     short .panic)
     .mm-error-message (db "ERROR: memory map cannot be detected." 0)
+    ))
+
+(defparameter *memory-32*
+  `(
+    ;;; Memory type constants.
+    (equ     memory-usable 1)
+    (equ     memory-reserved 2)
+    (equ     memory-acpi-reclaimable 3)
+    (equ     memory-acpi-nvs 4)
+    (equ     memory-bad 5)
+
+    ;;; Get the maximum physical memory size, in bytes. Return the result in (EDX, EAX),
+    ;;; where EDX stores the upper 32 bits.
+    ;;; This is based on memory map detected with get-memory-map.
+    get-memory-size
+    (push    esi)
+    (push    ecx)
+    (push    ebx)
+    (push    ebp)
+    (mov     ecx (mm-count-addr))     ; Number of entries to process
+    (mov     esi mm-entries-addr)
+    (xor     edx edx)                 ; EDX:EAX store the maximum physical address.
+    (xor     eax eax)
+    .start
+    (mov     ebp (esi 16))            ; Memory type
+    (cmp     ebp memory-usable)       ; TODO: consider ACPI reclaimable?
+    (jnz     .skip-entry)
+    (mov     ebp (esi 8))             ; Lower 32 bits.
+    (mov     ebx (esi 12))            ; Higher 32 bits. Now EBX:EBP store the current physical address.
+    (cmp     ebx edx)
+    (jb      .skip-entry)
+    (ja      .update)
+    (cmp     ebp eax)
+    (jbe     .skip-entry)
+    .update
+    (mov     edx ebx)
+    (mov     eax ebp)
+    .skip-entry
+    (add     esi 24)
+    (loop    .start)
+    .done
+    (pop     ebp)
+    (pop     ebx)
+    (pop     ecx)
+    (pop     esi)
+    (ret)
    ))
