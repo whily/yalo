@@ -238,7 +238,6 @@
     ,@(def-fun 'backspace-char nil `(
     ;; If the cursor just follows prompt (e.g. REPL> ), then backspace
     ;; does nothing.
-    (xchg bx bx)
     (cmp     byte (text-x) prompt-length)
     (jbe     .done)
     ;; First go back one character and write a space.
