@@ -233,7 +233,7 @@
     (dw      long-mode)      ; In [1], dd is used instead of dw.
     (dw      code-selector-64)
 
-    ,@*paging*
+    ,@*paging-32*
     ,@*memory-32*
 
     ;;;==================== 64 bit long mode ====================
@@ -307,6 +307,9 @@
     no-bga-message (db "ERROR: BGA not available." 0)
 
     (bits 64)
+
+    ;; Include 64 bit paging related functiosn from paging.lisp
+    ,@*paging-64*
 
     ;; Include content from bga.lisp.
     ,@*bga*

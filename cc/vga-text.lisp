@@ -110,7 +110,7 @@
 (defparameter *vga-text-code*
     ;;; VGA text output in 64 bit mode.
   `(
-    (equ     vga-video-memory  #xb8000)
+    (equ     vga-video-memory  (+ kernel-virtual-base #xb8000))
     ;; Blue background, white foreground, space char.
     (equ     background-filling #x1f201f20)
 
@@ -218,9 +218,9 @@
     (mul     ebx)
     (shr     eax 1)         ; 2 bytes per character, write 4 bytes with movsd
     (shl     ebx 1)         ; Number of bytes per line.
-    (mov     edi vga-video-memory)
-    (mov     esi edi)
-    (add     esi ebx)
+    (mov     rdi vga-video-memory)
+    (mov     rsi rdi)
+    (add     rsi rbx)
     (mov     ecx eax)
     (cld)
     ;; TODO: change to movsq
