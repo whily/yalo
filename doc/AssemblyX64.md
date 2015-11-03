@@ -22,6 +22,18 @@ value of `*bootloader*` defined in https://github.com/whily/yalo/blob/master/cc/
 Directives (e.g. bits, origin) are categorized as pseudo instructions
 here too.
 
+## addressing: addressing mode
+
+Set the default setting of whether RIP Relative Addressing is used in
+64 bit mode. This only applies when memory label is used (i.e. it does
+not affect the addressing options when registers are used). Note that
+per-instruction override of `abs` or `rel` explicitly is not supported.
+
+| Instruction    | Description                                 |
+| -------------- | ------------------------------------------- |
+| addressing abs | Default to bsolute addresing                |
+| addressing rel | Default to RIP Relative addresing (default) |
+
 ## align: boundary align
 
 The next instruction will be aligned at the boundary specified. NOP

@@ -37,6 +37,7 @@
         (length 0)
         (cursor 0)
         (bits 64)
+        (addressing 'rel)
         label)
     (dolist (e listing)
       (if (listp e)
@@ -49,6 +50,8 @@
                                      (unless (member n '(4 8 16 32 64 128 256 512))
                                        (error "asm: unsupported alignment ~A." n))
                                      (repeat-list (mod (- n cursor) n) (list #x90)))) ; #x90 is NOP.
+                            (addressing (setf addressing (second e*))
+                                        nil)
                             (bits (setf bits (second e*))
                                   nil)
                             (equ (push (cons (second e*) (eval (third e*)))
@@ -59,8 +62,8 @@
                                  nil)
                             (times
                              (repeat-list (eval (second e*))
-                                          (encode (nthcdr 2 e*) cursor bits)))
-                            (t (encode e* cursor bits)))))
+                                          (encode (nthcdr 2 e*) cursor bits addressing)))
+                            (t (encode e* cursor bits addressing)))))
             (setf code (nconc code snippet))
             (incf length (length snippet))
             (setf cursor (+ origin length)))
@@ -120,7 +123,7 @@
     )
   "Prefix mapping table.")
 
-(defun encode (e* cursor bits)
+(defun encode (e* cursor bits addressing)
   "Opcode encoding, including pseudo instructions like db/dw..., resb/resw..."
   (let ((e (if (and (eq (car e*) 'xchg)
                     (member (second e*) '(ax eax rax)))
@@ -128,7 +131,7 @@
                e*)))
     (acond
      ((assoc* (car e) *prefix-mapping*)
-      (cons it (encode (cdr e) (1+ cursor) bits)))
+      (cons it (encode (cdr e) (1+ cursor) bits addressing)))
      ((assoc* e (x86-64-syntax bits) :test #'equal)
       ;; Instructions with exact match, e.g. instructions without
       ;; operands (like nop, hlt), or special instructions like int 3.
@@ -151,7 +154,7 @@
                                      (eq (third x) (third y)))))))
       ;; Some registers are explicitly given as destination operand,
       ;; e.g. (add al imm8).
-      (encode-complex e (canonical-type (car it)) (cdr it) cursor bits))
+      (encode-complex e (canonical-type (car it)) (cdr it) cursor bits addressing))
      ((assoc* e (x86-64-syntax bits)
               :test #'(lambda (x y)
                         (and (member (car x) '(shl shr))
@@ -165,13 +168,13 @@
                                  (eq (second x) (second y)))
                              (member (car (last x)) '(1 cl)))))
       ;; Special case for (shl/shr r/m8/16 1/cl).
-      (encode-complex (butlast e) (butlast (instruction-type e)) it cursor bits))
+      (encode-complex (butlast e) (butlast (instruction-type e)) it cursor bits addressing))
      ((cc-instruction? e 'cmov) ; CMOVcc.
       (declare (ignore it))
-      (cc-encode e 'cmov cursor bits))
+      (cc-encode e 'cmov cursor bits addressing))
      ((cc-instruction? e 'j)    ; Jcc.
       (declare (ignore it))
-      (cc-encode e 'j cursor bits))
+      (cc-encode e 'j cursor bits addressing))
      (t
       (declare (ignore it))
       (case (car e)
@@ -195,15 +198,15 @@
            ;; Use 0 as unitialized data, as in NASM.
            (repeat-list (* (second  e) n-bytes) (list 0))))
         ;; Normal instructions.
-        (t (match-n-encode e cursor bits)))))))
+        (t (match-n-encode e cursor bits addressing)))))))
 
-(defun match-n-encode (e cursor bits &optional (cc-code 0))
+(defun match-n-encode (e cursor bits addressing &optional (cc-code 0))
   "Match instruction and encode it."
   (multiple-value-bind (type opcode)
       (match-instruction e (instruction-type e) bits)
-    (encode-complex e type opcode cursor bits cc-code)))
+    (encode-complex e type opcode cursor bits addressing cc-code)))
 
-(defun encode-complex (instruction type opcode cursor bits
+(defun encode-complex (instruction type opcode cursor bits addressing
                        &optional (cc-code 0))
   "Encode instruction (with optional rex prefix). Other prefixes like
 lock are directly handled in encode()."
@@ -216,6 +219,7 @@ lock are directly handled in encode()."
                       (cdr opcode)
                       opcode))
          (encoded-len (length prefix)) ; Tracking for (R)IP relative encoding.
+         disp32 ; Pointer for RIP Relative Addressing.
          (remaining
           (mapcan
            #'(lambda (on)
@@ -250,8 +254,9 @@ lock are directly handled in encode()."
                                 (encode-r/m-sib-disp
                                  (instruction-value instruction type
                                                     (find-r/m instruction type))
-                                 on bits)
+                                 on bits addressing)
                               (setf rex-set (append rex-set rex-set*))
+                              (setf disp32 (mark-rip-relative mod-sib-disp bits))
                               mod-sib-disp))
                            (/r
                             (multiple-value-bind (mod-sib-disp rex-set*)
@@ -260,8 +265,9 @@ lock are directly handled in encode()."
                                                     (find-r/m instruction type))
                                  (instruction-value instruction type
                                                     (find-reg instruction type))
-                                 bits)
+                                 bits addressing)
                               (setf rex-set (append rex-set rex-set*))
+                              (setf disp32 (mark-rip-relative mod-sib-disp bits))
                               mod-sib-disp)))))))
                  (incf encoded-len (length x))
                  x))
@@ -269,6 +275,8 @@ lock are directly handled in encode()."
     (declare (ignore dummy))
     (when (and rex-set (/= bits 64))
       (error "Instruction ~A only supported in 64-bit mode." instruction))
+    (when disp32
+      (process-rip-relative disp32 cursor encoded-len rex-set))
     ;; REX prefix should precede immdiately the opcode, i.e. other
     ;; prefix should precede REX prefix (see section 2.2.1 of [2]).
     (append prefix
@@ -279,6 +287,27 @@ lock are directly handled in encode()."
                                   (if (member 'x rex-set) 1 0)
                                   (if (member 'b rex-set) 1 0))))
             remaining)))
+
+(defun mark-rip-relative (mod-sib-disp bits)
+  "For RIP Relative Addressing, return the list pointing to the field disp32.
+Actual modification is done by process-rip-relative."
+  (when (and (= bits 64) (rip-relative? (car mod-sib-disp)))
+    (cdr mod-sib-disp)))
+
+(defun process-rip-relative (disp32 cursor encoded-len rex-set)
+  "For RIP Relative Addressing, handle the encoding of disp32 (modify
+mod-sib-disp if needed)."
+  (let* ((next-rip (+ cursor encoded-len
+                      (if rex-set 1 0)))
+         (mem (if (numberp (first disp32)) ; TODO: handle in r/m-values-64 to avoid this case.
+                  (error "process-rip-relative(): never encode label in encode-r/m-sib-disp as 64 bit precision is lost.")
+                  (second (first disp32))))
+         (new-disp (try-encode-bytes `(- ,mem ,next-rip) 4)))
+    ;; In-place replacement.
+    (setf (first disp32)  (first new-disp))
+    (setf (second disp32) (second new-disp))
+    (setf (third disp32)  (third new-disp))
+    (setf (fourth disp32) (fourth new-disp))))
 
 (defun size-prefix (op bits)
   "Handles operand/address-size override prefix o16/o32 and
@@ -305,7 +334,7 @@ lock are directly handled in encode()."
        it
        (error "No (s)reg operand in ~A~%" instruction)))
 
-(defun encode-r/m-sib-disp (r/m reg/opcode bits)
+(defun encode-r/m-sib-disp (r/m reg/opcode bits addressing)
   "Return 2 values:
      - Encode ModR/M, SIB byte (if any) and displacement (if any).
      - A list of (w r x b) if present."
@@ -324,13 +353,13 @@ lock are directly handled in encode()."
                                              rex-set))
                              regi)))))))
     (multiple-value-bind (mod rm sib disp disp-length rex-set*)
-        (r/m-values r/m bits)
+        (r/m-values r/m bits addressing)
       (values (append (list (encode-modr/m mod rm r/o))
                       (when sib (list sib))
                       (when disp (try-encode-bytes disp disp-length)))
               (append rex-set rex-set*)))))
 
-(defun r/m-values (r/m bits)
+(defun r/m-values (r/m bits addressing)
   "Return values: mod, r/m for encoding, sib, disp, length of disp
 in bytes, and rex-set.
 
@@ -350,7 +379,7 @@ in bytes, and rex-set.
     (m (ecase bits ;; FIXME: should be directly related to address mode.
          (16 (r/m-values-16 r/m))
          (32 (r/m-values-32 r/m))
-         (64 (r/m-values-64 r/m))))))
+         (64 (r/m-values-64 r/m addressing))))))
 
 (defun r/m-values-16 (r/m)
   (if (equal r/m '(bp))  ; Special handling of (bp)
@@ -446,7 +475,7 @@ in bytes, and rex-set.
                                               r/m)))))
               (values mod rm sib disp disp-length nil))))))))
 
-(defun r/m-values-64 (r/m)
+(defun r/m-values-64 (r/m addressing)
   ;; TODO: overhaul (currently only something like a placeholder).
   (cond
     ((equal r/m '(rbp))  ; Special handling of (rbp)
@@ -460,17 +489,22 @@ in bytes, and rex-set.
                (member* '(imm8 imm16 imm32 label) type))
           ;; Special handling of (disp32).  In 64 bit mode,
           ;; RIP-Relative Addressing is used when mod=00 and r/m=101
-          ;; (Table 1-16 of [1]). Therefore we need the other encoding
+          ;; (Table 1-16 of [1]). For abslute encoding, use
           ;; (mod=00, r/m=100, with SIB byte).
-          (values 0 #b100 (encode-sib 0 #b100 #b101) (car r/m) 4 nil))
+          (ecase addressing
+            (abs (values 0 #b100 (encode-sib 0 #b100 #b101) (car r/m) 4 nil))
+            ;; Not encoded yet. As we need to know the cursor and instruction length,
+            ;; we will let higher level function (`encode-complex`) to actually encode
+            ;; as it has more context e.g. the prefix to determine instruction length.
+            (rel (values 0 #b101 nil (car r/m) 4 nil))))
          ((and (= (length r/m) 2) (member 'rsp r/m) (member 'imm8 type))
           ;; Special handling of (rsp + disp8)
-          (values 1 #b100  (encode-sib 0 #b100 4)
+          (values 1 #b100 (encode-sib 0 #b100 4)
                   (instruction-value r/m type 'imm8) 1 nil))
          ((and (= (length r/m) 2) (member 'rsp r/m)
                (member* '(imm16 imm32) type))
           ;; Special handling of (rsp + disp32)
-          (values 2 #b100  (encode-sib 0 #b100 4)
+          (values 2 #b100 (encode-sib 0 #b100 4)
                   (instruction-value r/m type (member* '(imm16 imm32) type)) 4
                   nil))
          (t (let* ((mod (cond
@@ -526,7 +560,7 @@ in bytes, and rex-set.
 
 (defun encode-bytes (x length)
   "Encode byte, word, doubleword, quadword into bytes in
-little-ending. Length is the number of bytes to convert to. X is first
+little-endian. Length is the number of bytes to convert to. X is first
 converted from signed to unsigned."
   (ecase length
     ((1 2 4 8)
@@ -636,6 +670,10 @@ converted from signed to unsigned."
 (defun encode-modr/m (mod r/m reg/opcode)
   "Encode ModR/M byte."
   (+ (* mod #b1000000) (* reg/opcode #b1000) r/m))
+
+(defun rip-relative? (modr/m)
+  "Returns T if ModR/M byte indicates RIP relative addressing."
+  (= (logand modr/m #b11000111) #b00000101))
 
 (defun encode-sib (scale index base)
   "Encode SIB byte."
@@ -753,12 +791,12 @@ cmovcc and jcc. Returns -1 if cc is not a valid value."
          (string= (subseq mnemonic 0 prefix-len) prefix-s)
          (>= (cc->int (symb (subseq mnemonic prefix-len))) 0))))
 
-(defun cc-encode (e prefix cursor bits)
+(defun cc-encode (e prefix cursor bits addressing)
   "Encode instructions with conditional codes."
   (let* ((cc (symb (subseq (str (car e)) (length (str prefix)))))
          (cc-code (cc->int cc))
          (e* (cons (symb prefix 'cc) (cdr e))))
-    (match-n-encode e* cursor bits cc-code)))
+    (match-n-encode e* cursor bits addressing cc-code)))
 
 (defun string->bytes (s)
   (map 'list #'char-code s))

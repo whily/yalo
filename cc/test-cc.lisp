@@ -96,6 +96,7 @@
     (inc      ebp)
 
     (bits 64)
+    (addressing abs)
     (adc      rax #x12345)
     (add      ebx 1000)
     (add      rax #x10010203)
@@ -250,6 +251,7 @@
     (wrmsr)
 
     (bits 64)
+    (addressing abs)
     (bswap   ebx)
     (bswap   rax)
     (bswap   r10)
