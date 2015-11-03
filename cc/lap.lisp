@@ -46,7 +46,7 @@
                            cursor origin symtab)))
                  (snippet (case (car e*)
                             (align (let ((n (second e*)))
-                                     (unless (member n '(4 8 16))
+                                     (unless (member n '(4 8 16 32 64 128 256 512))
                                        (error "asm: unsupported alignment ~A." n))
                                      (repeat-list (mod (- n cursor) n) (list #x90)))) ; #x90 is NOP.
                             (bits (setf bits (second e*))
