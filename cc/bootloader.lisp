@@ -124,7 +124,7 @@
     no-long-mode-message (db "ERROR: CPU does not support long mode." 0)
 
     ;; Include content from vga-text.lisp.
-    ,@*vga-text-code-16*
+    ,@*vga-text-16*
 
     ;;; Global Descriptor Table (GDT).
     ;;; 32 bit GDT entries are according to
@@ -315,8 +315,7 @@
     ,@*bga*
 
     ;; Include content from vga-text.lisp.
-    ,@*vga-text-code*
-    ,@*vga-text-data*
+    ,@*vga-text*
 
     ;; Include content from keyboard.lisp
     ,@*keyboard*

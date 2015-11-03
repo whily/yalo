@@ -21,7 +21,7 @@
     (equ     ascii-space     #x20)
     ))
 
-(defparameter *vga-text-code-16*
+(defparameter *vga-text-16*
   ;;; VGA text output code in 16 bit mode, based on http://wiki.osdev.org/Babystep4
   ;;; We only implement minimal set of features in 16 bit mode as the main intention
   ;;; is only to print error messages.
@@ -37,8 +37,8 @@
 
     ;;; Clear screen.
     clear-16
-    (movzx   ax (text-rows))
-    (movzx   dx (text-cols))
+    (movzx   ax (text-rows-16))
+    (movzx   dx (text-cols-16))
     (mul     dx)
     (movzx   ecx ax)          ; All screen to be cleared.
     (mov     ax #x0f20)       ; Black background, white foreground, space char.
@@ -63,10 +63,10 @@
     ;;; Input: None
     ;;; Output: None
     ;;; Modified reisters: None
-    ;;; Global variables: text-x, text-y
+    ;;; Global variables: text-x-16, text-y-16
     printlf-16
-    (add     byte (text-y) 1)   ; Down one row
-    (mov     byte (text-x) 0)   ; Back to left
+    (add     byte (text-y-16) 1)   ; Down one row
+    (mov     byte (text-x-16) 0)   ; Back to left
     (ret)
 
     do-char-16
@@ -88,26 +88,31 @@
     ;;;   AL: character to display
     ;;; Output: None
     ;;; Modified registers: AX, BX, CX, DX, DI
-    ;;; Global variables: text-x, text-y, text-cols
+    ;;; Global variables: text-x-16, text-y-16, text-cols-16
     putchar-16
     (mov     ah #xf)               ; Attribute: white on black
     (mov     cx ax)                ; Save char/attribute
-    (movzx   ax (text-y))
-    (movzx   dx (text-cols))
+    (movzx   ax (text-y-16))
+    (movzx   dx (text-cols-16))
     (shl     dx 1)                 ; 2 bytes for one character
     (mul     dx)
-    (movzx   bx (text-x))
+    (movzx   bx (text-x-16))
     (shl     bx 1)
     (mov     di 0)                 ; Start of video memory
     (add     di ax)                ; Add y offset
     (add     di bx)                ; Add x offset
     (mov     ax cx)                ; Restore char/attribute
     (stosw)                        ; Write char/atribute
-    (add     byte (text-x) 1)      ; Advance to right
+    (add     byte (text-x-16) 1)   ; Advance to right
     (ret)
+
+    text-rows-16 (db 25)   ;; Number of rows in text mode.
+    text-cols-16 (db 80)   ;; Number of columns in text mode.
+    text-x-16 (db 0)       ;; Position x in text mode [0, text-cols-16)
+    text-y-16 (db 0)       ;; Position y in text mode [0, text-rows-16)
     ))
 
-(defparameter *vga-text-code*
+(defparameter *vga-text*
     ;;; VGA text output in 64 bit mode.
   `(
     (equ     vga-video-memory  (+ kernel-virtual-base #xb8000))
@@ -283,10 +288,7 @@
     (mov     al ch)
     (mov     dx crt-data-reg)
     (out     dx al)))
-    ))
 
-(defparameter *vga-text-data*
-  `(
     text-rows (db 25)   ;; Number of rows in text mode.
     text-cols (db 80)   ;; Number of columns in text mode.
     text-x (db 0)       ;; Position x in text mode [0, text-cols)
