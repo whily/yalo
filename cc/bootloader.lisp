@@ -322,6 +322,6 @@
     ,@*keyboard*
 
     ;; Fill up to multiple of sectors, otherwise VirtualBox complains.
-    (times   (- 8192 (- $ $$)) db 0)
+    (align 512)
 
     kernel-end))
