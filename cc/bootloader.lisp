@@ -25,11 +25,6 @@
     (xor     ax ax)
     (mov     ds ax)
     (mov     es ax)
-    (mov     fs ax)
-    (mov     gs ax)
-    ;; Skip setting fs and gs since we will jump from protected mode
-    ;; directly to long mode. Skip setting es as it will be handled in
-    ;; vga-text.lisp.
     ;; From http://wiki.osdev.org/Memory_Map_(x86),
     ;; #x7e00 ~ #x7ffff is guaranteed to be available for use, therefore set
     ;; ss:sp = 7000:ff00
@@ -40,8 +35,10 @@
 
     ;; Load other sectors from floppy disk.
     ;; AL: # of sectors
-    (mov     ax (+ #x200 (ceiling (- kernel-end stage-2) 512)))
-    (mov     bx stage-2)   ; ES:BX is destination
+    (mov     ax (+ #x200 (ceiling (+ (- kernel-before-relocation stage-2)
+                                     (- kernel-virtual-end kernel-virtual-start))
+                                  512)))
+    (mov     bx stage-2)      ; ES:BX is destination
     (mov     cx 2)            ; CH: cylinder; CL: sector
     (xor     dx dx)           ; DH: head; DL: drive
     (int     #x13)
@@ -51,7 +48,7 @@
     ;; Fill up to 510 bytes.
     (times   (- 510 (- $ $$)) db 0)
 
-    (dw      #xaa55)           ; Boot sector signature
+    (dw      #xaa55)          ; Boot sector signature
 
     ;; Stage 2.
     stage-2
@@ -225,7 +222,7 @@
     (bts     eax 31)              ; Set PE = 1.
     (mov     cr0 eax)             ; Write CR0.
 
-    ;; Jump from 16 bit compatibility mode to 64 bit code segment.
+    ;; Jump from 32 bit compatibility mode to 64 bit code segment.
     ;; Far jump to turn on long mode. The following code is equivalent to
     ;; (jmp far code-selector-64:protected-mode)
     (db      #x66)
@@ -253,7 +250,30 @@
     ;; Load 64 bit IDT. So far IDT has zero length, therefore any NMI causes a triple fault.
     ;;(lidt    (idt))
 
-    ;; Higher half kernel: http://forum.osdev.org/viewtopic.php?f=1&t=21748
+    ;; Move kernel to physical address #x100000, which is virtual address
+    ;; #xffffffff80100000.
+    (mov     rsi kernel-before-relocation)
+    (mov     rdi kernel-physical-base)
+    (mov     rcx (- kernel-virtual-end kernel-virtual-start))
+    (rep     movsb)
+
+    ;; Jump to higher half kernel in 64 bit trampoline.
+    (mov     rdi kernel-virtual-start)
+    (push    rdi)
+    (ret)                      ; Use push/ret together to implement a jmp.
+
+    ;; Fill up to multiple of sectors, otherwise VirtualBox complains.
+    (align   512)
+
+    kernel-before-relocation
+
+    (equ kernel-physical-base #x100000)
+    (org (+ kernel-virtual-base kernel-physical-base))
+
+    kernel-virtual-start
+
+    ;; Setup stack's linear address again.
+    (mov     rsp (+ kernel-virtual-start #x100000))
 
     (call    clear)
 
@@ -296,15 +316,15 @@
     ;;; REPL: loop
     (jmp     short read-start)
 
-    (bits 16)
+    ;; (bits 16)
 
-    no-bga-error
-    (mov     si no-bga-message)
-    (call    println-16)
-    .panic
-    (hlt)
-    (jmp     short .panic)
-    no-bga-message (db "ERROR: BGA not available." 0)
+    ;; no-bga-error
+    ;; (mov     si no-bga-message)
+    ;; (call    println-16)
+    ;; .panic
+    ;; (hlt)
+    ;; (jmp     short .panic)
+    ;; no-bga-message (db "ERROR: BGA not available." 0)
 
     (bits 64)
 
@@ -312,7 +332,7 @@
     ,@*paging-64*
 
     ;; Include content from bga.lisp.
-    ,@*bga*
+    ;,@*bga*
 
     ;; Include content from vga-text.lisp.
     ,@*vga-text*
@@ -323,4 +343,4 @@
     ;; Fill up to multiple of sectors, otherwise VirtualBox complains.
     (align 512)
 
-    kernel-end))
+    kernel-virtual-end))

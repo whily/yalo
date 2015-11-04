@@ -141,8 +141,8 @@
     ,@(call-function 'wait-kbd-out-buf nil)
     (xor     eax eax)
     (in      al kbd-encoder-buf)     ; Get key data
-    (mov     esi scan-code-set-1)
-    (add     esi eax)
+    (mov     rsi scan-code-set-1)
+    (add     rsi rax)
     (lodsb)))
 
     ;;; Table for Scan code set 1: http://wiki.osdev.org/Keyboard#Scan_Code_Set_1
