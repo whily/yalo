@@ -121,6 +121,8 @@ start:
         mov     rsp, 90000h
         mov     rax, 1122334455667788h
         mov     rcx, [msg]
+        mov     rcx, [abs msg]
+        mov     rdi, [abs 0b8000h]
         mov     rbx, rcx
         mov     qword [msg], 1019
         mov     ax, r8w

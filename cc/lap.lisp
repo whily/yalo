@@ -249,26 +249,29 @@ lock are directly handled in encode()."
                              `(- ,(instruction-value instruction type (on->in on))
                                  ,(+ cursor encoded-len (on-length on)))
                              (on-length on)))
-                           ((/0 /1 /2 /3 /4 /5 /6 /7)
-                            (multiple-value-bind (mod-sib-disp rex-set*)
-                                (encode-r/m-sib-disp
-                                 (instruction-value instruction type
-                                                    (find-r/m instruction type))
-                                 on bits addressing)
-                              (setf rex-set (append rex-set rex-set*))
-                              (setf disp32 (mark-rip-relative mod-sib-disp bits))
-                              mod-sib-disp))
-                           (/r
-                            (multiple-value-bind (mod-sib-disp rex-set*)
-                                (encode-r/m-sib-disp
-                                 (instruction-value instruction type
-                                                    (find-r/m instruction type))
-                                 (instruction-value instruction type
-                                                    (find-reg instruction type))
-                                 bits addressing)
-                              (setf rex-set (append rex-set rex-set*))
-                              (setf disp32 (mark-rip-relative mod-sib-disp bits))
-                              mod-sib-disp)))))))
+                           ((/0 /1 /2 /3 /4 /5 /6 /7 /r)
+                            (let* ((mem (instruction-value instruction type
+                                                           (find-r/m instruction type)))
+                                   (mem* mem)
+                                   (addressing*
+                                    (if (and (listp mem) (> (length mem) 1)
+                                             (member (car mem) '(abs rel)))
+                                        ;; Explicit abs/rel override.
+                                        (progn
+                                          (setf mem* (cdr mem))
+                                          (car mem))
+                                        addressing)))
+                              (multiple-value-bind (mod-sib-disp rex-set*)
+                                  (encode-r/m-sib-disp
+                                   mem*
+                                   (if (eq on '/r)
+                                       (instruction-value instruction type
+                                                          (find-reg instruction type))
+                                       on)
+                                   bits addressing*)
+                                (setf rex-set (append rex-set rex-set*))
+                                (setf disp32 (mark-rip-relative mod-sib-disp bits))
+                                mod-sib-disp))))))))
                  (incf encoded-len (length x))
                  x))
            opcode*)))

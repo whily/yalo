@@ -26,8 +26,10 @@ here too.
 
 Set the default setting of whether RIP Relative Addressing is used in
 64 bit mode. This only applies when memory label is used (i.e. it does
-not affect the addressing options when registers are used). Note that
-per-instruction override of `abs` or `rel` explicitly is not supported.
+not affect the addressing options when registers are used, also it is
+not applicable to absolute address like #xb8000). One can use
+per-instruction override of `abs` or `rel` explicitly, for example:
+`(mov byte (abs msg) 0)`.
 
 | Instruction    | Description                                 |
 | -------------- | ------------------------------------------- |
