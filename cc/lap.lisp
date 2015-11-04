@@ -66,7 +66,7 @@
                             (t (encode e* cursor bits addressing)))))
             (setf code (nconc code snippet))
             (incf length (length snippet))
-            (setf cursor (+ origin length)))
+            (incf cursor (length snippet)))
           ;; Labels
           (progn
             (unless (local-label? e)

@@ -117,7 +117,7 @@ i.e. forward reference is not allowed.
 
 Note:
 
-* *org* should precede any (pseudo) instructions that actually generating code.
+* *org* can be used multiple times, however $$ refers to the latest definition of *org*.
 
 ## resb/resw/resd/resq: Declare unitialized data
 
