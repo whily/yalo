@@ -93,6 +93,7 @@ start:
         wrmsr
 
         bits 64
+        default rel
         bswap   ebx
         bswap   rax
         bswap   r10
@@ -123,7 +124,7 @@ start:
         mov     rbx, rcx
         mov     qword [msg], 1019
         mov     ax, r8w
-        mov     r9w, word [fs:0]
+        mov     r9w, word [fs: rel msg]
         mov     dil, 19
         movsq
         movzx   r10, al

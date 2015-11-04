@@ -300,7 +300,7 @@ mod-sib-disp if needed)."
   (let* ((next-rip (+ cursor encoded-len
                       (if rex-set 1 0)))
          (mem (if (numberp (first disp32)) ; TODO: handle in r/m-values-64 to avoid this case.
-                  (error "process-rip-relative(): never encode label in encode-r/m-sib-disp as 64 bit precision is lost.")
+                  (error "process-rip-relative(): RIP relative addressing cannot be used on absolute address.")
                   (second (first disp32))))
          (new-disp (try-encode-bytes `(- ,mem ,next-rip) 4)))
     ;; In-place replacement.
