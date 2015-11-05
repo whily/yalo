@@ -36,3 +36,9 @@ x86-64 Instruction Set I
 | ----------- | ------ |
 | int 3       | CC     |
 | int imm8    | CD ib  |
+
+### invlpg: Invalidate TLB entries
+
+| Instruction | Opcode   |
+| ----------- | -------- |
+| invlpg m    | 0F 01 /7 |

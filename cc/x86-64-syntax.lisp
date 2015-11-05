@@ -170,6 +170,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((inc    dword m)                        . (o32 #xff /0))
     ((int    3)                              . (#xcc))
     ((int    imm8)                           . (#xcd ib))
+    ((invlpg m)                              . (#x0f #x01 /7))
     ((jcc    (imm8 label imm16 imm32 imm64)) . ((+ #x70 cc) cb))
     ((jcc    near (imm32 label imm8 imm16 imm64)) . (#x0f (+ #x80 cc) cd))
     ((jecxz   (imm8 label imm16 imm32 imm64)) . (a32 #xe3 cb))

@@ -114,6 +114,7 @@ start:
         cmpxchg rcx, r10
         cmpxchg8b [rbx]
         cmpxchg16b [rbx]
+        invlpg  [abs 0]
         jb      near msg
         leave
         lodsq
