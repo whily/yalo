@@ -110,6 +110,9 @@
 
 (defparameter *paging-64*
   `(
-    ;;; Remove identity mapping of bottom 2 MB. TODO.
+    ;;; Remove identity mapping of bottom 2 MB.
     ,@(def-fun 'unmap-lower-memory nil `(
+    (mov     rdi pml4-base)
+    (mov     qword (rdi) 0)
+    (invlpg  (abs 0))
     ))))

@@ -275,6 +275,8 @@
     ;; Setup stack's linear address again.
     (mov     rsp (+ kernel-virtual-start #x100000))
 
+    (call    unmap-lower-memory)
+
     (call    clear)
 
     (mov     rdi banner)
