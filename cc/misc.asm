@@ -119,6 +119,8 @@ start:
         jmp     rbx
         jmp     [msg]
         leave
+        lgdt    [msg]
+        lidt    [msg]
         lodsq
         mov     eax, 1234h
         mov     rsp, 90000h
