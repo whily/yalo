@@ -28,3 +28,4 @@ Please refer to [conditional codes](AssemblyX64.md) for details.
 | -------------- | -------- |
 | jmp short imm  | EB cb    |
 | jmp near imm   | E9 cw    |
+| jmp near r/m64 | FF /4    |

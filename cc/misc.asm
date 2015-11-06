@@ -116,6 +116,8 @@ start:
         cmpxchg16b [rbx]
         invlpg  [abs 0]
         jb      near msg
+        jmp     rbx
+        jmp     [msg]
         leave
         lodsq
         mov     eax, 1234h
