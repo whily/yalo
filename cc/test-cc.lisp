@@ -273,6 +273,7 @@
     (cmpxchg8b (rbx))
     (cmpxchg16b (rbx))
     (invlpg  (abs 0))
+    (iretq)
     (jb      near msg)
     (jmp     near rbx)
     (jmp     near (msg))

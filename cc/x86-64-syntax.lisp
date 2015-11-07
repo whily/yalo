@@ -300,6 +300,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ,@(arith-syntax-2 'div t)
     ((inc    (r/m64 r64))                    . (rex.w #xff /0))
     ((inc    qword m)                        . (rex.w #xff /0))
+    ((iretq)                                 . (rex.w #xcf))
     ((jmp    near (r/m64 r64 m))             . (#xff /4))
     ((jrcxz  (imm8 label imm16 imm32 imm64)) . (#xe3 cb))
     ((leave)                                 . (#xc9))

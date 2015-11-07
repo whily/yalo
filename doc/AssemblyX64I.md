@@ -42,3 +42,9 @@ x86-64 Instruction Set I
 | Instruction | Opcode   |
 | ----------- | -------- |
 | invlpg m    | 0F 01 /7 |
+
+### iretq: Interrupt Return
+
+| Instruction | Opcode   |
+| ----------- | -------- |
+| iretq       | REX.W CF |
