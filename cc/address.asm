@@ -55,6 +55,27 @@
         mov     [esi*4+edx+8], ecx
         mov     [edx*8+ebp+123456], ebx
         mov     [edi*8+ecx+8], edx
+
+        bits    64
+        mov     [rbp], rbx
+        mov     [rsp], rcx
+        mov     [123456], rdx
+        mov     [rax], rdx
+        mov     [rbp+36], rcx
+        mov     [rdi+1234], rdx
+        mov     [rsi+123456], rcx
+        mov     [rsp+23h], rbx
+        mov     [rsp+12345678h], rcx
+        mov     [rax+rbx], rcx
+        mov     [rsi+rdi], rdx
+        mov     [rsi+rbp], rdx
+        mov     [rax*2+rsi], rdx
+        mov     [rsi*2+rbp+123], rdx
+        mov     [rdi*2+rbx+8], rcx
+        mov     [rcx*4+rbp+123], rdx
+        mov     [rsi*4+rdx+8], rcx
+        mov     [rdx*8+rbp+123456], rbx
+        mov     [rdi*8+rcx+8], rdx
 msg:
         db      "Hello World! "
 endmsg:

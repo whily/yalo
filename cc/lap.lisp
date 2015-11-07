@@ -480,7 +480,6 @@ in bytes, and rex-set.
               (values mod rm sib disp disp-length nil))))))))
 
 (defun r/m-values-64 (r/m addressing)
-  ;; TODO: overhaul (currently only something like a placeholder).
   (cond
     ((equal r/m '(rbp))  ; Special handling of (rbp)
      (values 1 #b101 nil 0 1 nil))
@@ -532,7 +531,7 @@ in bytes, and rex-set.
                                                       (subseq sis 4 5))
                                                      2)))
                                   (index (reg->int (symb (subseq sis 0 3))))
-                                  (base-reg (find-if #'r32? r/m))
+                                  (base-reg (find-if #'r64? r/m))
                                   (base (if base-reg (reg->int base-reg) 5)))
                              (unless base-reg
                                ;; Special case of (scaled-index + disp32)
@@ -542,10 +541,10 @@ in bytes, and rex-set.
                                            (member* '(imm8 imm16 imm32) type))
                                      disp-length 4))
                              (encode-sib scale index base)))
-                          ((= (count-if #'r32? r/m) 2)
+                          ((= (count-if #'r64? r/m) 2)
                            (let* ((scale 0)
-                                  (base (reg->int (find-if #'r32? r/m)))
-                                  (index (reg->int (find-if #'r32? r/m
+                                  (base (reg->int (find-if #'r64? r/m)))
+                                  (index (reg->int (find-if #'r64? r/m
                                                             :from-end t))))
                              (encode-sib scale index base)))
                           (t nil)))
@@ -727,6 +726,10 @@ converted from signed to unsigned."
   "Returns T if operand op is a 32-bit general purpose register."
   (eq (operand-type op) 'r32))
 
+(defun r64? (op)
+  "Returns T if operand op is a 64-bit general purpose register."
+  (eq (operand-type op) 'r64))
+
 (defun reg->int (reg)
   "Returns values of:
      - the integer representation for register when encoding
@@ -841,4 +844,4 @@ current label."
     (and (= (length s) 5)
          (member (read-from-string (subseq s 4 5)) '(2 4 8))
          (char= (elt s 3) #\*)
-         (member (symb (subseq s 0 3)) '(eax ecx edx ebx ebp esi edi)))))
+         (member (symb (subseq s 0 3)) '(eax ecx edx ebx ebp esi edi rax rcx rdx rbx rbp rsi rdi)))))
