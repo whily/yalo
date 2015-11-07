@@ -157,7 +157,7 @@
       (encode-complex e (canonical-type (car it)) (cdr it) cursor bits addressing))
      ((assoc* e (x86-64-syntax bits)
               :test #'(lambda (x y)
-                        (and (member (car x) '(shl shr))
+                        (and (member (car x) '(sal sar shl shr))
                              (> (length y) 2)
                              (= (length x) (length y))
                              (eq (car x) (car y))

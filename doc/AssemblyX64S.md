@@ -14,22 +14,26 @@ S [T](AssemblyX64T.md) [U](AssemblyX64U.md)
 
 Please refer to [x86-64 arithmetic instructions](AssemblyX64Arith.md) for details.
 
-### shl/shr: Shift
+### sal/sar/shl/shr: Shift
 
-| Instruction    | Opcode   |
-| -------------- | -------- |
-| shl r/m8, 1    | D0 /4    |
-| shl r/m8, cl   | D2 /4    |
-| shl r/m8, imm8 | C0 /4 ib |
-| shl r/m16 1    | D1 /4    |
-| shl r/m16 cl   | D3 /4    |
-| shl r/m16 imm8 | C1 /4 ib |
-| shr r/m8, 1    | D0 /5    |
-| shr r/m8, cl   | D2 /5    |
-| shr r/m8, imm8 | C0 /5 ib |
-| shr r/m16 1    | D1 /5    |
-| shr r/m16 cl   | D3 /5    |
-| shr r/m16 imm8 | C1 /5 ib |
+| Instruction    | Opcode             |
+| -------------- | ------------------ |
+| ins r/m8, 1    | D0 opcode          |
+| ins r/m8, cl   | D2 opcode          |
+| ins r/m8, imm8 | C0 opcode ib       |
+| ins r/m16 1    | o16 D1 opcode      |
+| ins r/m16 cl   | o16 D3 opcode      |
+| ins r/m16 imm8 | o16 C1 opcode ib   |
+| ins r/m32 1    | o32 D1 opcode      |
+| ins r/m32 cl   | o32 D3 opcode      |
+| ins r/m32 imm8 | o32 C1 opcode ib   |
+| ins r/m64 1    | REX.W D1 opcode    |
+| ins r/m64 cl   | REX.W D3 opcode    |
+| ins r/m64 imm8 | REX.W C1 opcode ib |
+
+The opcodes are /4, /7, /4, 5 for sal, sar, shl, shr, respectively.
+
+Note that sal and shl perform the same operation.
 
 ### stc: Set Carry Flag
 

@@ -148,6 +148,10 @@ start:
         pushfq
         pop     rax
         popfq
+        sal     ebx, 1
+        sar     edx, cl
+        shl     r10, 6
+        shr     qword [msg], 8
         rep     stosq
         syscall
         sysret
