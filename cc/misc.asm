@@ -94,6 +94,12 @@ start:
 
         bits 64
         default rel
+        bsf     ax, bx
+        bsf     ecx, edx
+        bsf     r10, [msg]
+        bsr     ax, r8w
+        bsr     r10d, r9d
+        bsr     rax, r12
         bswap   ebx
         bswap   rax
         bswap   r10
