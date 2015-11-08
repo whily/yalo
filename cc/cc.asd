@@ -19,6 +19,7 @@
    (:file "util")
    (:file "unit-test")
    (:file "abi")
+   (:file "bitmap")
    (:file "memory")
    (:file "paging")
    (:file "bga")
