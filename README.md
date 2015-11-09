@@ -20,6 +20,8 @@ written in Common Lisp, and a 64 bit bootloader.
 - [x] Keyboard handling without using BIOS.
 - [x] Switch to 32 bit protected mode.
 - [x] Switch to 64 bit long mode.
+- [ ] Physical/virtual memory management.
+- [ ] Userland and system call.
 - [ ] Implement Ink interpreter with assembly.
 - [ ] Self hosting a more powerful Ink interpreter with Ink itself.
 
