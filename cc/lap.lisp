@@ -665,6 +665,18 @@ converted from signed to unsigned."
                                   (eq a b)))
                           x y))))
 
+(defun sub-type? (a b)
+  "Returns T if `a` is a sub-type of `b`."
+  (case a
+    (imm8 (member b '(imm8 imm16 imm32 imm64)))
+    (imm16 (member b '(imm16 imm32 imm64)))
+    (imm32 (member b '(imm32 imm64)))
+    (t (eq a b))))
+
+(defun sub-type-list? (a list)
+  "Returns T if `a` is a sub-type of at least one element of `list`."
+  (some #'(lambda (x) (sub-type? a x)) list))
+
 (defun signed->unsigned (value length)
   "Change value from signed to unsigned."
   (if (>= value 0)
