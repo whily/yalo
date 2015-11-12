@@ -16,7 +16,7 @@
 (defparameter *paging-32*
   `(
     ;;; Technical details for 2 MB page translation can be found in
-    ;;; section 5.3.4 of [1].
+    ;;; section 5.3.4 (2-Mbyte Page Translation) of [1].
     ;;; At the beginning, paging setup is based on
     ;;; http://wiki.osdev.rg/Entering_Long_Mode_Directly
     ;;;

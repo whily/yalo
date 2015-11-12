@@ -114,7 +114,7 @@
   (pp-hex (read-image filename)))
 
 (defparameter *prefix-mapping*
-  ;; As in section 2.1.1 of [2].
+  ;; As in section 2.1.1 (Instruction Prefixes) of [2].
   `((lock  . #xf0)
     (repne . #xf2) (repnz .#xf2)
     (rep   . #xf3) (repe  . #xf3) (repz . #xf3)
@@ -281,7 +281,7 @@ lock are directly handled in encode()."
     (when disp32
       (process-rip-relative disp32 cursor encoded-len rex-set))
     ;; REX prefix should precede immdiately the opcode, i.e. other
-    ;; prefix should precede REX prefix (see section 2.2.1 of [2]).
+    ;; prefix should precede REX prefix (see section 2.2.1 (REX Prefixes) of [2]).
     (append prefix
             (if (null rex-set)
                 nil

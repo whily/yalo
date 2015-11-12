@@ -226,11 +226,11 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((out    dx ax)                          . (#xef))
     ((pop    r16)                            . (o16 (+ #x58 r)))
     ;; Note that for 64 bit mode, prefix #x66 should be used according
-    ;; to section 4.2 of [1]. This is different from NASM.
+    ;; to section 4.2 (INSTRUCTIONS (N-Z)) of [1]. This is different from NASM.
     ((popf)                                  . (o16 #x9d))
     ((push   r16)                            . (o16 (+ #x50 r)))
     ;; Note that for 64 bit mode, prefix #x66 should be used according
-    ;; to section 4.2 of [1]. This is different from NASM.
+    ;; to section 4.2 (INSTRUCTIONS (N-Z)) of [1]. This is different from NASM.
     ((pushf)                                 . (o16 #x9c))
     ((ret)                                   . (#xc3))
     ((rdmsr)                                 . (#x0f #x32))

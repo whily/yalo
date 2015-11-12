@@ -5,7 +5,7 @@
 ;;;;     Bootloader.
 ;;;;
 ;;;;     Switch to 32 bit protected mode and 64 bit long mode is mainly based on
-;;;;     Section 14.8 of
+;;;;     Section 14.8 (Long-Mode Initialization Example) of
 ;;;;     [1] AMD64 Architecture Programmer's Manual Volume 2: System Programming.
 ;;;;         Publication No. 24593; Revision: 3.25
 ;;;; License:
@@ -94,7 +94,7 @@
     ,@*memory-16*
 
     ;; Function check-cpu. Use CPUID to check if the process supports long mode.
-    ;; From section 14.8 of [1].
+    ;; From section 14.8 (Long-Mode Initialization Example) of [1].
     ;; If long mode is supported, CF is cleared; otherwise CF is set.
 
     check-cpu
@@ -126,7 +126,8 @@
     ;;; Global Descriptor Table (GDT).
     ;;; 32 bit GDT entries are according to
     ;;;   http://www.brokenthorn.com/Resources/OSDev8.html
-    ;;; 64 bit GDT entries are according to section 4.8 of [1].
+    ;;; 64 bit GDT entries are according to section 14.8
+    ;;; (Long-Mode Initialization Example) of [1].
     gdt
     ;; Null descriptor
     (dd 0)
@@ -277,6 +278,34 @@
 
     (call    unmap-lower-memory)
 
+    (mov     rdi #xffffffff80400000)
+    (mov     rsi 100)
+    ,@(call-function 'bitmap-init nil)
+    (mov     rdi #xffffffff80400000)
+    (mov     rsi 0)
+    ,@(call-function 'bitmap-set nil)
+    (mov     rdi #xffffffff80400000)
+    (mov     rsi 1)
+    ,@(call-function 'bitmap-set nil)
+    (mov     rdi #xffffffff80400000)
+    ,@(call-function 'bitmap-scan nil)
+    (mov     rax #xffffffffffffffff)
+    (mov     (rdi 8) rax)
+    ,@(call-function 'bitmap-scan nil)
+    (mov     rsi 64)
+    ,@(call-function 'bitmap-set nil)
+    ,@(call-function 'bitmap-scan nil)
+    (mov     rsi 65)
+    ,@(call-function 'bitmap-set nil)
+    ,@(call-function 'bitmap-scan nil)
+    (mov     rsi 67)
+    ,@(call-function 'bitmap-set nil)
+    ,@(call-function 'bitmap-scan nil)
+    (mov     rsi 64)
+    ,@(call-function 'bitmap-unset nil)
+    ,@(call-function 'bitmap-scan nil)
+    (xchg    bx bx)
+
     (call    clear)
 
     (mov     rdi banner)
@@ -339,8 +368,18 @@
     ;; Include content from vga-text.lisp.
     ,@*vga-text*
 
-    ;; Include content from keyboard.lisp
+    ;; Include content from keyboard.lisp.
     ,@*keyboard*
+
+    ;; Include content from bitmap.lisp.
+    ,@*bitmap*
+
+    ;; Function panic. Display error message and halt the computer.
+    ,@(def-fun 'panic nil `(
+    ,@(call-function 'println nil)
+    .panic
+    (hlt)
+    (jmp     short .panic)))
 
     ;; Fill up to multiple of sectors, otherwise VirtualBox complains.
     (align 512)
