@@ -661,17 +661,22 @@ converted from signed to unsigned."
          :test #'(lambda (x y)
                    (every #'(lambda (a b)
                               (if (listp b)
-                                  (member a b)
-                                  (eq a b)))
+                                  (sub-type-list? a b)
+                                  (sub-type? a b)))
                           x y))))
 
 (defun sub-type? (a b)
   "Returns T if `a` is a sub-type of `b`."
-  (case a
-    (imm8 (member b '(imm8 imm16 imm32 imm64)))
-    (imm16 (member b '(imm16 imm32 imm64)))
-    (imm32 (member b '(imm32 imm64)))
-    (t (eq a b))))
+  (or (eq a b)
+      (case a
+        (imm8  (member b '(imm16 imm32 imm64)))
+        (imm16 (member b '(imm32 imm64)))
+        (imm32 (eq     b 'imm64))
+        (r8    (eq     b 'r/m8))
+        (r16   (eq     b 'r/m16))
+        (r32   (eq     b 'r/m32))
+        (r64   (eq     b 'r/m64))
+        (m     (member b '(r/m8 r/m16 r/m32 r/m64))))))
 
 (defun sub-type-list? (a list)
   "Returns T if `a` is a sub-type of at least one element of `list`."
