@@ -29,7 +29,7 @@ x86-64 Instruction Set M
 | mov r/m8 imm8   | C6 /0 ib       |
 | mov r/m16 imm16 | o16 C7 /0 iw   |
 | mov r/m32 imm32 | o32 C7 /0 id   |
-| mov r/m64 imm32 | REX.W C7 /0 io |
+| mov r/m64 imm32 | REX.W C7 /0 id |
 | mov sreg r/m16  | 8E /r          |
 | mov r/m16 sreg  | 8C /r          |
 

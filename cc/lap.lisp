@@ -241,9 +241,12 @@ lock are directly handled in encode()."
                         (t
                          (ecase on
                            ((ib iw id io)
-                            (try-encode-bytes (instruction-value instruction type
-                                                                 (on->in on))
-                                              (on-length on)))
+                            (try-encode-bytes
+                             (if (equal type '(mov r64 -imm32))
+                                 (third instruction)
+                                 (instruction-value instruction type
+                                                    (on->in on)))
+                             (on-length on)))
                            ((cb cw cd co)
                             (try-encode-bytes
                              `(- ,(instruction-value instruction type (on->in on))
@@ -671,6 +674,7 @@ converted from signed to unsigned."
       (case a
         (imm8  (member b '(imm16 imm32 imm64)))
         (imm16 (member b '(imm32 imm64)))
+        (-imm32 (member b '(imm32 imm64)))
         (imm32 (eq     b 'imm64))
         (r8    (eq     b 'r/m8))
         (r16   (eq     b 'r/m16))
@@ -715,10 +719,11 @@ converted from signed to unsigned."
   (cond
     ((numberp operand)
      (cond
-       ((and (<= (- (expt 2 7))  operand (1- (expt 2 8))))  'imm8)
-       ((and (<= (- (expt 2 15)) operand (1- (expt 2 16)))) 'imm16)
-       ((and (<= (- (expt 2 31)) operand (1- (expt 2 32)))) 'imm32)
-       ((and (<= (- (expt 2 63)) operand (1- (expt 2 64)))) 'imm64)
+       ((<= (- (expt 2 31)) operand -1)               '-imm32)
+       ((<= (- (expt 2 7))  operand (1- (expt 2 8)))  'imm8)
+       ((<= (- (expt 2 15)) operand (1- (expt 2 16))) 'imm16)
+       ((<= (- (expt 2 31)) operand (1- (expt 2 32))) 'imm32)
+       ((<= (- (expt 2 63)) operand (1- (expt 2 64))) 'imm64)
        (t (error "Invalid operand: ~A" operand))))
     ((listp operand)
      (case (car operand)

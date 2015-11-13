@@ -165,7 +165,8 @@ instructions. There are 2 columns in the table:
 Following notations are used:
 * **imm8**: immediate byte value in the range of -128..+255.
 * **imm16**: immediate word value in the range of -32,768..+65,535.
-* **imm32**: immediate doubleword value in the range of -2,147,483,648..+4,294,967,295.
+* **imm32**: immediate doubleword value in the range of -2,147,483,648..+4,294,967,295. There is one special notation
+  **-imm32** for value in the range of -2,147,483,648..-1, which is used to encode 'mov r/m64 -imm32'.
 * **imm64**: immediate quadword value in the range of -9,223,372,036,854,775,808..+18,446,744,073,709,551,615..
 * **r8**: one of the byte general-purpose registers: al, cl, dl, bl, ah, ch, dh, bh, bpl, spl, dil, and sil.
 * **r16**: one of the word general-purpose registers: ax, cx, dx, bx, sp, bp, si, di.

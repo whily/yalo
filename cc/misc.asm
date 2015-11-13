@@ -136,6 +136,7 @@ start:
         mov     rcx, [abs msg]
         mov     rdi, [abs 0b8000h]
         mov     rbx, rcx
+        mov     rax, -1
         mov     qword [msg], 1019
         mov     ax, r8w
         mov     r9w, word [fs: rel msg]
