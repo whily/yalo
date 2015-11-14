@@ -650,9 +650,16 @@ converted from signed to unsigned."
   "Returns values of (type opcode).
    In the first run, when the type does not appear in syntax table,
      try to match immediate data with register length."
-  (aif (assoc-x86-64-opcode type bits)
-       (values (canonical-type (car it)) (copy-list (cdr it)))
-       (error "match-instruction: unsupported instruction ~A" instruction)))
+  ;; Special handling for (mov r64 imm32) if imm32 < 0.
+  (if (and (eq (car instruction) 'mov)
+           (= (length instruction) 3)
+           (eq (second type) 'r64)
+           (numberp (third instruction))
+           (<= (- (expt 2 31)) (third instruction) -1))
+      (values (list 'mov 'r64 'imm32) (list 'rex.w #xc7 '/0 'id))
+      (aif (assoc-x86-64-opcode type bits)
+           (values (canonical-type (car it)) (copy-list (cdr it)))
+           (error "match-instruction: unsupported instruction ~A" instruction))))
 
 (defun canonical-type (type)
   "Return the canonical form of the type."
@@ -674,7 +681,6 @@ converted from signed to unsigned."
       (case a
         (imm8  (member b '(imm16 imm32 imm64)))
         (imm16 (member b '(imm32 imm64)))
-        (-imm32 (member b '(imm32 imm64)))
         (imm32 (eq     b 'imm64))
         (r8    (eq     b 'r/m8))
         (r16   (eq     b 'r/m16))
@@ -719,7 +725,6 @@ converted from signed to unsigned."
   (cond
     ((numberp operand)
      (cond
-       ((<= (- (expt 2 31)) operand -1)               '-imm32)
        ((<= (- (expt 2 7))  operand (1- (expt 2 8)))  'imm8)
        ((<= (- (expt 2 15)) operand (1- (expt 2 16))) 'imm16)
        ((<= (- (expt 2 31)) operand (1- (expt 2 32))) 'imm32)

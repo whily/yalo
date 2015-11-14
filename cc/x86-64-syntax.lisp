@@ -320,9 +320,12 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((jrcxz  (imm8 label imm16 imm32 imm64)) . (#xe3 cb))
     ((leave)                                 . (#xc9))
     ((lodsq)                                 . (rex.w #xad))
-    ;; For the following instruction, we use id instead of io (as in
-    ;; instruction manual) for imm32. NASM generates same results.
-    ((mov    r64 -imm32)                     . (rex.w #xc7 /0 id))
+    ;; For the following two instructions (including the one commented out)
+    ;; we use id instead of io (as in instruction manual) for imm32.
+    ;; NASM generates same results.
+    ;; The following instruction is handled in function match-instruction,
+    ;; therefore commented out.
+    ;((mov    r64 -imm32)                     . (rex.w #xc7 /0 id))
     ((mov    qword m (imm32 imm16 imm8 imm label)) . (rex.w #xc7 /0 id))
     ((mov    r64 (imm32 imm16 imm8 imm))     . ((+ #xb8 r) id))
     ((mov    r64 (imm64 label))              . (rex.w (+ #xb8 r) io))
