@@ -204,7 +204,11 @@
   "Match instruction and encode it."
   (multiple-value-bind (type opcode)
       (match-instruction e (instruction-type e) bits)
-    (encode-complex e type opcode cursor bits addressing cc-code)))
+    (if (and (>= (length opcode) 2) (eq (second opcode) 'rex.w))
+        ;; Handle instructions like popcnt where rex.w is the 2nd element in opcode.
+        (append (list (first opcode))
+                (encode-complex e type (cdr opcode) (1+ cursor) bits addressing cc-code))
+        (encode-complex e type opcode cursor bits addressing cc-code))))
 
 (defun encode-complex (instruction type opcode cursor bits addressing
                        &optional (cc-code 0))

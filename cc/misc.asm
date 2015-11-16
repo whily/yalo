@@ -148,6 +148,7 @@ start:
         push    r10
         pushfq
         pop     rax
+        popcnt  r11, [msg]
         popfq
         sal     ebx, 1
         sar     edx, cl

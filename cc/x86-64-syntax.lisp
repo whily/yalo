@@ -341,6 +341,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ,@(arith-syntax-2 'not t)
     ,@(arith-syntax-1 'or  t)
     ((pop    r64)                            . ((+ #x58 r)))
+    ((popcnt r64 r/m64)                      . (#xf3 rex.w #x0f #xb8 /r))
     ((popfq)                                 . (#x9d))
     ((push   r64)                            . ((+ #x50 r)))
     ((pushfq)                                . (#x9c))
