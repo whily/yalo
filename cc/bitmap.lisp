@@ -124,6 +124,33 @@
     .done
     ))
 
+    ;;; Function bitmap-count-1. Returns the count of 1 in the bitmap.
+    ;;; Input:
+    ;;;     RDI: start-address
+    ;;; Output:
+    ;;;     RAX: count of 1.
+    ,@(def-fun 'bitmap-count-1 nil `(
+    (mov     rcx (rdi))
+    (add     rcx bitmap-mask)      ; Scan ceil((rdi) / 64)
+    (shr     rcx bitmap-shift)
+    (xor     eax eax)              ; RAX: count of 1
+    (xor     edx edx)              ; RDX: index to the qword element
+    .start
+    (popcnt  r8 (rdx*8 rdi bitmap-offset))
+    (add     rax r8)
+    (inc     rdx)
+    (loop    .start)))
+
+    ;;; Function bitmap-count-0. Returns the count of 0 in the bitmap.
+    ;;; Input:
+    ;;;     RDI: start-address
+    ;;; Output:
+    ;;;     RAX: count of 0.
+    ,@(def-fun 'bitmap-count-0 nil `(
+    ,@(call-function 'bitmap-count-1 nil)
+    (neg     rax)
+    (add     rax (rdi))))
+
     ;;; Bitmap regression test.
     ,@(def-fun 'bitmap-regression nil `(
     (equ bitmap-regression-addr #xffffffff80400000)
@@ -131,27 +158,47 @@
     (mov     rsi 100)
     ,@(call-function 'bitmap-init nil)
     (mov     rdi bitmap-regression-addr)
+    ,@(call-function 'bitmap-count-1 nil)
+    (cmp     rax 0)
+    (jne     .error)
+    ,@(call-function 'bitmap-count-0 nil)
+    (cmp     rax 100)
+    (jne     .error)
+    (mov     rdi bitmap-regression-addr)
     (mov     rsi 0)
     ,@(call-function 'bitmap-set nil)
-    (mov     rdi bitmap-regression-addr)
+    ,@(call-function 'bitmap-count-0 nil)
+    (cmp     rax 99)
+    (jne     .error)
     (mov     rsi 1)
     ,@(call-function 'bitmap-set nil)
-    (mov     rdi bitmap-regression-addr)
+    ,@(call-function 'bitmap-count-0 nil)
+    (cmp     rax 98)
+    (jne     .error)
     ,@(call-function 'bitmap-scan nil)
     (cmp     rax 2)
     (jne     .error)
     (mov     rax #xffffffffffffffff)
     (mov     (rdi 8) rax)
+    ,@(call-function 'bitmap-count-0 nil)
+    (cmp     rax 36)
+    (jne     .error)
     ,@(call-function 'bitmap-scan nil)
     (cmp     rax 64)
     (jne     .error)
     (mov     rsi 64)
     ,@(call-function 'bitmap-set nil)
+    ,@(call-function 'bitmap-count-0 nil)
+    (cmp     rax 35)
+    (jne     .error)
     ,@(call-function 'bitmap-scan nil)
     (cmp     rax 65)
     (jne     .error)
     (mov     rsi 65)
     ,@(call-function 'bitmap-set nil)
+    ,@(call-function 'bitmap-count-0 nil)
+    (cmp     rax 34)
+    (jne     .error)
     ,@(call-function 'bitmap-scan nil)
     (cmp     rax 66)
     (jne     .error)
@@ -162,6 +209,9 @@
     (jne     .error)
     (mov     rsi 64)
     ,@(call-function 'bitmap-unset nil)
+    ,@(call-function 'bitmap-count-0 nil)
+    (cmp     rax 34)
+    (jne     .error)
     ,@(call-function 'bitmap-scan nil)
     (cmp     rax 64)
     (jne     .error)
