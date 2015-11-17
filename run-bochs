@@ -5,4 +5,4 @@ bochs -n -q -rc bochs-debug-cmds \
       'floppya: 1_44=floppy.img, status=inserted' \
       'megs: 32' \
       'magic_break: enabled=1' \
-#            'cpuid: x86_64=1, sse=sse4_2, sep=1, apic=1'
+      'cpuid: x86_64=1, simd=sse4_2'
