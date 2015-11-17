@@ -276,45 +276,45 @@
     ;; Setup stack's linear address again.
     (mov     rsp (+ kernel-virtual-start #x100000))
 
-    (call    unmap-lower-memory)
+    ,@(call-function 'unmap-lower-memory)
 
-    (call    clear)
+    ,@(call-function 'clear)
 
     (mov     rdi banner)
-    (call    println)
+    ,@(call-function 'println)
     (jmp     short read-start)
     banner   (db "Start your journey on yalo v0.0.1!" 0)
 
-    (call    init-keyboard)
+    ,@(call-function 'init-keyboard)
 
     ;;; REPL: read
     read-start
     (mov     rdi repl)
-    (call    print)
+    ,@(call-function 'print)
     (jmp     short read)
     repl     (db "REPL> " 0)
     (equ     prompt-length (- $ repl 1))
     read
-    (call    getchar)
+    ,@(call-function 'getchar)
     (cmp     al 10)
     (je      eval-start)
     (cmp     al 0)         ; Non-printable character.
     (jz      read)
     (cmp     al ascii-backspace)
     (jnz     .show)
-    (call    backspace-char)
+    ,@(call-function 'backspace-char)
     (jmp     short read)
     .show
     (mov     dil al)
-    ,@(call-function 'putchar nil)
+    ,@(call-function 'putchar)
     (jmp     short read)
 
     ;;; REPL: eval
     eval-start
 
     ;;; REPL: print
-    (call    printlf)
-    (call    printlf)
+    ,@(call-function 'printlf)
+    ,@(call-function 'printlf)
 
     ;;; REPL: loop
     (jmp     short read-start)
@@ -348,7 +348,7 @@
 
     ;; Function panic. Display error message and halt the computer.
     ,@(def-fun 'panic nil `(
-    ,@(call-function 'println nil)
+    ,@(call-function 'println)
     .panic
     (hlt)
     (jmp     short .panic)))

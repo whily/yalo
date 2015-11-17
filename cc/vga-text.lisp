@@ -131,7 +131,7 @@
     (rep     stosd)
     (mov     byte (text-x) 0)
     (mov     byte (text-y) 0)
-    ,@(call-function 'set-cursor nil)))
+    ,@(call-function 'set-cursor)))
 
     ;;; Function println. Write a string and start a new line.
     ;;; It is equivalent to calling print twice: first to print the string,
@@ -142,8 +142,8 @@
     ;;; Modified registers: same as putchar
     ;;; Global variables: same as putchar
     ,@(def-fun 'println nil `(
-    ,@(call-function 'print nil)
-    ,@(call-function 'printlf nil)))
+    ,@(call-function 'print)
+    ,@(call-function 'printlf)))
 
     ;;; Function printlf. Print crlf only.
     ;;; Input: None
@@ -156,9 +156,9 @@
     (mov     al (text-y))
     (cmp     al (text-rows))
     (jb      .done)
-    ,@(call-function 'scroll-up nil)
+    ,@(call-function 'scroll-up)
     .done
-    ,@(call-function 'set-cursor nil)))
+    ,@(call-function 'set-cursor)))
 
     ;;; Function print. Write string to screen.
     ;;; Input:
@@ -173,7 +173,7 @@
     (cmp     al 0)  ; 0 terminated string like C.
     (je      .done)
     (mov     dil al)
-    ,@(call-function 'putchar nil)
+    ,@(call-function 'putchar)
     (jmp     short .start)
     .done
     ))
@@ -206,9 +206,9 @@
     (je      .next-line)
     (jmp     short .done)
     .next-line
-    ,@(call-function 'printlf nil)
+    ,@(call-function 'printlf)
     .done
-    ,@(call-function 'set-cursor nil)))
+    ,@(call-function 'set-cursor)))
 
     ;;; Function scroll-up. Scroll the screen up one line.
     ;;; Input: None
@@ -248,10 +248,10 @@
     ;; First go back one character and write a space.
     (dec     byte (text-x))
     (mov     dil ascii-space)
-    ,@(call-function 'putchar nil)
+    ,@(call-function 'putchar)
     ;; Go back once more and set cursor.
     (dec     byte (text-x))
-    ,@(call-function 'set-cursor nil)
+    ,@(call-function 'set-cursor)
     .done
     ))
 

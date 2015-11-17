@@ -79,15 +79,15 @@
     ;;; Output: None
     ,@(def-fun 'init-keyboard nil `(
     (mov     dil kbd-encoder-cmd-reset)
-    ,@(call-function 'kbd-encoder-send-cmd nil)
+    ,@(call-function 'kbd-encoder-send-cmd)
     (mov     dil kbd-encoder-cmd-disable-scanning)
-    ,@(call-function 'kbd-encoder-send-cmd nil)
+    ,@(call-function 'kbd-encoder-send-cmd)
     (mov     dil kbd-encoder-cmd-set-scan-code)
-    ,@(call-function 'kbd-encoder-send-cmd nil)
+    ,@(call-function 'kbd-encoder-send-cmd)
     (mov     dil kbd-encoder-cmd-set-scan-code-1)
-    ,@(call-function 'kbd-encoder-send-cmd nil)
+    ,@(call-function 'kbd-encoder-send-cmd)
     (mov     dil kbd-encoder-cmd-enable-scanning)
-    ,@(call-function 'kbd-encoder-send-cmd nil)))
+    ,@(call-function 'kbd-encoder-send-cmd)))
 
     ;;; Send command byte to keyboard controller.
     ;;; Input:
@@ -95,7 +95,7 @@
     ;;; Output: None
     ;;; Modified registers: BL
     ,@(def-fun 'kbd-ctrl-send-cmd nil `(
-    ,@(call-function 'wait-kbd-in-buf nil)
+    ,@(call-function 'wait-kbd-in-buf)
     (mov     al dil)
     (out     kbd-ctrl-cmd-reg al)))
 
@@ -105,7 +105,7 @@
     ;;; Output: None
     ;;; Modified registers: AL
     ,@(def-fun 'kbd-encoder-send-cmd nil `(
-    ,@(call-function 'wait-kbd-in-buf nil)
+    ,@(call-function 'wait-kbd-in-buf)
     (mov     al dil)
     (out     kbd-encoder-cmd-reg al)))
 
@@ -138,7 +138,7 @@
     ;;;   AL: ASCII character (0 indicats a key is released or not handled)
     ;;; Modified registers: ESI
     ,@(def-fun 'getchar nil `(
-    ,@(call-function 'wait-kbd-out-buf nil)
+    ,@(call-function 'wait-kbd-out-buf)
     (xor     eax eax)
     (in      al kbd-encoder-buf)     ; Get key data
     (mov     rsi scan-code-set-1)

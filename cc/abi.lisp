@@ -12,7 +12,7 @@
 
 (in-package :cc)
 
-(defun call-function (function-name saved-registers)
+(defun call-function (function-name &optional saved-registers)
   "Used by the caller. The function adds push and pops around function
 calling automatically. It is assumed that RSP is aligned on 16 byte
 boundary before calling. if the number of `saved-registers` is odd,
