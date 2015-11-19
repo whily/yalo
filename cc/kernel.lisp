@@ -56,6 +56,8 @@
 
     ,@(call-function 'unmap-lower-memory)
 
+    ,@(call-function 'pmm-init)
+
     ,@(call-function 'clear)
 
     (mov     rdi banner)
@@ -109,8 +111,11 @@
 
     (bits 64)
 
-    ;; Include 64 bit paging related functiosn from paging.lisp
+    ;; Include 64 bit paging related functions from paging.lisp
     ,@*paging-64*
+
+    ;; Include 64 bit memory related functions from memory.lisp
+    ,@*memory*
 
     ;; Include content from bga.lisp.
     ;,@*bga*

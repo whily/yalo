@@ -37,11 +37,16 @@
 
     setup-paging
 
-    (equ     pml4-base #x9000)
+    (equ     pml4-base #x10000)
     (equ     page-present-writable (+ 2 1))   ; Flags indicate the page is present and writable.
     (equ     page-present-writable-pde.ps (+ 128 2 1)) ; In addition to above flags, set PDE.PS for 2 MB page.
 
     (equ     kernel-virtual-base #xffffffff80000000) ; Start virtual address for higher half kernel.
+
+    ;; The position to store memory size.
+    (equ     memory-size-physical-addr #x20000)
+    (equ     memory-size-virtual-addr (+ kernel-virtual-base memory-size-physical-addr))
+    (equ     page-frame-bitmap-virtual-addr (+ memory-size-virtual-addr 8)) ; 8 byte to store memory size.
 
     (push    edx)
     (push    ecx)
@@ -49,8 +54,13 @@
     (push    edi)
 
     (call32  get-memory-size)
+    ;; Store the memory size.
+    (mov     ecx memory-size-physical-addr)
+    (mov     (ecx) eax)
+    (mov     (ecx 4) edx)
     ;; TODO. So far we only handle < 4GB memory. As memory size is in
-    ;; EDX:EAX, we ignore the value in EDX for now.
+    ;; EDX:EAX, we ignore the value in EDX for now. Use EDX to store
+    ;; the memory size (< 4 GB).
     (mov     edx eax)
 
     ;; Zero out the 5 * 4 kB buffer.
