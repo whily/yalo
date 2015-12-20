@@ -28,12 +28,13 @@
     ;;; by calling function unmap-lower-memory.
     ;;;
     ;;; Suppose PML4 points to address A (`pml4-base` below), then there are
-    ;;; 5 4 KB memory regions to be processed by this function:
+    ;;; five 4 KB memory regions to be processed by this function (note that we put
+    ;;; identity mapping after kernel mapping as identity mapping will be unmapped):
     ;;;   A          .. A + #x0fff: Page Map Level 4
-    ;;;   A + #x1000 .. A + #x1fff: Page Directory Pointer Table for identity mapping.
-    ;;;   A + #x2000 .. A + #x2fff: Page Directory Table for identity mapping.
-    ;;;   A + #x3000 .. A + #x3fff: Page Directory Pointer Table for higher half mapping.
-    ;;;   A + #x4000 .. A + #x4fff: Page Directory Table for higher half mapping.
+    ;;;   A + #x1000 .. A + #x3fff: Page Directory Pointer Table for higher half mapping.
+    ;;;   A + #x2000 .. A + #x4fff: Page Directory Table for higher half mapping.
+    ;;;   A + #x3000 .. A + #x1fff: Page Directory Pointer Table for identity mapping.
+    ;;;   A + #x4000 .. A + #x2fff: Page Directory Table for identity mapping.
 
     setup-paging
 
@@ -74,26 +75,26 @@
     ;; Build the Page Map Level 4.
     ;; First set entry the identity mapping.
     (mov     eax edi)
-    (add     eax #x1000)              ; Address of the Page Directory Pointer Table for identity mapping.
+    (add     eax #x3000)              ; Address of the Page Directory Pointer Table for identity mapping.
     (or      eax page-present-writable)
     (mov     (edi) eax)
     ;; Secondly set entry for higher half mapping.
-    (add     eax #x2000)              ; Address of the Page Directory Pointer Table for higher half mapping.
+    (sub     eax #x2000)              ; Address of the Page Directory Pointer Table for higher half mapping.
     (mov     ebx 511)                 ; The last entry in the 512 entry table.
     (mov     (ebx*8 edi) eax)
 
     ;; Build the Page Directory Pointer Table for identity mapping.
     (mov     eax edi)
-    (add     eax #x2000)              ; Address of the Page Directory.
+    (add     eax #x4000)              ; Address of the Page Directory.
     (or      eax page-present-writable)
-    (mov     (edi #x1000) eax)
+    (mov     (edi #x3000) eax)
 
     ;; Build the Page Directory Table for identity mapping. Just map 2 MB.
     (mov     eax page-present-writable-pde.ps) ; Effectively point EAX to address #x0.
-    (mov     (edi #x2000) eax)
+    (mov     (edi #x4000) eax)
 
     ;; Build the Page Directory Pointer Table for higher half mapping.
-    (mov     edi (+ pml4-base #x3000))
+    (mov     edi (+ pml4-base #x1000))
     (mov     eax edi)
     (add     eax #x1000)              ; Address of the Page Directory.
     (or      eax page-present-writable)
