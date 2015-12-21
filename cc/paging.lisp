@@ -23,7 +23,9 @@
     ;;; Setup two mappings:
     ;;;   1) Identity mapping for bottom 2 MB physical address.
     ;;;   2) Map ALL available physical memory to higher memory space
-    ;;;      starting from -2GB memory space: #xffffffff80000000
+    ;;;      starting from -2GB memory space below recursive mapping. As
+    ;;;      recursive mapping occupies 512 GB and starts from #xffffff8000000000,
+    ;;;      kernel starts from #xffffff7f80000000.
     ;;; Identity mapping will be removed after entering 64 bit mode
     ;;; by calling function unmap-lower-memory.
     ;;;
@@ -42,7 +44,7 @@
     (equ     page-present-writable (+ 2 1))   ; Flags indicate the page is present and writable.
     (equ     page-present-writable-pde.ps (+ 128 2 1)) ; In addition to above flags, set PDE.PS for 2 MB page.
 
-    (equ     kernel-virtual-base #xffffffff80000000) ; Start virtual address for higher half kernel.
+    (equ     kernel-virtual-base #xffffff7f80000000) ; Start virtual address for higher half kernel.
 
     ;; The position to store memory size.
     (equ     memory-size-physical-addr #x20000)
@@ -80,8 +82,12 @@
     (mov     (edi) eax)
     ;; Secondly set entry for higher half mapping.
     (sub     eax #x2000)              ; Address of the Page Directory Pointer Table for higher half mapping.
-    (mov     ebx 511)                 ; The last entry in the 512 entry table.
+    (mov     ebx 510)
     (mov     (ebx*8 edi) eax)
+    (mov     eax 511)                 ; Now starts recursive mapping.
+    (shl     eax 3)
+    (add     eax edi)
+    (mov     (eax) eax)
 
     ;; Build the Page Directory Pointer Table for identity mapping.
     (mov     eax edi)
