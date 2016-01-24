@@ -41,8 +41,20 @@
     setup-paging
 
     (equ     pml4-base #x10000)
-    (equ     page-present-writable (+ 2 1))   ; Flags indicate the page is present and writable.
-    (equ     page-present-writable-pde.ps (+ 128 2 1)) ; In addition to above flags, set PDE.PS for 2 MB page.
+
+    ;; Page flags.
+    (equ     page-present           (expt 2 0))
+    (equ     page-writable          (expt 2 1))
+    (equ     page-user-accessible   (expt 2 2))
+    (equ     page-write-through     (expt 2 3))
+    (equ     page-cache-disable     (expt 2 4))
+    (equ     page-accessed          (expt 2 5))
+    (equ     page-dirty             (expt 2 6))
+    (equ     page-pde.ps            (expt 2 7))
+    (equ     page-global            (expt 2 8))
+    (equ     page-no-execuite       (expt 2 63))
+    (equ     page-table-flag (+ page-present page-writable))
+    (equ     page-entry-flag (+ page-table-flag page-pde.ps)) ; In addition to above flags, set PDE.PS for 2 MB page.
 
     (equ     kernel-virtual-base #xffffff7f80000000) ; Start virtual address for higher half kernel.
 
@@ -93,7 +105,7 @@
     ;; First set entry the identity mapping.
     (mov     eax edi)
     (add     eax #x3000)              ; Address of the Page Directory Pointer Table for identity mapping.
-    (or      eax page-present-writable)
+    (or      eax page-table-flag)
     (mov     (edi) eax)
     ;; Secondly set entry for higher half mapping.
     (sub     eax #x2000)              ; Address of the Page Directory Pointer Table for higher half mapping.
@@ -107,25 +119,25 @@
     ;; Build the Page Directory Pointer Table for identity mapping.
     (mov     eax edi)
     (add     eax #x4000)              ; Address of the Page Directory.
-    (or      eax page-present-writable)
+    (or      eax page-table-flag)
     (mov     (edi #x3000) eax)
 
     ;; Build the Page Directory Table for identity mapping. Just map 2 MB.
-    (mov     eax page-present-writable-pde.ps) ; Effectively point EAX to address #x0.
+    (mov     eax page-entry-flag) ; Effectively point EAX to address #x0.
     (mov     (edi #x4000) eax)
 
     ;; Build the Page Directory Pointer Table for higher half mapping.
     (mov     edi (+ pml4-base #x1000))
     (mov     eax edi)
     (add     eax #x1000)              ; Address of the Page Directory.
-    (or      eax page-present-writable)
+    (or      eax page-table-flag)
     ;; TODO: we only map maximum 1 GB memory now. So we only handle the 2nd last entry here.
     (mov     ebx 510)                 ; The second last entry in the 512 entry table.
     (mov     (ebx*8 edi) eax)
 
     ;; Build the Page Directory Table for higher half mapping.
     (add     edi #x1000)
-    (mov     eax page-present-writable-pde.ps) ; Effectively point EAX to address #x0.
+    (mov     eax page-entry-flag) ; Effectively point EAX to address #x0.
     .loop-page-directory-table
     (mov     (edi) eax)
     (add     eax #x200000)            ; Increase 2 MB.
