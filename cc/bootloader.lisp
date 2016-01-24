@@ -201,7 +201,7 @@
     (call32    setup-paging)
 
     ;; Enable 64 bit page-translation-table entries by setting
-    ;; CR4.PAE=1. Paging is not enabled until after long mode is
+    ;; CR4.PAE=1. Paging is not enabled until long mode is
     ;; enabled.
     (mov     eax cr4)
     (bts     eax 5)

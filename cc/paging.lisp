@@ -47,7 +47,7 @@
     (equ     kernel-virtual-base #xffffff7f80000000) ; Start virtual address for higher half kernel.
 
     ;; The position to store memory size.
-    (equ     memory-size-physical-addr #x20000)
+    (equ     memory-size-physical-addr #x80000)
     (equ     memory-size-virtual-addr (+ kernel-virtual-base memory-size-physical-addr))
     (equ     page-frame-bitmap-virtual-addr (+ memory-size-virtual-addr 8)) ; 8 byte to store memory size.
 
@@ -56,6 +56,21 @@
     (push    ebx)
     (push    edi)
 
+    ;; Firstly check the size of the kernel. When kernel is firstly loaded
+    ;; (before relocated), the memory map of our code/data below 1 MB is like:
+    ;;   0 - some BIOS stuff - kernel - page tables - memory size data structure - other BIOS stuff
+    ;; If kernel size is too big, following code about page tables will trash
+    ;; the kernel. So the following check is needed; if there is overlapping, pml4-base
+    ;; should be increased.
+    (mov     edx kernel-physical-end)
+    (cmp     edx pml4-base)
+    (jb      .page-continue)
+    ;; If code comes to this branch, increase pml4-base appropriately.
+    .panic
+    (hlt)
+    (jmp     short .panic)
+
+    .page-continue
     (call32  get-memory-size)
     ;; Store the memory size.
     (mov     ecx memory-size-physical-addr)

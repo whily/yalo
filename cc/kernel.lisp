@@ -139,4 +139,10 @@
     ;; Fill up to multiple of sectors, otherwise VirtualBox complains.
     (align 512)
 
-    kernel-virtual-end))
+    kernel-virtual-end
+
+    ;; This is the physical address of the end of the kernel.
+    (equ kernel-physical-end
+         (+ kernel-before-relocation
+            (- kernel-virtual-end kernel-virtual-start)))
+    ))
