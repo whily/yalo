@@ -26,10 +26,16 @@
     ;; the BIOS call, but the value is replaced with end address by this function.
     (equ     mm-end-addr 8)
     (equ     mm-memory-type 16)
-    ;; Number of memory map entries.
-    (equ     mm-count-physical-addr #xd000)
-    ;; Starting address of the memory map entries.
-    (equ     mm-entries-physical-addr (+ mm-count-physical-addr 2))
+    (equ     mm-entries-offset 2)
+    ;; Stores Number of memory map entries. As page tables start at #x10000, following
+    ;; address allow we to store maximum 20 entries.
+    (equ     mm-count-physical-addr #xfe1e)
+    ;; Should be located in paging.lisp. Put it here to allow reference by mm-count-max.
+    (equ     pml4-base #x10000)
+    (equ     mm-count-max (/ (- pml4-base mm-count-physical-addr mm-entries-offset) mm-entry-size))
+    ;; Starting address of the memory map entries. The offset relative to mm-physical-addr is
+    ;;   mm-entries-offset.
+    (equ     mm-entries-physical-addr (+ mm-count-physical-addr mm-entries-offset))
     (push    es)
     (xor     ebx ebx)           ; Set EBX to 0 to start
     (mov     es bx)
@@ -56,7 +62,7 @@
     (mov     edx mm-smap)	; Repair potentially trashed register.
     .jump-in
     (jcxz    .skip-entry)       ; Skip and 0 length entry.
-    (cmp     cl, 20)            ; Got a 24 byte ACPI 3.x response?
+    (cmp     cl 20)            ; Got a 24 byte ACPI 3.x response?
     (jbe     .no-text)
     (es test byte (di 20) 1)    ; Test whether the "ignore this data" bit is clear or not.
     (je      .skip-entry)
@@ -78,6 +84,9 @@
     .skip-entry
     (test    ebx ebx)           ; If EBX is reset to 0, the list is complete.
     (jne     .loop)
+    (cmp     bp mm-count-max)   ; If the actual memory count exceeds the limit,
+                                ; Memory data will be trashed by page tables.
+    (jae     .fail)
     .done
     (mov     (mm-count-physical-addr) bp)
     (clc)                       ; Clear CF (since .done lable is entered after "jc" instruction).
