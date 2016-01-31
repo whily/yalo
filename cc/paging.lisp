@@ -40,8 +40,7 @@
 
     setup-paging
 
-    ;; Below definition is actually in paging.lisp to allow reference by other const.
-    ;; (equ     pml4-base #x10000)
+    (equ     pml4-base #x10000)
 
     ;; Page flags.
     (equ     page-present           (expt 2 0))
@@ -60,7 +59,7 @@
     (equ     kernel-virtual-base #xffffff7f80000000) ; Start virtual address for higher half kernel.
 
     ;; The position to store memory size.
-    (equ     memory-size-physical-addr #x80000)
+    (equ     memory-size-physical-addr (+ mm-entries-physical-addr (* mm-entry-max mm-entry-size)))
     (equ     memory-size-virtual-addr (+ kernel-virtual-base memory-size-physical-addr))
     (equ     page-frame-bitmap-virtual-addr (+ memory-size-virtual-addr 8)) ; 8 byte to store memory size.
 
@@ -71,21 +70,20 @@
 
     ;; Firstly check the size of the kernel. When kernel is firstly loaded
     ;; (before relocated), the memory map of our code/data below 1 MB is like:
-    ;;   0 - some BIOS stuff - kernel
-    ;;     - memory map (starting from mm-count-physical-addr)
+    ;;   0 - some BIOS stuff
+    ;;     - kernel (starting from #x7c00)
     ;;     - page tables (starting from pml4-base)
+    ;;     - FREE
+    ;;     - stack
+    ;;     - memory map (starting from mm-count-physical-addr)
     ;;     - memory size and page frame bitmap (starting from memory-size-physical-addr)
     ;;     - other BIOS stuff
-    ;; If kernel size is too big, code about memory size will trash
+    ;; If kernel size is too big, code about page tables will trash
     ;; the kernel. So the following check is needed.
-    ;; TODO: it is might be better to check in function get-memory-map.
-    ;;       It might be an even better idea to put mm-count-physical-addr
-    ;;       to an higher address e.g. #x70000 etc. But let's adjust that
-    ;;       once we get a bigger kernel.
     ;; TODO: we need to make sure that page tables do not run into the region for
-    ;;       memory size.
+    ;;       stack and memory map.
     (mov     edx kernel-physical-end)
-    (cmp     edx mm-count-physical-addr)
+    (cmp     edx pml4-base)
     (jb      .page-continue)
     ;; If code comes to this branch, increase pml4-base appropriately.
     .panic

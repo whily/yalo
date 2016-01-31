@@ -27,19 +27,25 @@
     (equ     mm-end-addr 8)
     (equ     mm-memory-type 16)
     (equ     mm-entries-offset 2)
-    ;; Stores Number of memory map entries. As page tables start at #x10000, following
-    ;; address allow we to store maximum 20 entries.
-    (equ     mm-count-physical-addr #xfe1e)
-    ;; Should be located in paging.lisp. Put it here to allow reference by mm-count-max.
-    (equ     pml4-base #x10000)
-    (equ     mm-count-max (/ (- pml4-base mm-count-physical-addr mm-entries-offset) mm-entry-size))
-    ;; Starting address of the memory map entries. The offset relative to mm-physical-addr is
-    ;;   mm-entries-offset.
+    ;; Stores Number of memory map entries. This is the linear address.
+    ;; Corresponding semgnet:offset is in mm-count-physical-segment
+    ;; and mm-count-physical-offset
+    (equ     mm-count-physical-addr #x80000)
+    ;; The following is the pair of segment:offset
+    (equ     mm-count-physical-segment (ash mm-count-physical-addr -4))
+    (equ     mm-count-physical-offset (logand mm-count-physical-addr #xffff))
+    ;; Maximum number of entries.
+    (equ     mm-entry-max 20)
+    ;; Starting address of the memory map entries. This is the linear address.
+    ;; Corresponding semgent and offset is mm-count-physical-segment, and
+    ;; mm-entries-physical-offset.
     (equ     mm-entries-physical-addr (+ mm-count-physical-addr mm-entries-offset))
+    (equ     mm-entries-physical-offset (logand mm-entries-physical-addr #xffff))
     (push    es)
+    (mov     ax mm-count-physical-segment)
+    (mov     es ax)
     (xor     ebx ebx)           ; Set EBX to 0 to start
-    (mov     es bx)
-    (mov     di mm-entries-physical-addr)
+    (mov     di mm-entries-physical-offset)
     (xor     bp bp)
     (mov     edx mm-smap)	; Place "SMAP" into edx
     (mov     eax #xe820)
@@ -62,7 +68,7 @@
     (mov     edx mm-smap)	; Repair potentially trashed register.
     .jump-in
     (jcxz    .skip-entry)       ; Skip and 0 length entry.
-    (cmp     cl 20)            ; Got a 24 byte ACPI 3.x response?
+    (cmp     cl 20)             ; Got a 24 byte ACPI 3.x response?
     (jbe     .no-text)
     (es test byte (di 20) 1)    ; Test whether the "ignore this data" bit is clear or not.
     (je      .skip-entry)
@@ -84,11 +90,11 @@
     .skip-entry
     (test    ebx ebx)           ; If EBX is reset to 0, the list is complete.
     (jne     .loop)
-    (cmp     bp mm-count-max)   ; If the actual memory count exceeds the limit,
+    (cmp     bp mm-entry-max)   ; If the actual memory count exceeds the limit,
                                 ; Memory data will be trashed by page tables.
     (jae     .fail)
     .done
-    (mov     (mm-count-physical-addr) bp)
+    (es mov  (mm-count-physical-offset) bp)
     (clc)                       ; Clear CF (since .done lable is entered after "jc" instruction).
     (pop     es)
     (ret)

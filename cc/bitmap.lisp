@@ -43,7 +43,7 @@
     ;;;        This has the benefit that we have sentinel element for bitmap-scan
     ;;;        if the bitmap size is not the multiple of 64 (qword).
     ;;; Input:
-    ;;;     RDI: start-address
+    ;;;     RDI: start-address, there is no requirement that it should be qword aligned.
     ;;;     RSI: size in bits
     ,@(def-fun 'bitmap-init nil `(
     (mov     (rdi) rsi)
