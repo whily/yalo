@@ -41,6 +41,7 @@
     setup-paging
 
     (equ     pml4-base #x10000)
+    (equ     page-table-size 4096)  ; Number of bytes occupied by a page table.
 
     ;; Page flags.
     (equ     page-present           (expt 2 0))
@@ -61,8 +62,13 @@
     ;; The position to store memory size.
     (equ     memory-size-physical-addr (+ mm-entries-physical-addr (* mm-entry-max mm-entry-size)))
     (equ     memory-size-virtual-addr (+ kernel-virtual-base memory-size-physical-addr))
-    (equ     page-frame-bitmap-virtual-addr (+ memory-size-virtual-addr 8)) ; 8 byte to store memory size.
-
+    ;; Maximum number of page tables.
+    (equ     page-table-end-next #x70000)
+    (equ     page-table-max (/ (- page-table-end-next pml4-base) page-table-size))
+    (equ     page-table-bitmap-virtual-addr (+ memory-size-virtual-addr 8)) ; 8 byte to store memory size.
+    ;; In the calculation below, first 8 for bitmap-offset, second 8 because 1 bytes contains 8 bits.
+    (equ     page-frame-bitmap-virtual-addr
+             (+ page-table-bitmap-virtual-addr 8 (ceiling page-table-max 8)))
     (push    edx)
     (push    ecx)
     (push    ebx)
@@ -76,7 +82,8 @@
     ;;     - FREE
     ;;     - stack
     ;;     - memory map (starting from mm-count-physical-addr)
-    ;;     - memory size and page frame bitmap (starting from memory-size-physical-addr)
+    ;;     - memory size (starting from memory-size-physical-addr), page table bitmap
+    ;;       and page frame bitmap
     ;;     - other BIOS stuff
     ;; If kernel size is too big, code about page tables will trash
     ;; the kernel. So the following check is needed.

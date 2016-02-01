@@ -175,6 +175,21 @@
     ;;;       If the end address of the page frame >= the starting address of the memory entry:
     ;;;         Mark the page frame as used (set the bit to 1).
     ,@(def-fun 'pmm-init nil `(
+    ;; First initialize page-table-bitmap.
+    (mov     rdi page-table-bitmap-virtual-addr)
+    (mov     rsi page-table-max)
+    (push    rdi)
+    ,@(call-function 'bitmap-init)
+    (pop     rdi)
+    ;; The first three page tables are already used. Note that identity mapping tables
+    ;; are available for reuse.
+    (xor     esi esi)
+    ,@(call-function 'bitmap-set)
+    (mov     esi 1)
+    ,@(call-function 'bitmap-set)
+    (mov     esi 2)
+    ,@(call-function 'bitmap-set)
+    ;; Now initialize page-frame-bitmap.
     (mov     rsi (memory-size-virtual-addr))
     (mov     eax 1)
     (shl     eax page-size-shift)
