@@ -112,7 +112,7 @@
     (bits 64)
 
     ;; Include 64 bit paging related functions from paging.lisp
-    ,@*paging-64*
+    ,@*paging*
 
     ;; Include 64 bit memory related functions from memory.lisp
     ,@*memory*

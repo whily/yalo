@@ -167,11 +167,31 @@
 
     (ret)))
 
-(defparameter *paging-64*
+(defparameter *paging*
   `(
     ;;; Remove identity mapping of bottom 2 MB.
     ,@(def-fun 'unmap-lower-memory nil `(
     (mov     rdi pml4-base)
     (mov     qword (rdi) 0)
-    (invlpg  (abs 0))
-    ))))
+    (invlpg  (abs 0))))
+
+    ;; Mask to get bits 12-51 from page table entry for the physical address of the frame.
+    (equ     page-frame-mask #x000ffffffffff000)
+
+    ;;; Function pointed-frame. Returns page frame address (physical).
+    ;;; Input:
+    ;;;     RDI: page table entry address (virtual)
+    ;;; Output:
+    ;;;     RAX: page frame address. 0 if page table entry is invalid
+    ;;;          (e.g. not present)
+    ,@(def-fun'pointed-frame nil `(
+    (mov     rax (rdi))
+    (test    eax page-present)
+    (je      .not-present)
+    (mov     rsi page-frame-mask)
+    (and     rax rsi)
+    (jmp     short .done)
+    .not-present
+    (xor     eax eax)
+    .done))
+    ))
