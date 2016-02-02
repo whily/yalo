@@ -129,7 +129,7 @@ and select "Add Floppy Controller". And the select the image file
 `floppy.img` for floppy drive. In the **System** page of virtual
 machine settings, make sure that Floppy is checked for Boot order.
 
-Assuming the VM name is `yalo`, go to the root directory of the source
+Go to the root directory of the source
 code, where script `run-virtualbox` and `debug-virtualbox` are
 located. Run script `run-virtualbox` to start the emulator, or script
 `debug-virtualbox` to start the emulator with debug window.
