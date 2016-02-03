@@ -186,6 +186,11 @@
         neg     rcx
         not     qword [rbx]
         sbb     rbx, rdx
+        test    rax, 123456789
+        test    r12, 11223344
+        test    qword [rdi], 9966
+        test    rdx, rdi
+        test    qword [rdx], r9
 
 msg:
         db      "Hello World! "

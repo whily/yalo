@@ -12,14 +12,19 @@ x86-64 Instruction Set T
 
 ### test: Logical Compare
 
-| Instruction      | Opcode   |
-| ---------------- | -------- |
-| test al imm8     | A8 ib    |
-| test ax imm16    | A9 iw    |
-| test r/m8 imm8   | F6 /0 ib |
-| test r/m16 imm16 | F7 /0 iw |
-| test r/m8 r8     | 84 /r    |
-| test r/m16 r16   | 85 /r    |
+| Instruction      | Opcode         |
+| ---------------- | -------------- |
+| test al imm8     | A8 ib          |
+| test ax imm16    | A9 iw          |
+| test rax imm32   | REX.W A9 id    |
+| test r/m8 imm8   | F6 /0 ib       |
+| test r/m16 imm16 | F7 /0 iw       |
+| test r/m32 imm32 | F7 /0 id       |
+| test r/m64 imm32 | REX.W F7 /0 id |
+| test r/m8 r8     | 84 /r          |
+| test r/m16 r16   | 85 /r          |
+| test r/m32 r32   | 85 /r          |
+| test r/m64 r64   | REX.W85 /r     |
 
 After ANDing the two operands, flags SF, ZF, and PF are set according
 to the result. The destination operand is *not* modified.
