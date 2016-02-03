@@ -194,4 +194,28 @@
     .not-present
     (xor     eax eax)
     .done))
+
+    ;;; Function page-directory-entry-set. Return a page directory entry (PDE) given
+    ;;;   the physical frame base address and flags
+    ;;; Input:
+    ;;;     RDI: page frame base address (should be aligned at 2 MB boundary) and
+    ;;;          smaller than 2^52 (due to x86-64 architecture limitation)
+    ;;;     RSI: page flags
+    ;;; Output:
+    ;;;     RAX: the page directory entry (PDE).
+    ;;; Technical details for 2 MB PDE can be found in section 5.3.4
+    ;;; (2-Mbyte Page Translation) of [1], especially Figure 5-25. "2-Mbyte PDE - Long Mode"
+    ,@(def-fun 'page-directory-entry-set nil `(
+    (equ     pde-physical-base-address-mask #xfff00000001fffff)
+    (mov     rdx pde-physical-base-address-mask)
+    (test    rdi rdx)
+    (jne     .panic)
+    (or      rdi rsi)
+    (mov     rax rdi)
+    (jmp     short .done)
+    .invalid-physical-base-address
+    .panic
+    (hlt)
+    (jmp     short .panic)
+    .done))
     ))
