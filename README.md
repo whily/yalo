@@ -136,12 +136,12 @@ located. Run script `run-virtualbox` to start the emulator, or script
 
 ## Software version
 
-So far, the development is done on OS X Yosemite. For above-mentioned
+So far, the development is done on Ubuntu 16.10. For above-mentioned
 software, the corresponding version is listed below:
 
-* SBCL: 1.2.12
+* SBCL: 1.3.3
 * Emacs: 24.5.1
-* SLIME: 2015-08-24
-* Bochs: 2.6.8
-* QEMU: 2.4.0
-* VirtualBox: 5.0.4
+* SLIME: 2.18
+* Bochs: 2.6 (not working yet)
+* QEMU: 2.6.1
+* VirtualBox: 5.1.6 (some issues)
