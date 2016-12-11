@@ -108,6 +108,9 @@ for `run-bochs`; while for `debug-bochs`, emulator pauses before BIOS,
 and one needs to type `c` in the debugger window to continue the
 emulation.
 
+Note that on Ubuntu (at least in 16.10), package `bochs-x` should be
+installed in addition to package `bochs`.
+
 ### QEMU
 
 Similar to Bochs, go to the root directory of the source code, where
@@ -142,6 +145,6 @@ software, the corresponding version is listed below:
 * SBCL: 1.3.3
 * Emacs: 24.5.1
 * SLIME: 2.18
-* Bochs: 2.6 (not working yet)
+* Bochs: 2.6 (some issues)
 * QEMU: 2.6.1
 * VirtualBox: 5.1.6 (some issues)
