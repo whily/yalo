@@ -75,16 +75,13 @@ When using SBCL alone, type the following at REPL:
 * (require 'asdf)
 * (asdf:oos 'asdf:load-op 'cc)
 * (in-package :cc)
-* (write-kernel "floppy.img")
+* (write-kernel "../floppy.img")
 ```
+
+Note that `floppy.img` is written directly to the source tree, where
+scripts to run the image (e.g. `run-bochs`) are located.
 
 One may type `Ctrl-d` to exit from SBCL.
-
-Then type the following in terminal:
-
-``` shell
-mv floppy.img ..
-```
 
 ##### With Emacs+SLIME
 
