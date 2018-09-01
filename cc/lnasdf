@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Create symbolic link of CC system for ASDF. 
+mkdir -p ~/common-lisp
+ln -fs `pwd`\/cc.asd ~/common-lisp/cc.asd
