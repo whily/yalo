@@ -62,7 +62,7 @@ cross compiler.
 
 ```shell
 $ cd yalo/cc
-$ ./lnasdf
+$ ./lnasdf-sbcl
 ```
 
 #### Build Floppy Image
@@ -79,6 +79,12 @@ When using SBCL alone, type the following at REPL:
 ```
 
 One may type `Ctrl-d` to exit from SBCL.
+
+Then type the following in terminal:
+
+``` shell
+mv floppy.img ..
+```
 
 ##### With Emacs+SLIME
 
@@ -139,12 +145,12 @@ located. Run script `run-virtualbox` to start the emulator, or script
 
 ## Software version
 
-So far, the development is done on Ubuntu 16.10. For above-mentioned
+So far, the development is done on Arch Linux. For above-mentioned
 software, the corresponding version is listed below:
 
-* SBCL: 1.3.3
-* Emacs: 24.5.1
-* SLIME: 2.18
-* Bochs: 2.6 (some issues)
-* QEMU: 2.6.1
-* VirtualBox: 5.1.6 (some issues)
+* SBCL: 1.4.10
+* Emacs: 26.1
+* SLIME: 2.22
+* Bochs: 2.6.9
+* QEMU: 3.0.0
+* VirtualBox: 5.2.18
