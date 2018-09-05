@@ -35,11 +35,10 @@ containing yalo.
 ### [Cross compilation](https://github.com/whily/yalo/blob/master/doc/CrossCompilation.md)
 
 Although yalo should compile on any Ansi Common Lisp implementation,
-it is only tested on SBCL. Therefore the following discussion is
-focused on how to build yalo from SBCL.
+it is only tested on SBCL and Clozure CL (aka CCL).
 
 Mandatory Requirements:
-* [SBCL](http://sbcl.sourceforge.net SBCL)
+* [SBCL](http://sbcl.sourceforge.net SBCL) or [CCL](https://ccl.clozure.com/)
 * git
 
 Optional Requirements:
@@ -57,31 +56,34 @@ $ git clone https://github.com/whily/yalo.git
 
 #### Setup link for ASDF
 
-Run following commands to make SBCL aware of the ASDF file for the
-cross compiler.
+Run following commands to make SBCL/CCL aware of the ASDF file for the
+cross compiler. Note that one only needs to run the script once.
 
 ```shell
 $ cd yalo/cc
-$ ./lnasdf-sbcl
+$ ./lnasdf
 ```
 
 #### Build Floppy Image
 
-##### With SBCL alone
+##### With SBCL or CCL alone
 
-When using SBCL alone, type the following at REPL:
+For SBCL, in the root directory of the project (e.g. directory
+`yalo`), run script `write-kernel-sbcl`. Afterwards,`floppy.img` is
+written directly to the same directory, where scripts to run the image
+(e.g. `run-bochs`) are located.
+
+For CCL, in the root directory of the project, type the following at
+REPL to generate `floppy.img`:
 
 ```lisp
-* (require 'asdf)
-* (asdf:oos 'asdf:load-op 'cc)
-* (in-package :cc)
-* (write-kernel "../floppy.img")
+(require 'asdf)
+(asdf:oos 'asdf:load-op 'cc)
+(in-package :cc)
+(write-kernel "../floppy.img")
 ```
 
-Note that `floppy.img` is written directly to the source tree, where
-scripts to run the image (e.g. `run-bochs`) are located.
-
-One may type `Ctrl-d` to exit from SBCL.
+One may type `(ccl:quit)` to exit from CCL.
 
 ##### With Emacs+SLIME
 
@@ -96,6 +98,9 @@ Inside Emacs,
    Here we assume that current directory is `cc` of the source tree, therefore
    `floppy.img` is written directly to the source tree, where scripts to run the
    image (e.g. `run-bochs`) are located.
+
+Above is applicable for both SBCL and CCL, assuming SLIME is
+configured properly for the CL implementation(s).
 
 ## Run Image
 
@@ -145,7 +150,7 @@ located. Run script `run-virtualbox` to start the emulator, or script
 So far, the development is done on Arch Linux. For above-mentioned
 software, the corresponding version is listed below:
 
-* SBCL: 1.4.10
+* SBCL: 1.4.10 or CCL 1.12
 * Emacs: 26.1
 * SLIME: 2.22
 * Bochs: 2.6.9

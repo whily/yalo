@@ -1,0 +1,6 @@
+#!/usr/bin/sbcl --script
+
+(require 'asdf)
+(asdf:oos 'asdf:load-op 'cc)
+(in-package :cc)
+(write-kernel "floppy.img")
