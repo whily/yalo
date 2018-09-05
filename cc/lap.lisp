@@ -147,6 +147,7 @@
                        (and (> (length y) 1)
                             (eq (car x) (car y))
                             (or (and (member (elt x 1) '(al ax eax rax))
+                                     (> (length x) 2)
                                      (numberp (elt x 2))
                                      (eq (second x) (second y)))
                                 (and (eq (car x) 'xchg)
