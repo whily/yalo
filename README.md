@@ -71,7 +71,9 @@ $ ./lnasdf
 For SBCL, in the root directory of the project (e.g. directory
 `yalo`), run script `write-kernel-sbcl`. Afterwards,`floppy.img` is
 written directly to the same directory, where scripts to run the image
-(e.g. `run-bochs`) are located.
+(e.g. `run-bochs`) are located. It should be noted that it is assumed
+that `sbcl` executable is installed in directory `/usr/bin`. Otherwise
+modify script `write-kernel-sbcl` accordingly.
 
 For CCL, in the root directory of the project, type the following at
 REPL to generate `floppy.img`:
