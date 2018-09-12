@@ -3,12 +3,21 @@
 ;;;;     Yujian Zhang <yujian.zhang@gmail.com>
 ;;;; Description:
 ;;;;     x86-64 calling convention based on System V AMD64 ABI.
+;;;;
+;;;;     Summary in
+;;;;     https://en.wikipedia.org/wiki/X86_calling_conventions#System_V_AMD64_ABI
+;;;;     Basically, the first 6 integer or pointer arguments are
+;;;;     passed in RDI, RSI, RDX, RCX, R8, and R9. If callees wants to
+;;;;     use RBX, RBP, and R12-R15, it must restore their original
+;;;;     values before returning control to the caller. All other
+;;;;     registers must be saved by the caller if it wishes to preserve their values.
+;;;;
 ;;;; References:
-;;;;     [1] http://www.x86-64.org/documentation/abi.pdf
+;;;;     [1] https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-1.0.pdf
 ;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
-;;;; Copyright (C) 2015 Yujian Zhang
+;;;; Copyright (C) 2015-2018 Yujian Zhang
 
 (in-package :cc)
 
@@ -31,7 +40,7 @@ boundaring before calling the function."
      of (rbx rsp rbp r12 r13 r14 r15). TODO: automatically detect
      which registers to save.
 
-   This function automatically detec whether the function is a leaf
+   This function automatically detect whether the function is a leaf
    function (which does not call other functions) or not. For a
    non-leaf function, stack frames are saved via rbp; while such
    additional operation is not done for leaf functions.
