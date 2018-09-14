@@ -152,6 +152,8 @@ start:
         popfq
         sal     ebx, 1
         sar     edx, cl
+        seta    ah
+        setz    byte [msg]
         shl     r10, 6
         shr     qword [msg], 8
         rep     stosq

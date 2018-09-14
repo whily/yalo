@@ -35,6 +35,14 @@ The opcodes are /4, /7, /4, 5 for sal, sar, shl, shr, respectively.
 
 Note that sal and shl perform the same operation.
 
+### setcc: Set Byte on Condition
+
+| Instruction       | Opcode                |
+| ----------------- | --------------------- |
+| setcc r/m8        | 0F (+ 90 cc) /0       |
+
+Please refer [x86-64 conditional codes](AssemblyX64.md#conditional-codes) for details.
+
 ### stc: Set Carry Flag
 
 | Instruction | Opcode |

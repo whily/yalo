@@ -6,7 +6,7 @@
 ;;;; License:
 ;;;;     GNU General Public License v2
 ;;;;     http://www.gnu.org/licenses/gpl-2.0.html
-;;;; Copyright (C) 2015 Yujian Zhang
+;;;; Copyright (C) 2015-2018 Yujian Zhang
 
 (in-package :cc)
 
@@ -65,6 +65,9 @@
     (jmp     short read-start)
     banner   (db "Start your journey on yalo v0.0.1!" 0)
 
+    ;; So far this function is not called. Actually calling it
+    ;; resulting in some issues
+    ;; TODO
     ,@(call-function 'init-keyboard)
 
     ;;; REPL: read
@@ -118,7 +121,7 @@
     ,@*memory*
 
     ;; Include content from bga.lisp.
-    ;,@*bga*
+    ;;,@*bga*
 
     ;; Include content from vga-text.lisp.
     ,@*vga-text*

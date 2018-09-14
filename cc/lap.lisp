@@ -176,6 +176,9 @@
      ((cc-instruction? e 'j)    ; Jcc.
       (declare (ignore it))
       (cc-encode e 'j cursor bits addressing))
+     ((cc-instruction? e 'set) ; SETcc.
+      (declare (ignore it))
+      (cc-encode e 'set cursor bits addressing))
      (t
       (declare (ignore it))
       (case (car e)

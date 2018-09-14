@@ -345,6 +345,8 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((popfq)                                 . (#x9d))
     ((push   r64)                            . ((+ #x50 r)))
     ((pushfq)                                . (#x9c))
+    ((setcc (r/m8 r8))                       . (#x0f (+ #x90 cc) /0))
+    ((setcc byte m)                          . (#x0f (+ #x90 cc) /0))
     ,@(shift-syntax 'sal t)
     ,@(shift-syntax 'sar t)
     ,@(shift-syntax 'shl t)
