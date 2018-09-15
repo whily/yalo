@@ -170,10 +170,11 @@
 (defparameter *paging*
   `(
     ;;; Remove identity mapping of bottom 2 MB.
-    ,@(def-fun 'unmap-lower-memory nil `(
-    (mov     rdi pml4-base)
-    (mov     qword (rdi) 0)
-    (invlpg  (abs 0))))
+    ,@(def-fun 'unmap-lower-memory nil
+        `(
+          (mov     rdi pml4-base)
+          (mov     qword (rdi) 0)
+          (invlpg  (abs 0))))
 
     ;; Mask to get bits 12-51 from page table entry for the physical address of the frame.
     (equ     page-frame-mask #x000ffffffffff000)
@@ -184,16 +185,17 @@
     ;;; Output:
     ;;;     RAX: page frame address. 0 if page table entry is invalid
     ;;;          (e.g. not present)
-    ,@(def-fun'pointed-frame nil `(
-    (mov     rax (rdi))
-    (test    eax page-present)
-    (je      .not-present)
-    (mov     rsi page-frame-mask)
-    (and     rax rsi)
-    (jmp     short .done)
-    .not-present
-    (xor     eax eax)
-    .done))
+    ,@(def-fun'pointed-frame nil
+          `(
+            (mov     rax (rdi))
+            (test    eax page-present)
+            (je      .not-present)
+            (mov     rsi page-frame-mask)
+            (and     rax rsi)
+            (jmp     short .done)
+            .not-present
+            (xor     eax eax)
+            .done))
 
     ;;; Function page-directory-entry-set. Return a page directory entry (PDE) given
     ;;;   the physical frame base address and flags
@@ -205,17 +207,18 @@
     ;;;     RAX: the page directory entry (PDE).
     ;;; Technical details for 2 MB PDE can be found in section 5.3.4
     ;;; (2-Mbyte Page Translation) of [1], especially Figure 5-25. "2-Mbyte PDE - Long Mode"
-    ,@(def-fun 'page-directory-entry-set nil `(
-    (equ     pde-physical-base-address-mask #xfff00000001fffff)
-    (mov     rdx pde-physical-base-address-mask)
-    (test    rdi rdx)
-    (jne     .panic)
-    (or      rdi rsi)
-    (mov     rax rdi)
-    (jmp     short .done)
-    .invalid-physical-base-address
-    .panic
-    (hlt)
-    (jmp     short .panic)
-    .done))
+    ,@(def-fun 'page-directory-entry-set nil
+        `(
+          (equ     pde-physical-base-address-mask #xfff00000001fffff)
+          (mov     rdx pde-physical-base-address-mask)
+          (test    rdi rdx)
+          (jne     .panic)
+          (or      rdi rsi)
+          (mov     rax rdi)
+          (jmp     short .done)
+          .invalid-physical-base-address
+          .panic
+          (hlt)
+          (jmp     short .panic)
+          .done))
     ))
