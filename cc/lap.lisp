@@ -818,7 +818,7 @@ encoding ModR/M byte."
 
 (defun cc->int (cc)
   "Returns the integer representing conditional codes (cc) used by
-cmovcc and jcc. Returns -1 if cc is not a valid value."
+cmovcc, jcc, and setcc. Returns -1 if cc is not a valid value."
   (case cc
     (o          0)  (no         1)  ((b c nae)  2)  ((ae nb nc) 3)
     ((e z)      4)  ((ne nz)    5)  ((be na)    6)  ((a nbe)    7)

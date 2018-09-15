@@ -7,10 +7,12 @@
 ;;;;     Summary in
 ;;;;     https://en.wikipedia.org/wiki/X86_calling_conventions#System_V_AMD64_ABI
 ;;;;     Basically, the first 6 integer or pointer arguments are
-;;;;     passed in RDI, RSI, RDX, RCX, R8, and R9. If callees wants to
-;;;;     use RBX, RBP, and R12-R15, it must restore their original
-;;;;     values before returning control to the caller. All other
-;;;;     registers must be saved by the caller if it wishes to preserve their values.
+;;;;     passed in RDI, RSI, RDX, RCX, R8, and R9, and rest are pushed
+;;;;     on stack. Return values are stored in RAX, and RDX if needed.
+;;;;     If callees wants to use RBX, RBP, and R12-R15, it must
+;;;;     restore their original values before returning control to the
+;;;;     caller. All other registers must be saved by the caller if it
+;;;;     wishes to preserve their values.
 ;;;;
 ;;;; References:
 ;;;;     [1] https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-1.0.pdf
