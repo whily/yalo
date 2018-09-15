@@ -93,57 +93,62 @@
     ;;; Initialize keyboard by set scan code set 1.
     ;;; Input: None
     ;;; Output: None
-    ,@(def-fun 'init-keyboard nil `(
-    (mov     dil kbd-encoder-cmd-reset)
-    ,@(call-function 'kbd-encoder-send-cmd)
-    (mov     dil kbd-encoder-cmd-disable-scanning)
-    ,@(call-function 'kbd-encoder-send-cmd)
-    (mov     dil kbd-encoder-cmd-set-scan-code)
-    ,@(call-function 'kbd-encoder-send-cmd)
-    (mov     dil kbd-encoder-cmd-set-scan-code-1)
-    ,@(call-function 'kbd-encoder-send-cmd)
-    (mov     dil kbd-encoder-cmd-enable-scanning)
-    ,@(call-function 'kbd-encoder-send-cmd)))
+    ,@(def-fun 'init-keyboard nil
+        `(
+          (mov     dil kbd-encoder-cmd-reset)
+          ,@(call-function 'kbd-encoder-send-cmd)
+          (mov     dil kbd-encoder-cmd-disable-scanning)
+          ,@(call-function 'kbd-encoder-send-cmd)
+          (mov     dil kbd-encoder-cmd-set-scan-code)
+          ,@(call-function 'kbd-encoder-send-cmd)
+          (mov     dil kbd-encoder-cmd-set-scan-code-1)
+          ,@(call-function 'kbd-encoder-send-cmd)
+          (mov     dil kbd-encoder-cmd-enable-scanning)
+          ,@(call-function 'kbd-encoder-send-cmd)))
 
     ;;; Send command byte to keyboard controller.
     ;;; Input:
     ;;;   AL: command byte
     ;;; Output: None
     ;;; Modified registers: BL
-    ,@(def-fun 'kbd-ctrl-send-cmd nil `(
-    ,@(call-function 'wait-kbd-in-buf)
-    (mov     al dil)
-    (out     kbd-ctrl-cmd-reg al)))
+    ,@(def-fun 'kbd-ctrl-send-cmd nil
+        `(
+          ,@(call-function 'wait-kbd-in-buf)
+          (mov     al dil)
+          (out     kbd-ctrl-cmd-reg al)))
 
     ;;; Send command byte to keyboard encoder.
     ;;; Input:
     ;;;   DIL: command byte
     ;;; Output: None
     ;;; Modified registers: AL
-    ,@(def-fun 'kbd-encoder-send-cmd nil `(
-    ,@(call-function 'wait-kbd-in-buf)
-    (mov     al dil)
-    (out     kbd-encoder-cmd-reg al)))
+    ,@(def-fun 'kbd-encoder-send-cmd nil
+        `(
+          ,@(call-function 'wait-kbd-in-buf)
+          (mov     al dil)
+          (out     kbd-encoder-cmd-reg al)))
 
     ;;; Wait until the keyboard controller input buffer empty,
     ;;; therefore command can be written
     ;;; Input: None
     ;;; Output: None
     ;;; Modified registers: AL
-    ,@(def-fun 'wait-kbd-in-buf nil `(
-    (in      al kbd-ctrl-status-reg) ; Get status
-    (test    al kbd-ctrl-status-mask-in-buf)
-    (jnz     wait-kbd-in-buf)))
+    ,@(def-fun 'wait-kbd-in-buf nil
+        `(
+          (in      al kbd-ctrl-status-reg) ; Get status
+          (test    al kbd-ctrl-status-mask-in-buf)
+          (jnz     wait-kbd-in-buf)))
 
     ;;; Wait until the keyboard controller output buffer ready for
     ;;; reading.
     ;;; Input: None
     ;;; Output: None
     ;;; Modified registers: AL
-    ,@(def-fun 'wait-kbd-out-buf nil `(
-    (in      al kbd-ctrl-status-reg) ; Get status
-    (test    al kbd-ctrl-status-mask-out-buf)
-    (jz      wait-kbd-out-buf)))
+    ,@(def-fun 'wait-kbd-out-buf nil
+        `(
+          (in      al kbd-ctrl-status-reg) ; Get status
+          (test    al kbd-ctrl-status-mask-out-buf)
+          (jz      wait-kbd-out-buf)))
 
     ;;; Function getchar. Get keystroke from keyboard without echo. If
     ;;; keystroke is available, it is removed from keyboard buffer.
@@ -153,58 +158,59 @@
     ;;; Output:
     ;;;   AL: ASCII character (0 indicats a key is released or not handled)
     ;;; Modified registers: RSI, RDX
-    ,@(def-fun 'getchar nil `(
-    ,@(call-function 'wait-kbd-out-buf)
-    (xor     eax eax)
-    ;; Use DL to store whether key is released or pressed.
-    ;;   Zero: key is pressed; otherwise released.
-    (xor     edx edx)
-    (in      al kbd-encoder-buf)     ; Get key data
-    (mov     dl al)
-    ;; After following instruction, DL stores whether key is released (#x80)
-    ;; or pressed (#x0).
-    (and     dl kbd-key-released-mask)
-    (and     al kbd-scancode-mask)
-    ;; Now highest bit of AL is 0, and we can index into scan code set table.
-    (mov     rsi scan-code-set-1)
-    (add     rsi rax)
-    (lodsb)
-    (cmp     al kbd-left-shift)
-    ;; kbd-left-shift is the first code for key and toggle states.
-    (jb      .translate)
-    (jnz     .check-right-shift)
-    (test    dl dl)
-    (setz    (kbd-left-shift-status))
-    (jmp     short .set-shift-status)
-    .check-right-shift
-    (cmp     al kbd-right-shift)
-    (jnz     .clear-key)
-    (test    dl dl)
-    (setz    (kbd-right-shift-status))
-    .set-shift-status
-    ;; Use DH to store the overall Shift status.
-    ;; TODO reorganize the shift status checking code carefully.
-    (mov     dh (kbd-left-shift-status))
-    (or      dh (kbd-right-shift-status))
-    (mov     (kbd-shift-status) dh)
-    (jmp     short .clear-key)
-    .translate
-    (mov     dh (kbd-shift-status))
-    (test    dh dh)
-    (jz      .test-key-release)
-    ;; Shift has been pressed
-    (mov     rsi lower-to-upper-table)
-    (add     rsi rax)
-    (lodsb)
-    .test-key-release
-    (test    dl dl)
-    (jnz     .done)
-    .clear-key
-    ;; Set AL to 0 if highest bit of DL is 1 as we don't handle key release for now.
-    ;; Also set AL to 0 if keys for states and toggles are pressed/released.
-    (xor     eax eax)
-    .done
-    ))
+    ,@(def-fun 'getchar nil
+        `(
+          ,@(call-function 'wait-kbd-out-buf)
+          (xor     eax eax)
+          ;; Use DL to store whether key is released or pressed.
+          ;;   Zero: key is pressed; otherwise released.
+          (xor     edx edx)
+          (in      al kbd-encoder-buf)     ; Get key data
+          (mov     dl al)
+          ;; After following instruction, DL stores whether key is released (#x80)
+          ;; or pressed (#x0).
+          (and     dl kbd-key-released-mask)
+          (and     al kbd-scancode-mask)
+          ;; Now highest bit of AL is 0, and we can index into scan code set table.
+          (mov     rsi scan-code-set-1)
+          (add     rsi rax)
+          (lodsb)
+          (cmp     al kbd-left-shift)
+          ;; kbd-left-shift is the first code for key and toggle states.
+          (jb      .translate)
+          (jnz     .check-right-shift)
+          (test    dl dl)
+          (setz    (kbd-left-shift-status))
+          (jmp     short .set-shift-status)
+          .check-right-shift
+          (cmp     al kbd-right-shift)
+          (jnz     .clear-key)
+          (test    dl dl)
+          (setz    (kbd-right-shift-status))
+          .set-shift-status
+          ;; Use DH to store the overall Shift status.
+          ;; TODO reorganize the shift status checking code carefully.
+          (mov     dh (kbd-left-shift-status))
+          (or      dh (kbd-right-shift-status))
+          (mov     (kbd-shift-status) dh)
+          (jmp     short .clear-key)
+          .translate
+          (mov     dh (kbd-shift-status))
+          (test    dh dh)
+          (jz      .test-key-release)
+          ;; Shift has been pressed
+          (mov     rsi lower-to-upper-table)
+          (add     rsi rax)
+          (lodsb)
+          .test-key-release
+          (test    dl dl)
+          (jnz     .done)
+          .clear-key
+          ;; Set AL to 0 if highest bit of DL is 1 as we don't handle key release for now.
+          ;; Also set AL to 0 if keys for states and toggles are pressed/released.
+          (xor     eax eax)
+          .done
+          ))
 
     ;; Left Shift status: 0: released; 1: pressed
     kbd-left-shift-status (db 0)
@@ -242,4 +248,4 @@
         0 0 0 0 0 0 0 0 0 0 0 123 124 125 0 0
         126 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79
         80 81 82 83 84 85 86 87 88 89 90 0 0 0 0 0)
-))
+    ))
