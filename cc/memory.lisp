@@ -174,102 +174,105 @@
     ;;;     For every page frame whose starting address <= end address of the memory entry:
     ;;;       If the end address of the page frame >= the starting address of the memory entry:
     ;;;         Mark the page frame as used (set the bit to 1).
-    ,@(def-fun 'pmm-init nil `(
-    ;; First initialize page-table-bitmap.
-    (mov     rdi page-table-bitmap-virtual-addr)
-    (mov     rsi page-table-max)
-    (push    rdi)
-    ,@(call-function 'bitmap-init)
-    (pop     rdi)
-    ;; The first three page tables are already used. Note that identity mapping tables
-    ;; are available for reuse.
-    (xor     esi esi)
-    ,@(call-function 'bitmap-set)
-    (mov     esi 1)
-    ,@(call-function 'bitmap-set)
-    (mov     esi 2)
-    ,@(call-function 'bitmap-set)
-    ;; Now initialize page-frame-bitmap.
-    (mov     rsi (memory-size-virtual-addr))
-    (mov     eax 1)
-    (shl     eax page-size-shift)
-    (dec     eax)
-    (add     rsi rax)
-    (shr     rsi page-size-shift)       ; Get ceil(memory-size / (2 ^ page-size-shift))
-    (mov     rdi page-frame-bitmap-virtual-addr)
-    (push    rdi)
-    ,@(call-function 'bitmap-init)
-    (pop     rdi)
-    ;; Now loop throught every unusable memory entry.
-    (movzx   ecx word (mm-count-virtual-addr))     ; Number of entries to process
-    (mov     rax mm-entries-virtual-addr) ; Use RAX to loop throught memory map entry.
-    .memory-entry
-    (mov     edx (rax mm-memory-type))
-    (cmp     edx memory-usable)       ; TODO: consider ACPI reclaimable?
-    (je      .skip-entry)
-    (mov     r8 (rax mm-start-addr))
-    (mov     r9 (rax mm-end-addr))
-    (xor     r10d r10d)               ; The index to the page frames.
-    .page-frame
-    (mov     r11 r10)
-    (shl     r11 page-size-shift)     ; Starting address of the page frame.
-    (cmp     r11 r9)
-    ;; Skip the current and remaining page frames, as the memory entry cannot
-    ;; overlap with them.
-    (ja      .skip-entry)
-    (mov     r11 r10)
-    (inc     r11)
-    (shl     r11 page-size-shift)     ; End address of the page frame.
-    (cmp     r11 r8)
-    (jb      .next-page-frame)
-    ;; Now the unusable memory entry overlaps with the page frame, so
-    ;; we set it to used (bit is 1).
-    (push    rsi)
-    (push    rdx)
-    (mov     rsi r10)
-    ,@(call-function 'bitmap-set)
-    (pop     rdx)
-    (pop     rsi)
-    .next-page-frame
-    (inc     r10)
-    (cmp     r10 rsi)
-    (jb      .page-frame)
-    .skip-entry
-    (add     rax mm-entry-size)
-    (loop    .memory-entry)
-    ))
+    ,@(def-fun 'pmm-init nil
+        `(
+          ;; First initialize page-table-bitmap.
+          (mov     rdi page-table-bitmap-virtual-addr)
+          (mov     rsi page-table-max)
+          (push    rdi)
+          ,@(call-function 'bitmap-init)
+          (pop     rdi)
+          ;; The first three page tables are already used. Note that identity mapping tables
+          ;; are available for reuse.
+          (xor     esi esi)
+          ,@(call-function 'bitmap-set)
+          (mov     esi 1)
+          ,@(call-function 'bitmap-set)
+          (mov     esi 2)
+          ,@(call-function 'bitmap-set)
+          ;; Now initialize page-frame-bitmap.
+          (mov     rsi (memory-size-virtual-addr))
+          (mov     eax 1)
+          (shl     eax page-size-shift)
+          (dec     eax)
+          (add     rsi rax)
+          (shr     rsi page-size-shift)       ; Get ceil(memory-size / (2 ^ page-size-shift))
+          (mov     rdi page-frame-bitmap-virtual-addr)
+          (push    rdi)
+          ,@(call-function 'bitmap-init)
+          (pop     rdi)
+          ;; Now loop throught every unusable memory entry.
+          (movzx   ecx word (mm-count-virtual-addr))     ; Number of entries to process
+          (mov     rax mm-entries-virtual-addr) ; Use RAX to loop throught memory map entry.
+          .memory-entry
+          (mov     edx (rax mm-memory-type))
+          (cmp     edx memory-usable)       ; TODO: consider ACPI reclaimable?
+          (je      .skip-entry)
+          (mov     r8 (rax mm-start-addr))
+          (mov     r9 (rax mm-end-addr))
+          (xor     r10d r10d)               ; The index to the page frames.
+          .page-frame
+          (mov     r11 r10)
+          (shl     r11 page-size-shift)     ; Starting address of the page frame.
+          (cmp     r11 r9)
+          ;; Skip the current and remaining page frames, as the memory entry cannot
+          ;; overlap with them.
+          (ja      .skip-entry)
+          (mov     r11 r10)
+          (inc     r11)
+          (shl     r11 page-size-shift)     ; End address of the page frame.
+          (cmp     r11 r8)
+          (jb      .next-page-frame)
+          ;; Now the unusable memory entry overlaps with the page frame, so
+          ;; we set it to used (bit is 1).
+          (push    rsi)
+          (push    rdx)
+          (mov     rsi r10)
+          ,@(call-function 'bitmap-set)
+          (pop     rdx)
+          (pop     rsi)
+          .next-page-frame
+          (inc     r10)
+          (cmp     r10 rsi)
+          (jb      .page-frame)
+          .skip-entry
+          (add     rax mm-entry-size)
+          (loop    .memory-entry)
+          ))
 
     ;;; Function pmm-alloc-page-frame: allocate one page frame.
     ;;; Input: None.
     ;;; Output:
     ;;;     RAX: starting physical address of the page frame.
     ;;;          0 if out of memory.
-    ,@(def-fun 'pmm-alloc-page-frame nil `(
-    (mov     rdi page-frame-bitmap-virtual-addr)
-    ,@(call-function 'bitmap-scan)
-    (mov     rsi -1)
-    (cmp     rax rsi)
-    (je      .out-of-memory)
-    (mov     rsi rax)
-    (push    rax)
-    ,@(call-function 'bitmap-set)
-    (pop     rax)
-    (shl     rax page-size-shift)
-    (jmp     short .done)
-    .out-of-memory
-    (xor     eax eax)
-    .done
-    ))
+    ,@(def-fun 'pmm-alloc-page-frame nil
+        `(
+          (mov     rdi page-frame-bitmap-virtual-addr)
+          ,@(call-function 'bitmap-scan)
+          (mov     rsi -1)
+          (cmp     rax rsi)
+          (je      .out-of-memory)
+          (mov     rsi rax)
+          (push    rax)
+          ,@(call-function 'bitmap-set)
+          (pop     rax)
+          (shl     rax page-size-shift)
+          (jmp     short .done)
+          .out-of-memory
+          (xor     eax eax)
+          .done
+          ))
 
     ;;; Function pmm-free-page-frame: free one page frame.
     ;;; Input:
     ;;;     RDI: starting physical address of the page frame.
     ;;; Output: None.
-    ,@(def-fun 'pmm-free-page-frame nil `(
-    (mov     rsi rdi)
-    (shr     rsi page-size-shift)
-    (mov     rdi page-frame-bitmap-virtual-addr)
-    ,@(call-function 'bitmap-unset)))
+    ,@(def-fun 'pmm-free-page-frame nil
+        `(
+          (mov     rsi rdi)
+          (shr     rsi page-size-shift)
+          (mov     rdi page-frame-bitmap-virtual-addr)
+          ,@(call-function 'bitmap-unset)))
 
     ;;; ===================== End of Physical Memory Manager (PMM) =====================
     ))
