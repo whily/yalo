@@ -33,6 +33,9 @@
     (equ kbd-ctrl-cmd-write-output-port #xd1)
     (equ kbd-ctrl-cmd-enable-a20       #xdd)
     (equ kbd-ctrl-cmd-system-reset     #xfe)
+    (equ kbd-encoder-cmd-set-led       #xed)
+    (equ kbd-encoder-cmd-set-led-capslock-on #x4)
+    (equ kbd-encoder-cmd-set-led-capslock-off #x0)
     (equ kbd-encoder-cmd-set-scan-code #xf0)
     (equ kbd-encoder-cmd-set-scan-code-1 #x1)
     (equ kbd-encoder-cmd-enable-scanning #xf4)
@@ -47,6 +50,8 @@
     (equ kbd-right-alt    #x85)
     (equ kbd-capslock     #x86)
     (equ kbd-numlock      #x87)
+    (equ kbd-ascii-a      #x61)
+    (equ kbd-ascii-z      #x7a)
     ;; Test whether key is released or not. If highest bit is 1, then key
     ;; is released; otherwise pressed.
     (equ kbd-key-released-mask #x80)
@@ -95,6 +100,8 @@
     ;;; Output: None
     ,@(def-fun 'init-keyboard nil
         `(
+          ;; TODO: double check whether to use encoder-cmd or ctrl-cmd.
+          ;; TODO: Enable init-keyboard in kernel.
           (mov     dil kbd-encoder-cmd-reset)
           ,@(call-function 'kbd-encoder-send-cmd)
           (mov     dil kbd-encoder-cmd-disable-scanning)
@@ -105,6 +112,18 @@
           ,@(call-function 'kbd-encoder-send-cmd)
           (mov     dil kbd-encoder-cmd-enable-scanning)
           ,@(call-function 'kbd-encoder-send-cmd)))
+
+    ;;; Turn on CapsLock LED.
+    ;;; Input: None
+    ;;; Output: None
+    ,@(def-fun 'turn-on-capslock-led nil
+        `(
+          (mov     dil kbd-encoder-cmd-set-led)
+          ,@(call-function 'kbd-encoder-send-cmd)
+          (mov     dil kbd-encoder-cmd-set-led-capslock-on)
+          ,@(call-function 'kbd-encoder-send-cmd)
+          ))
+
 
     ;;; Send command byte to keyboard controller.
     ;;; Input:
@@ -154,6 +173,7 @@
     ;;; keystroke is available, it is removed from keyboard buffer.
     ;;; Use polling method. TODO: use interrupt.
     ;;; So far only a few keys are scanned. TODO: support full set of scan code.
+    ;;; TODO: handle key repetition.
     ;;; Input: None
     ;;; Output:
     ;;;   AL: ASCII character (0 indicats a key is released or not handled)
@@ -177,27 +197,57 @@
           (lodsb)
           (cmp     al kbd-left-shift)
           ;; kbd-left-shift is the first code for key and toggle states.
-          (jb      .translate)
+          (jb      .translate-check)
           (jnz     .check-right-shift)
           (test    dl dl)
           (setz    (kbd-left-shift-status))
           (jmp     short .set-shift-status)
           .check-right-shift
           (cmp     al kbd-right-shift)
-          (jnz     .clear-key)
+          (jnz     .check-capslock)
           (test    dl dl)
           (setz    (kbd-right-shift-status))
+          (jmp     short .set-shift-status)
+          .check-capslock
+          (cmp     al kbd-capslock)
+          (jnz     .clear-key)
+          (test    dl dl)
+          ;; Ignore the release of Capslock key.
+          (jnz     .clear-key)
+          ;; Toggle kbd-capslock-status between 0 and 1.
+          (xor     byte (kbd-capslock-status) 1)
+          ;; We don't call function `turn-on-capslock-led' since at
+          ;;   least in QEMU, it seems that even if guest OS does
+          ;;   nothing, Capslock LED is automatically adjusted.
+          ;; Note: in host, if Capslock and Left Ctrl are swapped in file ~/.Xmodmap,
+          ;;       Bochs respects the change, while QEMU and VirtualBox still only recognize
+          ;;       old Capslock.
           .set-shift-status
           ;; Use DH to store the overall Shift status.
-          ;; TODO reorganize the shift status checking code carefully.
           (mov     dh (kbd-left-shift-status))
           (or      dh (kbd-right-shift-status))
           (mov     (kbd-shift-status) dh)
+          (xor     dh (kbd-capslock-status))
+          (mov     (kbd-to-upper-status) dh)
           (jmp     short .clear-key)
-          .translate
+          .translate-check
+          ;; For alphabetic characters (a-z), check kbd-to-upper-status (i.e.
+          ;; both Shift and Capslock are checked). Note that we don't check A-Z
+          ;; since table scan-code-set-1 only generates a-z.
+          (cmp     al kbd-ascii-a)
+          (jb      .non-alphabetic-characters)
+          (cmp     al kbd-ascii-z)
+          (ja      .non-alphabetic-characters)
+          .alphabetic-characters
+          (mov     dh (kbd-to-upper-status))
+          (test    dh dh)
+          (jz      .test-key-release)    ; Translation not needed.
+          (jmp     short .translate)
+          .non-alphabetic-characters
           (mov     dh (kbd-shift-status))
           (test    dh dh)
-          (jz      .test-key-release)
+          (jz      .test-key-release)    ; Translation not needed.
+          .translate
           ;; Shift has been pressed
           (mov     rsi lower-to-upper-table)
           (add     rsi rax)
@@ -209,19 +259,32 @@
           ;; Set AL to 0 if highest bit of DL is 1 as we don't handle key release for now.
           ;; Also set AL to 0 if keys for states and toggles are pressed/released.
           (xor     eax eax)
-          .done
-          ))
+          .done))
 
     ;; Left Shift status: 0: released; 1: pressed
     kbd-left-shift-status (db 0)
     ;; Right Shift status: 0: released; 1: pressed
     kbd-right-shift-status (db 0)
-    ;; Shift status: 0: released (if all shift key are released);
-    ;;               1: pressed (if any of the Shift key is pressed)
+    ;; Overall Shift status is 0 if all shift key are released else 1
+    ;; (i.e. if any of the Shift key is pressed). Note that for
+    ;; non-alphabetic characters, only kbd-shift-status matters (i.e.
+    ;; kbd-capslock-status does not have any influence).
     kbd-shift-status (db 0)
+    ;; Capslock status: 0: off; 1: on. Note that different from Shift/Ctrl/Alt,
+    ;; Capslock is a toggle when Capslock key is pressed. Release of Capslock key
+    ;; is ignored.
+    kbd-capslock-status (db 0)
+    ;; Overall status of whether to translate characters from lower
+    ;; case (including punctuations) to upper case. The Shift status
+    ;; (kbd-shift-status) is XORed with Capslock status
+    ;; (kbd-capslock-status) to determine whether lower-to-upper table
+    ;; below should be used (if the XOR result is 1) for alphabetic
+    ;; characters or not.
+    kbd-to-upper-status (db 0)
     ;;; Table for Scan code set 1: http://wiki.osdev.org/Keyboard#Scan_Code_Set_1
     ;;; Release code is not stored as it is simply the sum of pressed code and #x80
     ;;; (as in http://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html#ss1.1)
+    ;;; TODO: add right control and right shift.
     scan-code-set-1
     (db 0 27 49 50 51 52 53 54 55 56 57 48 45 61 8 9
         113 119 101 114 116 121 117 105 111 112 91 93 10 kbd-left-ctrl 97 115
