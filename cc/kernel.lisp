@@ -133,11 +133,12 @@
     ,@*bitmap*
 
     ;; Function panic. Display error message and halt the computer.
-    ,@(def-fun 'panic nil `(
-    ,@(call-function 'println)
-    .panic
-    (hlt)
-    (jmp     short .panic)))
+    ,@(def-fun 'panic nil
+        `(
+          ,@(call-function 'println)
+          .panic
+          (hlt)
+          (jmp     short .panic)))
 
     ;; Fill up to multiple of sectors, otherwise VirtualBox complains.
     (align 512)
