@@ -60,6 +60,14 @@
 
     ,@(call-function 'clear)
 
+    ;; Reload all data segments with null.
+    (xor     ax ax)
+    (mov     ss ax)
+    (mov     ds ax)
+    (mov     es ax)
+    (mov     fs ax)
+    (mov     gs ax)
+
     (mov     rdi banner)
     ,@(call-function 'println)
     (jmp     short read-start)
@@ -131,6 +139,9 @@
 
     ;; Include content from bitmap.lisp.
     ,@*bitmap*
+
+    ;; Include content from bochs.lisp.
+    ,@*bochs*
 
     ;; Function panic. Display error message and halt the computer.
     ,@(def-fun 'panic nil

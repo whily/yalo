@@ -51,6 +51,7 @@
     (equ kbd-capslock     #x86)
     (equ kbd-numlock      #x87)
     (equ kbd-ascii-a      #x61)
+    (equ kbd-ascii-q      #x71)
     (equ kbd-ascii-z      #x7a)
     ;; Test whether key is released or not. If highest bit is 1, then key
     ;; is released; otherwise pressed.
@@ -197,7 +198,7 @@
           (lodsb)
           (cmp     al kbd-left-shift)
           ;; kbd-left-shift is the first code for key and toggle states.
-          (jb      .translate-check)
+          (jb      near .shutdown-check)
           (jnz     .check-right-shift)
           (test    dl dl)
           (setz    (kbd-left-shift-status))
@@ -210,7 +211,7 @@
           (jmp     short .set-shift-status)
           .check-capslock
           (cmp     al kbd-capslock)
-          (jnz     .clear-key)
+          (jnz     .check-left-ctrl)
           (test    dl dl)
           ;; Ignore the release of Capslock key.
           (jnz     .clear-key)
@@ -230,6 +231,51 @@
           (xor     dh (kbd-capslock-status))
           (mov     (kbd-to-upper-status) dh)
           (jmp     short .clear-key)
+          .check-left-ctrl
+          (cmp     al kbd-left-ctrl)
+          (jnz     .check-right-ctrl)
+          (test    dl dl)
+          (setz    (kbd-left-ctrl-status))
+          (jmp     short .set-ctrl-status)
+          .check-right-ctrl
+          (cmp     al kbd-right-ctrl)
+          (jnz     .check-left-alt)
+          (test    dl dl)
+          (setz    (kbd-right-ctrl-status))
+          .set-ctrl-status
+          ;; Use DH to store the overall Ctrl status.
+          (mov     dh (kbd-left-ctrl-status))
+          (or      dh (kbd-right-ctrl-status))
+          (mov     (kbd-ctrl-status) dh)
+          (jmp     short .clear-key)
+          .check-left-alt
+          (cmp     al kbd-left-alt)
+          (jnz     .check-right-alt)
+          (test    dl dl)
+          (setz    (kbd-left-alt-status))
+          (jmp     short .set-alt-status)
+          .check-right-alt
+          (cmp     al kbd-right-alt)
+          (jnz     .clear-key)
+          (test    dl dl)
+          (setz    (kbd-right-alt-status))
+          .set-alt-status
+          ;; Use DH to store the overall Alt status.
+          (mov     dh (kbd-left-alt-status))
+          (or      dh (kbd-right-alt-status))
+          (mov     (kbd-alt-status) dh)
+          (jmp     short .clear-key)
+          .shutdown-check
+          ;; For BOCHS only. Check whether Ctrl-Alt-q is pressed.
+          (mov     dh (kbd-ctrl-status))
+          (and     dh (kbd-alt-status))
+          (test    dh dh)
+          (jz      .translate-check)
+          (cmp     al kbd-ascii-q)
+          (jnz     .translate-check)
+          ,@(call-function 'bochs-shutdown)
+          ;; The computer should have been shutdown already. Just for completeness.
+          (jmp     short .done)
           .translate-check
           ;; For alphabetic characters (a-z), check kbd-to-upper-status (i.e.
           ;; both Shift and Capslock are checked). Note that we don't check A-Z
@@ -281,6 +327,20 @@
     ;; below should be used (if the XOR result is 1) for alphabetic
     ;; characters or not.
     kbd-to-upper-status (db 0)
+    ;; Left Ctrl status: 0: released; 1: pressed
+    kbd-left-ctrl-status (db 0)
+    ;; Right Ctrl status: 0: released; 1: pressed
+    kbd-right-ctrl-status (db 0)
+    ;; Overall Ctrl status is 0 if all ctrl key are released else 1
+    ;; (i.e. if any of the Ctrl key is pressed).
+    kbd-ctrl-status (db 0)
+    ;; Left Alt status: 0: released; 1: pressed
+    kbd-left-alt-status (db 0)
+    ;; Right Alt status: 0: released; 1: pressed
+    kbd-right-alt-status (db 0)
+    ;; Overall Alt status is 0 if all alt key are released else 1
+    ;; (i.e. if any of the Alt key is pressed).
+    kbd-alt-status (db 0)
     ;;; Table for Scan code set 1: http://wiki.osdev.org/Keyboard#Scan_Code_Set_1
     ;;; Release code is not stored as it is simply the sum of pressed code and #x80
     ;;; (as in http://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html#ss1.1)

@@ -12,24 +12,25 @@
 (in-package #:cc-system)
 
 (defsystem cc
-  :description "Cross compiler for yalo."
-  :serial t
-  :components
-  ((:file "package")
-   (:file "util")
-   (:file "unit-test")
-   (:file "abi")
-   (:file "bitmap")
-   (:file "memory")
-   (:file "paging")
-   (:file "bga")
-   (:file "vga-text")
-   (:file "keyboard")
-   (:file "a20")
-   (:file "kernel")
-   (:file "bootloader")
-   (:file "x86-64-syntax")
-   (:file "lap")
-   (:file "nasm")
-   (:file "test-cc")
-   (:file "test")))
+    :description "Cross compiler for yalo."
+    :serial t
+    :components
+    ((:file "package")
+     (:file "util")
+     (:file "unit-test")
+     (:file "abi")
+     (:file "bitmap")
+     (:file "memory")
+     (:file "paging")
+     (:file "bga")
+     (:file "vga-text")
+     (:file "keyboard")
+     (:file "a20")
+     (:file "bochs")
+     (:file "kernel")
+     (:file "bootloader")
+     (:file "x86-64-syntax")
+     (:file "lap")
+     (:file "nasm")
+     (:file "test-cc")
+     (:file "test")))
