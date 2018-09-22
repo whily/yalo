@@ -118,6 +118,26 @@ for `run-bochs`; while for `debug-bochs`, emulator pauses before BIOS,
 and one needs to type `c` in the debugger window to continue the
 emulation.
 
+On HiDPI screens, the font of Bochs is too small to see. Therefore in
+both scripts `run-bochs` and `debug-bochs`, there is one line related
+to using SDL2 (make sure the library is installed) as display library
+and starts the emulator in fullscreen mode, as below (taking
+`debug-bochs` as example):
+
+```
+    'display_library: sdl2, options="gui_debug,fullscreen"'
+```
+
+Bochs header bar is not visible in full screen mode. Therefore one
+needs to press `Shift` key to drop into the debug, or press
+`Ctrl+Alt+q` to shutdown Yalo therefore quitting emulator.
+Alternatively, one can modify the script files (e.g. removing
+`fullscreen` option or deleting the line containing `display_library`
+completely).
+
+In addition, `scripts/build-boch` is the script the author used to
+compile a customized Bochs.
+
 Note that on Ubuntu (at least in 16.10), package `bochs-x` should be
 installed in addition to package `bochs`.
 

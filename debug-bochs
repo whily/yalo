@@ -4,4 +4,6 @@ bochs -n -q 'boot: a' \
             'floppya: 1_44=floppy.img, status=inserted' \
             'megs: 32' \
             'magic_break: enabled=1' \
-            'cpuid: x86_64=1'
+            'cpuid: x86_64=1' \
+            'vga: extension=vbe' \
+            'display_library: sdl2, options="gui_debug,fullscreen"'

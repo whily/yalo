@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Run the script in the root directory of bochs source.
+# Based on
+#   https://git.archlinux.org/svntogit/community.git/tree/trunk/PKGBUILD?h=packages/bochs
+#   https://wiki.osdev.org/Bochs#Compiling_Bochs_from_Source
+
+sed -i 's/2\.6\*|3\.\*)/2.6*|3.*|4.*)/' configure*
+
+./configure \
+        --prefix=/usr \
+        --without-wx \
+        --enable-cpu-level=6 \
+        --enable-fpu \
+        --enable-3dnow \
+        --enable-disasm \
+        --enable-smp \
+        --enable-x86-64 \
+        --enable-avx \
+        --enable-long-phy-address \
+        --enable-disasm \
+        --enable-pcidev \
+        --enable-pci \
+        --enable-usb \
+        --enable-sb16=dummy \
+        --enable-cdrom \
+        --enable-debugger \
+        --enable-x86-debugger \
+        --enable-debugger-gui \
+        --enable-iodebug \
+        --enable-logging \
+        --with-x --with-x11 --with-term --with-sdl2 \
+        #--enable-all-optimizations
+        --disable-docbook \
+        --disable-plugins
+
+sed -i 's/^LIBS = /LIBS = -lpthread/g' Makefile
+
+make -j5 && sudo make install
