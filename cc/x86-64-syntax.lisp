@@ -125,7 +125,8 @@ adc/add/and/cmp/or/sbb/sub/xor."
 ;;;    refer to https://github.com/whily/yalo/blob/master/doc/AssemblyX64.md
 
 (defparameter *x86-64-syntax-common*
-  `(,@(arith-syntax-1 'adc nil)
+  `(
+    ,@(arith-syntax-1 'adc nil)
     ,@(arith-syntax-1 'add nil)
     ,@(arith-syntax-1 'and nil)
     ((bswap r32)                             . (#x0f (+ #xc8 r)))
@@ -296,7 +297,8 @@ adc/add/and/cmp/or/sbb/sub/xor."
   "Valid for 16-bit mode only.")
 
 (defparameter *x86-64-syntax-64-bit-only*
-  `(,@(arith-syntax-1 'adc t)
+  `(
+    ,@(arith-syntax-1 'adc t)
     ,@(arith-syntax-1 'add t)
     ,@(arith-syntax-1 'and t)
     ((bswap r64)                             . (rex.w #x0f (+ #xc8 r)))
@@ -316,6 +318,9 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ((inc    (r/m64 r64))                    . (rex.w #xff /0))
     ((inc    qword m)                        . (rex.w #xff /0))
     ((iretq)                                 . (rex.w #xcf))
+    ;; The following instruction is available for 16/32 bit, but we only support it
+    ;; in 64 bit for simplicity (there are already more compact `jmp near` in 16/32 bits.)
+    ((jmp    near (imm32 label imm8 imm16 imm64))  . (#xe9 cd))
     ((jmp    near r/m64)                     . (#xff /4))
     ((jrcxz  (imm8 label imm16 imm32 imm64)) . (#xe3 cb))
     ((leave)                                 . (#xc9))
@@ -325,7 +330,7 @@ adc/add/and/cmp/or/sbb/sub/xor."
     ;; NASM generates same results.
     ;; The following instruction is handled in function match-instruction,
     ;; therefore commented out.
-    ;((mov    r64 -imm32)                     . (rex.w #xc7 /0 id))
+    ;; ((mov    r64 -imm32)                     . (rex.w #xc7 /0 id))
     ((mov    qword m (imm32 imm16 imm8 imm label)) . (rex.w #xc7 /0 id))
     ((mov    r64 (imm32 imm16 imm8 imm))     . ((+ #xb8 r) id))
     ((mov    r64 (imm64 label))              . (rex.w (+ #xb8 r) io))

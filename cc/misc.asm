@@ -124,6 +124,7 @@ start:
         iretq
         jb      near msg
         jmp     rbx
+        jmp     msg
         jmp     [msg]
         leave
         lgdt    [msg]

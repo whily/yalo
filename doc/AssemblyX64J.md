@@ -24,8 +24,9 @@ Please refer to [conditional codes](AssemblyX64.md) for details.
 
 ### jmp: Jump
 
-| Instruction    | Opcode   |
-| -------------- | -------- |
-| jmp short imm  | EB cb    |
-| jmp near imm   | E9 cw    |
-| jmp near r/m64 | FF /4    |
+| Instruction    | Opcode                 |
+| -------------- | --------               |
+| jmp short imm  | EB cb                  |
+| jmp near imm   | E9 cw (for 16/32 bits) |
+| jmp near imm   | E9 cd (for 64 bit)     |
+| jmp near r/m64 | FF /4                  |
