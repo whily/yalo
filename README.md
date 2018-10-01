@@ -111,25 +111,20 @@ There are various ways to run the image.
 ### Bochs
 
 Go to the root directory of the source code, where script `run-bochs`
-and `debug-bochs` are located. Run the scripts and select *6* to
-proceed emulation. The difference between `run-bochs` and
-`debug-bochs` is that after selecting *6*, emulation starts directly
-for `run-bochs`; while for `debug-bochs`, emulator pauses before BIOS,
-and one needs to type `c` in the debugger window to continue the
-emulation.
+is located. Run the scripts and select *6* to proceed emulation. After
+invoking `run-bochs`, select *6*, emulation starts directly.
 
 On HiDPI screens, the font of Bochs is too small to see. Therefore in
-both scripts `run-bochs` and `debug-bochs`, there is one line related
+script `run-bochs`, there is one line related
 to using SDL2 (make sure the library is installed) as display library
-and starts the emulator in fullscreen mode, as below (taking
-`debug-bochs` as example):
+and starts the emulator in fullscreen mode, as below:
 
 ```
-    'display_library: sdl2, options="gui_debug,fullscreen"'
+    'display_library: sdl2, options="fullscreen,gui_debug"'
 ```
 
 Bochs header bar is not visible in full screen mode. Therefore one
-needs to press `Ctrl+Alt+q` to shutdown Yalo therefore quitting emulator.
+needs to press `Ctrl+Alt+q` to shutdown Yalo to quit emulator.
 Alternatively, one can modify the script files (e.g. removing
 `fullscreen` option or deleting the line containing `display_library`
 completely).

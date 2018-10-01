@@ -7,4 +7,4 @@ bochs -n -q -rc bochs-debug-cmds \
       'magic_break: enabled=1' \
       'cpuid: x86_64=1' \
       'vga: extension=vbe' \
-      'display_library: sdl2, options="fullscreen"'
+      'display_library: sdl2, options="fullscreen,gui_debug"'
