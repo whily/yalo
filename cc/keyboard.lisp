@@ -214,7 +214,7 @@
           (jnz     .check-left-ctrl)
           (test    dl dl)
           ;; Ignore the release of Capslock key.
-          (jnz     .clear-key)
+          (jnz     near .clear-key)
           ;; Toggle kbd-capslock-status between 0 and 1.
           (xor     byte (kbd-capslock-status) 1)
           ;; We don't call function `turn-on-capslock-led' since at
@@ -230,7 +230,7 @@
           (mov     (kbd-shift-status) dh)
           (xor     dh (kbd-capslock-status))
           (mov     (kbd-to-upper-status) dh)
-          (jmp     short .clear-key)
+          (jmp     near .clear-key)
           .check-left-ctrl
           (cmp     al kbd-left-ctrl)
           (jnz     .check-right-ctrl)
@@ -247,7 +247,7 @@
           (mov     dh (kbd-left-ctrl-status))
           (or      dh (kbd-right-ctrl-status))
           (mov     (kbd-ctrl-status) dh)
-          (jmp     short .clear-key)
+          (jmp     near .clear-key)
           .check-left-alt
           (cmp     al kbd-left-alt)
           (jnz     .check-right-alt)
@@ -256,7 +256,7 @@
           (jmp     short .set-alt-status)
           .check-right-alt
           (cmp     al kbd-right-alt)
-          (jnz     .clear-key)
+          (jnz     near .clear-key)
           (test    dl dl)
           (setz    (kbd-right-alt-status))
           .set-alt-status
@@ -264,7 +264,7 @@
           (mov     dh (kbd-left-alt-status))
           (or      dh (kbd-right-alt-status))
           (mov     (kbd-alt-status) dh)
-          (jmp     short .clear-key)
+          (jmp     near .clear-key)
           .shutdown-check
           ;; For BOCHS only. Check whether Ctrl-Alt-q is pressed.
           (mov     dh (kbd-ctrl-status))

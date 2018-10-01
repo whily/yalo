@@ -129,8 +129,7 @@ and starts the emulator in fullscreen mode, as below (taking
 ```
 
 Bochs header bar is not visible in full screen mode. Therefore one
-needs to press `Shift` key to drop into the debug, or press
-`Ctrl+Alt+q` to shutdown Yalo therefore quitting emulator.
+needs to press `Ctrl+Alt+q` to shutdown Yalo therefore quitting emulator.
 Alternatively, one can modify the script files (e.g. removing
 `fullscreen` option or deleting the line containing `display_library`
 completely).
