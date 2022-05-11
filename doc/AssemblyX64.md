@@ -98,7 +98,7 @@ Note:
 -9,223,372,036,854,775,808..+18,446,744,073,709,551,615.
 Expression within the same range can be used as well.
 
-## equ: Defint Constant
+## equ: Define Constant
 
 | Instruction        | Description                               |
 | ------------------ | ----------------------------------------- |
